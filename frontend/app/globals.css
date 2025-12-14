@@ -117,6 +117,7 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+  background-color: var(--color-background); /* Added assuming variable usage */
 }
 
 /* Typography enhancements */
@@ -202,3 +203,4 @@ html {
   background-color: var(--color-primary-200);
   color: var(--color-primary-900);
 }
+

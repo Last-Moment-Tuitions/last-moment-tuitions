@@ -1,14 +1,15 @@
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { Home, BookOpen, Stethoscope, Cog, BriefcaseBusiness, GraduationCap } from 'lucide-react';
 
 import { ChevronDown, Search } from 'lucide-react';
 
 export function Header() {
-    const location = useLocation();
+    const pathname = usePathname();
 
-    const isActive = (path) => location.pathname === path;
-    const isGroupActive = (paths) => paths.some(path => location.pathname.startsWith(path));
+    const isActive = (path) => pathname === path;
+    const isGroupActive = (paths) => paths.some(path => pathname?.startsWith(path));
 
     return (
         <header className="sticky top-0 z-50 bg-white border-b border-gray-100 shadow-sm font-sans">
@@ -17,7 +18,7 @@ export function Header() {
                 {/* Left Section: Logo & Search */}
                 <div className="flex items-center gap-4 xl:gap-8">
                     {/* Logo & Branding */}
-                    <Link to="/" className="flex-shrink-0 flex items-center gap-3 group">
+                    <Link href="/" className="flex-shrink-0 flex items-center gap-3 group">
                         <div className="w-10 h-10 rounded-full overflow-hidden border border-gray-100 shadow-sm group-hover:shadow-md transition-all">
                             <img
                                 src="https://play-lh.googleusercontent.com/APeEZa4FLR80Q2huR4dQmpElLaBz_jw7kkkpFF38Kjm6Y_ehZjg3XIqH_8Vvo0WZBg"
@@ -43,7 +44,7 @@ export function Header() {
 
                 {/* Center Section: Navigation */}
                 <ul className="hidden lg:flex items-center gap-1 xl:gap-2">
-                    <NavLink to="/" active={isActive('/')}>
+                    <NavLink href="/" active={isActive('/')}>
                         Home
                     </NavLink>
 
@@ -72,7 +73,7 @@ export function Header() {
 
                 {/* Right Section: Auth Buttons */}
                 <div className="hidden md:flex items-center gap-3 xl:gap-4">
-                    <Link to="/login" className="text-gray-700 font-semibold hover:text-primary-600 transition-colors text-sm whitespace-nowrap">Sign in</Link>
+                    <Link href="/login" className="text-gray-700 font-semibold hover:text-primary-600 transition-colors text-sm whitespace-nowrap">Sign in</Link>
                     <Button variant="primary" className="rounded-full px-5 py-2 text-sm font-bold shadow-lg shadow-primary-500/20 whitespace-nowrap">Create Account</Button>
                 </div>
             </div>
@@ -80,11 +81,11 @@ export function Header() {
     );
 }
 
-function NavLink({ to, active, children }) {
+function NavLink({ href, active, children }) {
     return (
         <li>
             <Link
-                to={to}
+                href={href}
                 className={`
           flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 whitespace-nowrap
           ${active
@@ -120,7 +121,7 @@ function NavDropdown({ label, active, items }) {
                     {items.map((item, index) => (
                         <Link
                             key={index}
-                            to={item.href}
+                            href={item.href}
                             className="block px-4 py-3 text-sm text-gray-700 hover:bg-primary-50 hover:text-primary-700 rounded-lg transition-colors whitespace-nowrap"
                         >
                             {item.label}
@@ -166,7 +167,7 @@ export function Footer() {
 
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-12 border-t border-gray-800 pt-16">
                     <div className="space-y-6">
-                        <Link to="/" className="flex items-center gap-2">
+                        <Link href="/" className="flex items-center gap-2">
                             <div className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center overflow-hidden border border-gray-700">
                                 <img src="https://play-lh.googleusercontent.com/APeEZa4FLR80Q2huR4dQmpElLaBz_jw7kkkpFF38Kjm6Y_ehZjg3XIqH_8Vvo0WZBg" alt="LMT Logo" className="w-full h-full object-cover" />
                             </div>
@@ -187,40 +188,40 @@ export function Footer() {
                     <div>
                         <h4 className="text-lg font-bold mb-6 text-white">Quick Links</h4>
                         <ul className="space-y-3 text-sm text-gray-400">
-                            <li><Link to="#" className="hover:text-primary-500 transition-colors">About</Link></li>
-                            <li><Link to="#" className="hover:text-primary-500 transition-colors">Become Instructor</Link></li>
-                            <li><Link to="#" className="hover:text-primary-500 transition-colors">Contact</Link></li>
-                            <li><Link to="#" className="hover:text-primary-500 transition-colors">Career</Link></li>
+                            <li><Link href="#" className="hover:text-primary-500 transition-colors">About</Link></li>
+                            <li><Link href="#" className="hover:text-primary-500 transition-colors">Become Instructor</Link></li>
+                            <li><Link href="#" className="hover:text-primary-500 transition-colors">Contact</Link></li>
+                            <li><Link href="#" className="hover:text-primary-500 transition-colors">Career</Link></li>
                         </ul>
                     </div>
 
                     <div>
                         <h4 className="text-lg font-bold mb-6 text-white">Support</h4>
                         <ul className="space-y-3 text-sm text-gray-400">
-                            <li><Link to="#" className="hover:text-primary-500 transition-colors">Help Center</Link></li>
-                            <li><Link to="#" className="hover:text-primary-500 transition-colors">FAQs</Link></li>
-                            <li><Link to="#" className="hover:text-primary-500 transition-colors">Terms & Condition</Link></li>
-                            <li><Link to="#" className="hover:text-primary-500 transition-colors">Privacy Policy</Link></li>
+                            <li><Link href="#" className="hover:text-primary-500 transition-colors">Help Center</Link></li>
+                            <li><Link href="#" className="hover:text-primary-500 transition-colors">FAQs</Link></li>
+                            <li><Link href="#" className="hover:text-primary-500 transition-colors">Terms & Condition</Link></li>
+                            <li><Link href="#" className="hover:text-primary-500 transition-colors">Privacy Policy</Link></li>
                         </ul>
                     </div>
 
                     <div>
                         <h4 className="text-lg font-bold mb-6 text-white">Download App</h4>
                         <div className="space-y-4">
-                            <button className="flex items-center gap-3 bg-gray-800 px-4 py-3 rounded-lg hover:bg-gray-700 transition-colors w-full">
-                                <div className="text-2xl"></div>
+                            <Link href="#" className="flex items-center gap-3 bg-gray-800 px-4 py-3 rounded-lg hover:bg-gray-700 transition-colors w-full">
+                                <span className="text-2xl"></span>
                                 <div className="text-left">
                                     <div className="text-xs text-gray-400">Download on the</div>
                                     <div className="text-sm font-bold">App Store</div>
                                 </div>
-                            </button>
-                            <button className="flex items-center gap-3 bg-gray-800 px-4 py-3 rounded-lg hover:bg-gray-700 transition-colors w-full">
-                                <div className="text-2xl">▶</div>
+                            </Link>
+                            <Link href="#" className="flex items-center gap-3 bg-gray-800 px-4 py-3 rounded-lg hover:bg-gray-700 transition-colors w-full">
+                                <span className="text-2xl">▶</span>
                                 <div className="text-left">
                                     <div className="text-xs text-gray-400">Get it on</div>
                                     <div className="text-sm font-bold">Google Play</div>
                                 </div>
-                            </button>
+                            </Link>
                         </div>
                     </div>
                 </div>
@@ -228,20 +229,20 @@ export function Footer() {
                 <div className="border-t border-gray-800 mt-16 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-gray-500">
                     <p>© 2024 E-tutor. All rights reserved.</p>
                     <div className="flex gap-6">
-                        <Link to="#" className="hover:text-white transition-colors">English</Link>
-                        <Link to="#" className="hover:text-white transition-colors">USD</Link>
+                        <Link href="#" className="hover:text-white transition-colors">English</Link>
+                        <Link href="#" className="hover:text-white transition-colors">USD</Link>
                     </div>
                 </div>
-            </div>
-        </footer>
+            </div >
+        </footer >
     );
 }
 
-function FooterLink({ to, children }) {
+function FooterLink({ href, children }) {
     return (
         <li>
             <Link
-                to={to}
+                href={href}
                 className="text-sm text-gray-400 hover:text-white transition-colors"
             >
                 {children}
@@ -257,7 +258,7 @@ export function Breadcrumb({ items }) {
                 <React.Fragment key={index}>
                     {index > 0 && <span className="text-gray-400">/</span>}
                     {item.href ? (
-                        <Link to={item.href} className="hover:text-primary-600 transition-colors">
+                        <Link href={item.href} className="hover:text-primary-600 transition-colors">
                             {item.label}
                         </Link>
                     ) : (

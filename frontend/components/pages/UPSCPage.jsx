@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Breadcrumb } from '../components/Layout';
-import { Button, Badge, Card } from '../components/ui';
+import { Breadcrumb } from '@/components/Layout';
+import { Button, Badge, Card } from '@/components/ui';
 import {
     Download,
     ExternalLink,
@@ -16,7 +16,8 @@ import {
     ChevronRight,
     PlayCircle,
     FileText,
-    Monitor
+    Monitor,
+    Clock
 } from 'lucide-react';
 
 export default function UPSCPage() {
@@ -31,7 +32,7 @@ export default function UPSCPage() {
     useEffect(() => {
         const handleScroll = () => {
             const sections = ['overview', 'highlights', 'dates', 'pattern', 'syllabus', 'vacancy', 'salary', 'eligibility'];
-            const scrollPosition = window.scrollY + 100;
+            const scrollPosition = window.scrollY + 150;
 
             for (const section of sections) {
                 const element = document.getElementById(section);

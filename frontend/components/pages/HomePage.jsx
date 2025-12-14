@@ -22,13 +22,13 @@ import {
     Database,
     Globe
 } from 'lucide-react';
-import { Button, Badge, Card, CategoryCard, CourseCard, FeatureCourseCard, InstructorCard, Tabs, TabsList, TabsTrigger, TabsContent } from '../components/ui';
-import { FadeIn, StaggerContainer, StaggerItem, ScaleIn } from '../components/Animations';
-import { HeroBackground } from '../components/HeroAnimation';
-import { HeroMerged } from '../components/HeroMerged';
-import { FaqSection } from '../components/FaqSection';
-import { AnimatedTestimonials } from '../components/AnimatedTestimonials';
-import { StickyScroll } from '../components/StickyScrollLayout';
+import { Button, Badge, Card, CategoryCard, CourseCard, FeatureCourseCard, InstructorCard, Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui';
+import { FadeIn, StaggerContainer, StaggerItem, ScaleIn } from '@/components/Animations';
+import { HeroBackground } from '@/components/HeroAnimation';
+import { HeroMerged } from '@/components/HeroMerged';
+import { FaqSection } from '@/components/FaqSection';
+import { AnimatedTestimonials } from '@/components/AnimatedTestimonials';
+import { StickyScroll } from '@/components/StickyScrollLayout';
 
 export default function HomePage() {
     const [isMenuOpen, setIsMenuOpen] = React.useState(false);

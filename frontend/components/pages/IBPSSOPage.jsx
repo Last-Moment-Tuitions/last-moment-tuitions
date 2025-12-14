@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Breadcrumb } from '../components/Layout';
-import { Button, Badge } from '../components/ui';
+import { Breadcrumb } from '@/components/Layout';
+import { Button, Badge } from '@/components/ui';
 import {
     Clock,
     Monitor,
@@ -9,7 +9,9 @@ import {
     Cpu,
     BookOpen,
     Server,
-    Shield
+    Shield,
+    FileText,
+    CheckCircle
 } from 'lucide-react';
 
 export default function IBPSSOPage() {
@@ -24,7 +26,7 @@ export default function IBPSSOPage() {
     useEffect(() => {
         const handleScroll = () => {
             const sections = ['overview', 'highlights', 'dates', 'pattern', 'syllabus', 'vacancy', 'salary', 'eligibility'];
-            const scrollPosition = window.scrollY + 100;
+            const scrollPosition = window.scrollY + 150;
 
             for (const section of sections) {
                 const element = document.getElementById(section);

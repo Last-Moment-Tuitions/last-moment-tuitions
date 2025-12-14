@@ -17,7 +17,7 @@ import {
     MoreHorizontal,
     FolderOpen
 } from 'lucide-react';
-import { Button, Card, Badge, Tabs, Accordion } from '../components/ui';
+import { Button, Card, Badge, Tabs, Accordion } from '@/components/ui';
 
 const CourseDetails = () => {
     const [activeTab, setActiveTab] = useState('overview');
