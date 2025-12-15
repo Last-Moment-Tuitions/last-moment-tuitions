@@ -1,0 +1,112 @@
+@import 'grapesjs/dist/css/grapes.min.css';
+
+:root {
+    /* Brand Palette Mapping */
+    --brand-primary-900: #041230;
+    /* Deepest Blue */
+    --brand-primary-800: #061940;
+    /* Panel Background */
+    --brand-primary-700: #08204f;
+    /* Hover State */
+    --brand-accent-500: #0b80a1;
+    /* Cyan Accent */
+    --brand-accent-400: #33bfdf;
+    /* Light Cyan */
+    --brand-text-50: #e8f0f9;
+    /* Light Text */
+    --brand-text-200: #a3c3e7;
+    /* Muted Text */
+
+    --gjs-font-family: 'Inter', system-ui, sans-serif;
+}
+
+/* --- Main Backgrounds --- */
+.gjs-one-bg {
+    background-color: var(--brand-primary-900);
+}
+
+/* --- Panel & Toolbar Backgrounds --- */
+.gjs-two-color {
+    color: var(--brand-text-200);
+}
+
+/* --- Inputs & darker areas --- */
+.gjs-three-bg {
+    background-color: var(--brand-accent-500);
+    color: white;
+}
+
+/* --- Highlight / Accent Colors --- */
+.gjs-four-color,
+.gjs-four-color-h:hover {
+    color: var(--brand-accent-400);
+}
+
+/* --- Canvas Area --- */
+.gjs-cv-canvas {
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #f3f4f6;
+    /* Light gray canvas background for contrast */
+}
+
+/* --- Panels (Left/Right Sidebars) --- */
+.gjs-pn-panel {
+    background-color: var(--brand-primary-800);
+    border-color: var(--brand-primary-700);
+}
+
+/* --- Buttons --- */
+.gjs-pn-btn {
+    color: var(--brand-text-50);
+}
+
+.gjs-pn-btn:hover {
+    background-color: var(--brand-primary-700);
+    color: white;
+}
+
+.gjs-pn-btn.gjs-pn-active {
+    background-color: var(--brand-primary-700);
+    color: var(--brand-accent-400);
+    box-shadow: none;
+}
+
+/* --- Layer Manager / Block Manager Items --- */
+.gjs-block {
+    background-color: var(--brand-primary-700);
+    border: 1px solid var(--brand-primary-700);
+    color: var(--brand-text-50);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.gjs-block:hover {
+    background-color: var(--brand-primary-800);
+    border-color: var(--brand-accent-500);
+    color: var(--brand-accent-400);
+}
+
+.gjs-block-label {
+    font-weight: 500;
+}
+
+/* --- Input Fields --- */
+.gjs-field {
+    background-color: var(--brand-primary-900);
+    border-color: var(--brand-primary-700);
+    color: var(--brand-text-50);
+    border-radius: 4px;
+}
+
+.gjs-field:focus-within {
+    border-color: var(--brand-accent-500);
+}
+
+/* --- Typography --- */
+body,
+.gjs-editor {
+    font-family: var(--gjs-font-family);
+}
