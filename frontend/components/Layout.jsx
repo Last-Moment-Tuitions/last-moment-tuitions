@@ -58,6 +58,7 @@ export function Header() {
                         ]}
                     />
 
+
                     <NavDropdown
                         label="Engineering"
                         active={isGroupActive(['/exams/jee', '/exams/gate'])}
@@ -68,6 +69,10 @@ export function Header() {
                             { label: 'BITSAT', href: '/exams/jee' }
                         ]}
                     />
+
+                    <NavLink href="/courses" active={isActive('/courses')}>
+                        Courses
+                    </NavLink>
 
 
                 </ul>

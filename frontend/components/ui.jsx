@@ -270,9 +270,11 @@ export function CategoryCard({ icon, label, count, color, className }) {
     );
 }
 
-export function CourseCard({ image, category, title, rating, students, price, oldPrice, instructor, className }) {
+import Link from 'next/link';
+
+export function CourseCard({ id, image, category, title, rating, students, price, oldPrice, instructor, className }) {
     return (
-        <div className={cn("bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300 group", className)}>
+        <Link href={`/courses/${id}`} className={cn("block bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300 group", className)}>
             <div className="relative h-48 overflow-hidden">
                 <img src={image} alt={title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
                 <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-md text-xs font-bold text-primary-700 uppercase tracking-wide">
@@ -301,13 +303,14 @@ export function CourseCard({ image, category, title, rating, students, price, ol
                         </div>
                         <span className="text-sm font-medium text-gray-600">{instructor}</span>
                     </div>
+
                     <div className="text-right">
-                        <span className="block text-lg font-bold text-primary-600">${price}</span>
-                        {oldPrice && <span className="block text-xs text-gray-400 line-through">${oldPrice}</span>}
+                        <span className="block text-lg font-bold text-primary-600">₹{price}</span>
+                        {oldPrice && <span className="block text-xs text-gray-400 line-through">₹{oldPrice}</span>}
                     </div>
                 </div>
             </div>
-        </div>
+        </Link>
     );
 }
 
@@ -335,7 +338,7 @@ export function FeatureCourseCard({ image, category, title, rating, students, pr
                     <span className="text-sm font-medium text-gray-600">By {instructor}</span>
                 </div>
                 <div className="flex items-center justify-between mt-auto">
-                    <span className="text-2xl font-bold text-primary-600">${price}</span>
+                    <span className="text-2xl font-bold text-primary-600">₹{price}</span>
                     <Button size="sm" variant="outline" className="rounded-full">View Details</Button>
                 </div>
             </div>
