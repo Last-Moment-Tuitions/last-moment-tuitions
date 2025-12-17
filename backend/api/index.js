@@ -9,7 +9,21 @@ const dbConnect = require('../db/connect');
 
 const app = express();
 
-app.use(cors());
+// Robust CORS for Vercel
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    // Trust any origin
+    return callback(null, true);
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+}));
+
+// Explicit OPTIONS handler for preflight
+app.options('*', cors());
 app.use(express.json());
 
 // Connect to DB immediately
