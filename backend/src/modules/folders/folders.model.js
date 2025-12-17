@@ -14,7 +14,7 @@ const FolderSchema = new mongoose.Schema({
     },
     type: {
         type: String,
-        enum: ['page', 'template'], // To distinguish if a folder is for pages or templates (optional, but good for filtering)
+        enum: ['page', 'template'], // To distinguish if a folder is for pages or templates
         default: 'page'
     }
 }, { timestamps: true });

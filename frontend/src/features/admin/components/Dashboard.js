@@ -9,13 +9,20 @@ import {
 } from 'lucide-react';
 import API_BASE_URL from '@/lib/config';
 
-export default function AdminDashboard() {
+export function Dashboard() {
     const [stats, setStats] = useState({ totalPages: 0, totalTemplates: 0, totalViews: 0 });
 
     useEffect(() => {
         const fetchStats = async () => {
             try {
-                const res = await axios.get(`${API_BASE_URL}/pages/stats`);
+                const res = await axios.get(`${API_BASE_URL}/pages`); // Reverted to /pages because stats endpoint was not in my backend refactor unless I missed it. 
+                // Wait, original file had `${API_BASE_URL}/pages/stats`.
+                // My backend refactor handles `GET /pages`.
+                // I did NOT implment `GET /pages/stats` in my refactor.
+                // I must fix the backend to support stats or calculate it here.
+                // `GET /pages` returns all pages (lightweight).
+                // So I can just fetch all and calculate.
+
                 if (res.data.success) {
                     const allItems = res.data.data || [];
                     const pages = allItems.filter(p => (p.type || 'page') === 'page');
@@ -42,8 +49,8 @@ export default function AdminDashboard() {
         { title: 'Premium Students', value: '0', sub: '0%', icon: Crown, color: 'bg-orange-50 text-orange-600' },
         { title: 'Total Users', value: '2', sub: '100%', icon: Users, color: 'bg-blue-50 text-blue-600' },
         { title: 'Total Roles', value: '1', sub: '100%', icon: Award, color: 'bg-purple-50 text-purple-600' },
-        { title: 'Total Subjects', value: stats.totalPages.toString(), sub: 'From LMS', icon: BookOpen, color: 'bg-indigo-50 text-indigo-600' }, // Mapped to Real Pages
-        { title: 'Total Chapters', value: stats.totalTemplates.toString(), sub: 'From LMS', icon: Book, color: 'bg-pink-50 text-pink-600' }, // Mapped to Real Templates
+        { title: 'Total Subjects', value: stats.totalPages.toString(), sub: 'From LMS', icon: BookOpen, color: 'bg-indigo-50 text-indigo-600' },
+        { title: 'Total Chapters', value: stats.totalTemplates.toString(), sub: 'From LMS', icon: Book, color: 'bg-pink-50 text-pink-600' },
         { title: 'Total Questions', value: '62', sub: '0%', icon: FileQuestion, color: 'bg-cyan-50 text-cyan-600' },
         { title: 'Total Tests', value: '4', sub: '0%', icon: FileCheck, color: 'bg-rose-50 text-rose-600' },
     ];

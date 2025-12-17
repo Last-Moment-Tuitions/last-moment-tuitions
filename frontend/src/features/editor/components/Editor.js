@@ -3,44 +3,21 @@
 import { useEffect, useRef, useState } from 'react';
 import axios from 'axios';
 import API_BASE_URL from '@/lib/config';
-import { initEditor } from '@/core/editor/Manager';
-import { loadBlocks } from '@/core/blocks/basic';
-import { loadAdvancedBlocks } from '@/core/blocks/advanced';
-import { loadTemplateRefBlock } from '@/core/blocks/templateRef';
-import '@/core/editor/editor.css';
+import { initEditor } from '@/features/editor/core/editor/Manager';
+import { loadBlocks } from '@/features/editor/core/blocks/basic';
+import { loadAdvancedBlocks } from '@/features/editor/core/blocks/advanced';
+import { loadTemplateRefBlock } from '@/features/editor/core/blocks/templateRef';
+import '@/features/editor/core/editor/editor.css';
 import { Button } from '@/components/ui';
 import { Save, ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 
-export default function EditorPage({ params }) {
+export function Editor({ pageId }) {
     const editorRef = useRef(null);
-    // Unwrap params Promise because of Next.js 15
-    // Note: In client components, params is a prop, but if it is passed from a server component we might need to handle it.
-    // However, in standard Next.js 14/15 client page, params is a promise only in Server Components usually?
-    // Wait, the previous issue was in a Server Component. 
-    // Let's assume params is standard here, but we can wrap in use() or async if needed, 
-    // but hooks can't easily be async. Let's just useEffect on params.id if available.
-
-    // Actually, in App Router Client Components: "params is a promise" applies to layouts/pages.
-    // Since this is `use client`, we receive `params` as a prop.
-    // BUT Next.js 15 might require `use(params)` or awaiting it in the parent? 
-    // Let's check simply.
-
-    const [pageId, setPageId] = useState(null);
     const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        // Handle params promise unwrapping manually if needed or just access
-        // Ideally we should use `React.use(params)` but that's experimental/new.
-        // Let's assume simple access for now, or wrap access.
-        const unwrapParams = async () => {
-            const resolvedParams = await params;
-            setPageId(resolvedParams.id);
-        };
-        unwrapParams();
-    }, [params]);
-
+    const [saving, setSaving] = useState(false);
+    const [toast, setToast] = useState(null); // { message, type }
+    const [isPreview, setIsPreview] = useState(false);
 
     useEffect(() => {
         if (!pageId) return;
@@ -56,13 +33,7 @@ export default function EditorPage({ params }) {
         // Fetch Page Data
         const fetchPage = async () => {
             try {
-                const res = await axios.get(`${API_BASE_URL}/pages/${pageId}`); // This endpoint normally gets by slug but we can add get by ID
-                // Wait, our API: GET /api/pages/:slug. 
-                // We should probably allow fetching by ID or Slug. 
-                // Let's modify backend to support fetching by ID if the string looks like an ObjectId, or we assume route is [id].
-
-                // Assuming route is `/admin/editor/[id]`
-                // And we modify backend to getById.
+                const res = await axios.get(`${API_BASE_URL}/pages/id/${pageId}`);
                 const page = res.data.data;
 
                 if (page.gjsComponents && page.gjsComponents.length > 0) {
@@ -79,19 +50,12 @@ export default function EditorPage({ params }) {
             }
         };
 
-        // Actually, we need to modify backend API access or use the existing "slug" based one?
-        // Let's Modify Backend to support ID access on `GET /api/pages/:id` or specifically `GET /api/pages/id/:id`
-        // For now, let's assume we implement `GET /api/pages/id/:id` handling
-
         fetchPage();
 
         return () => {
             if (editor) editor.destroy();
         };
     }, [pageId]);
-
-    const [saving, setSaving] = useState(false);
-    const [toast, setToast] = useState(null); // { message, type }
 
     const showToast = (message, type = 'success') => {
         setToast({ message, type });
@@ -121,8 +85,6 @@ export default function EditorPage({ params }) {
             setSaving(false);
         }
     };
-
-    const [isPreview, setIsPreview] = useState(false);
 
     const togglePreview = () => {
         const editor = editorRef.current;

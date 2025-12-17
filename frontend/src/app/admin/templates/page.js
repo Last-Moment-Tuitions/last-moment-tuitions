@@ -1,6 +1,6 @@
 'use client';
 
-import ContentManager from '@/components/admin/ContentManager';
+import ContentManager from '@/features/admin/components/ContentManager';
 
 export default function AdminTemplates() {
     return <ContentManager view="template" />;

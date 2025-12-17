@@ -213,9 +213,7 @@ export default function LessonPage({ params }) {
                                 </div>
                             </div>
                             <div className="flex items-center gap-3">
-                                <Button variant="outline" size="sm" className="bg-gray-800 border-gray-700 text-white hover:bg-gray-700 hover:text-white hidden sm:flex">
-                                    <Share2 size={16} className="mr-2" /> Share
-                                </Button>
+
                                 <Button size="sm" className="hidden sm:flex bg-primary-600 hover:bg-primary-700 text-white border-0">
                                     Mark as Complete
                                 </Button>
@@ -301,9 +299,7 @@ export default function LessonPage({ params }) {
                                 <Button variant="outline" size="sm" className="gap-2">
                                     <ThumbsUp size={16} /> Like
                                 </Button>
-                                <Button variant="outline" size="sm" className="gap-2">
-                                    <Share2 size={16} /> Share
-                                </Button>
+
                                 <Button variant="ghost" size="icon">
                                     <MoreVertical size={18} />
                                 </Button>

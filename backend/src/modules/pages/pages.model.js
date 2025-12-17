@@ -23,7 +23,6 @@ const PageSchema = new mongoose.Schema({
         default: [],
     },
     // GrapesJS Storage
-    // GrapesJS Storage
     gjsAssets: { type: [mongoose.Schema.Types.Mixed], default: [] },
     type: { type: String, enum: ['page', 'template'], default: 'page' },
     createdAt: { type: Date, default: Date.now },
