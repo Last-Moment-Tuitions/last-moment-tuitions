@@ -59,7 +59,7 @@ const BlockRenderer = ({ block }) => {
 // Helper to fetch template content by ID
 async function getTemplateContent(id) {
     try {
-        const res = await fetch(`http://localhost:3001/api/pages/id/${id}`, { next: { revalidate: 60 } });
+        const res = await fetch(`${API_BASE_URL}/pages/id/${id}`, { next: { revalidate: 60 } });
         if (!res.ok) return null;
         const json = await res.json();
         return json.success ? json.data : null;
@@ -92,7 +92,7 @@ async function resolveTemplateRefs(html) {
     for (const { fullTag, templateId } of replacements) {
         try {
             // Fetch the template content
-            const res = await fetch(`http://localhost:3001/api/pages/id/${templateId}`, {
+            const res = await fetch(`${API_BASE_URL}/pages/id/${templateId}`, {
                 cache: 'no-store' // Updated cache strategy
             });
 
@@ -121,9 +121,9 @@ export default async function DynamicPage({ params }) {
     // Next.js 15: params is a promise
     const resolvedParams = await params;
     const slugArray = resolvedParams.slug;
-    const slug = slugArray.join('/');
+    // const slug = slugArray.join('/'); // Fixed: Do not join here, pass array to getPageData
 
-    const page = await getPageData(slug); // Function named getPageData, not getPage
+    const page = await getPageData(slugArray); // Function named getPageData, not getPage
 
     if (!page) {
         notFound();
