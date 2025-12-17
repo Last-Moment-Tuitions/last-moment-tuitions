@@ -24,10 +24,12 @@ export const AnimatedTestimonials = ({ testimonials, autoplay = false }) => {
         }
     }, [autoplay]);
 
-    const randomRotate = () => {
-        // Random rotation between -10 and 10 degrees for visual interest on change
-        return Math.floor(Math.random() * 21) - 10;
-    }
+    const getRotation = (index) => {
+        // Deterministic rotation between -10 and 10 degrees based on index
+        // Use a pseudo-random seed to make it look random but stay consistent across SSR/Client
+        const seed = (index + 1) * 7;
+        return (seed % 21) - 10;
+    };
 
     return (
         <div className="max-w-sm md:max-w-4xl mx-auto antialiased font-sans px-4 md:px-8 lg:px-12 py-20">
@@ -42,13 +44,13 @@ export const AnimatedTestimonials = ({ testimonials, autoplay = false }) => {
                                         opacity: 0,
                                         scale: 0.9,
                                         z: -100,
-                                        rotate: randomRotate(),
+                                        rotate: getRotation(index),
                                     }}
                                     animate={{
                                         opacity: isActive(index) ? 1 : 0.7,
                                         scale: isActive(index) ? 1 : 0.9,
                                         z: isActive(index) ? 0 : -100,
-                                        rotate: isActive(index) ? 0 : randomRotate(),
+                                        rotate: isActive(index) ? 0 : getRotation(index),
                                         zIndex: isActive(index) ? 30 : testimonials.length + 2 - index,
                                         y: isActive(index) ? [0, -80, 0] : 0,
                                     }}
@@ -56,7 +58,7 @@ export const AnimatedTestimonials = ({ testimonials, autoplay = false }) => {
                                         opacity: 0,
                                         scale: 0.9,
                                         z: 100,
-                                        rotate: randomRotate(),
+                                        rotate: getRotation(index),
                                     }}
                                     transition={{
                                         duration: 0.4,
