@@ -1,3 +1,4 @@
+'use client';
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -57,6 +58,7 @@ export function Header() {
                         ]}
                     />
 
+
                     <NavDropdown
                         label="Engineering"
                         active={isGroupActive(['/exams/jee', '/exams/gate'])}
@@ -67,6 +69,10 @@ export function Header() {
                             { label: 'BITSAT', href: '/exams/jee' }
                         ]}
                     />
+
+                    <NavLink href="/courses" active={isActive('/courses')}>
+                        Courses
+                    </NavLink>
 
 
                 </ul>

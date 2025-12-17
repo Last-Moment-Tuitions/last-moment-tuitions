@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lesson Notes</title>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px;
+            background-color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 30px;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        
+        /* A4 Page Simulation */
+        .page {
+            background-color: white;
+            width: 210mm; /* A4 Width */
+            min-height: 297mm; /* A4 Height */
+            padding: 25mm;
+            box-sizing: border-box;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            position: relative;
+        }
+
+        h1 {
+            color: #1D2026;
+            font-size: 32px;
+            border-bottom: 3px solid #FF6636;
+            padding-bottom: 20px;
+            margin-top: 0;
+        }
+        
+        h2 { 
+            color: #1D2026; 
+            margin-top: 40px; 
+            font-size: 24px;
+        }
+        
+        h3 {
+            color: #4E5566;
+            margin-top: 25px;
+            font-size: 18px;
+        }
+
+        p { 
+            margin-bottom: 18px; 
+            text-align: justify; 
+            color: #333;
+            font-size: 16px;
+            line-height: 1.7;
+        }
+
+        li {
+            margin-bottom: 10px;
+            font-size: 16px;
+            line-height: 1.7;
+        }
+
+        .highlight-box {
+            background-color: #FFF2EF;
+            border-left: 5px solid #FF6636;
+            padding: 20px;
+            margin: 25px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .code-block {
+            background-color: #1e1e1e;
+            color: #d4d4d4;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px;
+            margin: 20px 0;
+        }
+
+        .page-number {
+            position: absolute;
+            bottom: 20px;
+            right: 25px;
+            color: #888;
+            font-size: 12px;
+        }
+        
+        @media print {
+            body { display: none !important; }
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body oncontextmenu="return false;">
+
+    <!-- PAGE 1 -->
+    <div class="page">
+        <h1>Introduction to Webflow</h1>
+        
+        <p>Webflow is a powerful visual web development platform that bridges the gap between design and coding. Unlike traditional website builders that limit you to templates, Webflow gives you complete control over HTML, CSS, and JavaScript through a visual canvas.</p>
+        
+        <div class="highlight-box">
+            <strong>Core Philosophy:</strong> You are not just "drawing" a website; you are writing production-ready code visually. Every element you drag onto the canvas corresponds to a real HTML element.
+        </div>
+
+        <h2>1. The Designer Interface</h2>
+        <p>The Webflow Designer is your main workspace. It is divided into four main areas:</p>
+        <ul>
+            <li><strong>The Canvas:</strong> The central area where you build your site visually.</li>
+            <li><strong>The Add Panel (Left):</strong> Where you grab elements (Divs, Text, Images) and components.</li>
+            <li><strong>The Style Panel (Right):</strong> Where you apply CSS properties like layout, typography, and spacing.</li>
+            <li><strong>The Navigator (Left):</strong> A tree view of your page structure (DOM), essential for maintaining clean hierarchy.</li>
+        </ul>
+
+        <h2>2. HTML Tags & Semantics</h2>
+        <p>Webflow handles the `div` soup problem by allowing you to specify HTML tags for any container.</p>
+        <p>For example, you can change a generic `div` block to be a `section`, `nav`, `header`, or `footer` via the Settings panel. This is critical for <strong>SEO</strong> and <strong>Accessibility</strong>.</p>
+    
+        <div class="page-number">Page 1</div>
+    </div>
+
+    <!-- PAGE 2 -->
+    <div class="page">
+        <h1>The Box Model</h1>
+        
+        <p>Understanding the Box Model is the single most important concept in web design. In Webflow, every element follows these rules.</p>
+        
+        <h3>Components of the Box Model:</h3>
+        <ul>
+            <li><strong>Content:</strong> The actual text, image, or video inside the element.</li>
+            <li><strong>Padding:</strong> The space <em>inside</em> the border, between the content and the edge. Padding increases the click-able area of buttons.</li>
+            <li><strong>Border:</strong> The outline surrounding the padding.</li>
+            <li><strong>Margin:</strong> The space <em>outside</em> the border. Margins push other elements away.</li>
+        </ul>
+
+        <div class="code-block">
+/* CSS Representation */
+.element {
+    width: 200px;         /* Content Width */
+    padding: 20px;        /* Internal Spacing */
+    border: 1px solid;    /* Edge */
+    margin: 30px;         /* External Spacing */
+}
+        </div>
+
+        <h2>Classes & Reusability</h2>
+        <p>Never style the "Base" element unless you want the change to affect every instance of that element on the site. Instead, use <strong>Classes</strong>.</p>
+        
+        <p>A class is a reusable name you give to a style. If you create a class called `.primary-button` and apply it to five different links, changing the color on one will instantly update all five.</p>
+
+        <div class="page-number">Page 2</div>
+    </div>
+
+    <!-- PAGE 3 -->
+    <div class="page">
+        <h1>Modern Layouts: Flexbox & Grid</h1>
+        
+        <p>Gone are the days of using 'float' for layouts. Webflow provides first-class visual controls for Flexbox and CSS Grid.</p>
+
+        <h2>Flexbox (Flexible Box)</h2>
+        <p>Use Flexbox for <strong>1-dimensional</strong> layouts (a single row or a single column). It is perfect for:</p>
+        <ul>
+            <li>Aligning items in a Navbar (Logo - Links - Button).</li>
+            <li>Centering content inside a hero section.</li>
+            <li>Creating equal-height cards in a row.</li>
+        </ul>
+
+        <div class="highlight-box">
+            <strong>Pro Tip:</strong> To center anything perfectly in Webflow, set the parent to <code>Display: Flex</code>, <code>Align: Center</code>, and <code>Justify: Center</code>.
+        </div>
+
+        <h2>CSS Grid</h2>
+        <p>Use Grid for <strong>2-dimensional</strong> layouts (rows and columns simultaneously). It is best for:</p>
+        <ul>
+            <li>Photo galleries.</li>
+            <li>Complex bento-box style layouts.</li>
+            <li>Page structures that change drastically between Desktop and Mobile.</li>
+        </ul>
+
+        <div class="page-number">Page 3</div>
+    </div>
+
+    <!-- PAGE 4 -->
+     <div class="page">
+        <h1>Typography & Hierarchy</h1>
+        
+        <p>Good design is 90% typography. Webflow allows you to control every aspect of your type.</p>
+
+        <h3>Units Matter: PX vs REM</h3>
+        <p>By default, browsers set the root font size to 16px. It is best practice to use <strong>REM</strong> (Root EM) units instead of PX for font sizes.</p>
+        <p><em>Why?</em> If a user changes their browser's default font size for accessibility (e.g., they have poor vision), REM units will scale up automatically. PX units will stay fixed and might become unreadable.</p>
+
+        <h2>Responsive Design</h2>
+        <p>Webflow uses Cascading Breakpoints. Styles flow down from Desktop -> Tablet -> Mobile Landscape -> Mobile Portrait.</p>
+        
+        <p><strong>The Rule of Thumb:</strong> Always start designing on Desktop view. Changes made on Desktop cascade down. Changes made on Mobile stay on Mobile (overrides).</p>
+
+        <br><br>
+        <hr>
+        <p style="text-align: center; color: #888; margin-top: 50px;">End of Lesson Notes</p>
+
+        <div class="page-number">Page 4</div>
+    </div>
+
+    <!-- Security Script for Iframe Context -->
+    <div id="security-curtain" style="pointer-events:none; opacity:0; display:flex; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.98); z-index:9999; align-items:center; justify-content:center; flex-direction:column; text-align:center; transition:none;">
+        <div style="font-size:40px; margin-bottom:10px;">🔒</div>
+        <h3 style="margin:0; font-family: sans-serif; color:#333;">Security Mode Active</h3>
+        <p style="margin:5px 0 0 0; font-family: sans-serif; color:#666; font-size: 14px;">Screenshot disabled</p>
+    </div>
+
+    <script>
+        const curtain = document.getElementById('security-curtain');
+        let hideTimeout;
+        
+        // Instant Blackout on KeyDown (Direct DOM)
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'PrintScreen' || (e.metaKey && e.shiftKey)) {
+                clearTimeout(hideTimeout); // Cancel any pending hide
+                curtain.style.opacity = '1';
+                curtain.style.pointerEvents = 'auto'; // Block interaction
+            }
+        });
+
+        // Restore on KeyUp with 1s Delay
+        document.addEventListener('keyup', function(e) {
+            if (!e.metaKey && !e.shiftKey && e.key !== 'PrintScreen') {
+                hideTimeout = setTimeout(() => {
+                    curtain.style.opacity = '0';
+                    curtain.style.pointerEvents = 'none';
+                }, 1000);
+            }
+        });
+        
+        // Disable Context Menu
+        window.addEventListener('contextmenu', (e) => e.preventDefault());
+    </script>
+
+</body>
+</html>
