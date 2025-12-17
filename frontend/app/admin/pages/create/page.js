@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import axios from 'axios';
 import { Button } from '@/components/ui';
 import { Save, ArrowRight } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
-export default function CreatePage() {
+function CreatePageContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const [loading, setLoading] = useState(false);
@@ -182,5 +182,13 @@ export default function CreatePage() {
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function CreatePage() {
+    return (
+        <Suspense fallback={<div>Loading...</div>}>
+            <CreatePageContent />
+        </Suspense>
     );
 }
