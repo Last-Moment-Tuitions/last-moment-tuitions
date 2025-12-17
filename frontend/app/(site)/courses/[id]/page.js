@@ -8,6 +8,7 @@ import {
     Facebook, Twitter, Youtube, Instagram,
     FolderOpen, PlayCircle, File, BarChart, Captions, AlertCircle, Copy, Mail
 } from 'lucide-react';
+import Link from 'next/link';
 import { Button, Badge, Accordion, AccordionItem, AccordionTrigger, AccordionContent, CourseCard } from '@/components/ui';
 
 // --- MOCK DATA ---
@@ -75,9 +76,9 @@ const COURSE_DATA = {
                 lectures: 3,
                 duration: "07:31",
                 items: [
-                    { title: "What is Webflow?", type: "video", duration: "02:30", free: true },
-                    { title: "Sign up with Webflow", type: "file", size: "5 MB", free: false },
-                    { title: "Web Design Principles", type: "video", duration: "05:01", free: true }
+                    { id: 'l1', title: "What is Webflow?", type: "video", duration: "02:30", free: true },
+                    { id: 'l2', title: "Sign up with Webflow", type: "file", size: "5 MB", free: false },
+                    { id: 'l3', title: "Web Design Principles", type: "video", duration: "05:01", free: true }
                 ]
             },
             {
@@ -86,9 +87,9 @@ const COURSE_DATA = {
                 lectures: 5,
                 duration: "45:10",
                 items: [
-                    { title: "Interface Tour", type: "video", duration: "10:00", free: false },
-                    { title: "Frames & Shapes", type: "video", duration: "15:20", free: false },
-                    { title: "Pen Tool Masterclass", type: "video", duration: "20:00", free: false }
+                    { id: 'l4', title: "Interface Tour", type: "video", duration: "10:00", free: false },
+                    { id: 'l5', title: "Frames & Shapes", type: "video", duration: "15:20", free: false },
+                    { id: 'l6', title: "Pen Tool Masterclass", type: "video", duration: "20:00", free: false }
                 ]
             },
             {
@@ -97,9 +98,9 @@ const COURSE_DATA = {
                 lectures: 8,
                 duration: "55:00",
                 items: [
-                    { title: "Hero Section", type: "video", duration: "15:00", free: false },
-                    { title: "Grid Systems", type: "video", duration: "20:00", free: false },
-                    { title: "Asset Preparation", type: "file", size: "12 MB", free: false }
+                    { id: 'l7', title: "Hero Section", type: "video", duration: "15:00", free: false },
+                    { id: 'l8', title: "Grid Systems", type: "video", duration: "20:00", free: false },
+                    { id: 'l9', title: "Asset Preparation", type: "file", size: "12 MB", free: false }
                 ]
             }
         ]
@@ -326,16 +327,20 @@ export default function CourseDetailPage({ params }) {
                                             <AccordionContent className="p-0 border-t border-gray-100">
                                                 <div className="divide-y divide-gray-50">
                                                     {section.items.map((item, itemIdx) => (
-                                                        <div key={itemIdx} className="flex items-center justify-between px-6 py-3 hover:bg-gray-50 transition-colors">
+                                                        <Link
+                                                            key={itemIdx}
+                                                            href={`/courses/${data.id}/learn/lecture/${item.id}`}
+                                                            className="flex items-center justify-between px-6 py-3 hover:bg-gray-50 transition-colors group"
+                                                        >
                                                             <div className="flex items-center gap-3">
-                                                                {item.type === 'video' ? <PlayCircle size={16} className="text-gray-400" /> : <File size={16} className="text-gray-400" />}
-                                                                <span className="text-gray-700 text-sm font-medium">{item.title}</span>
+                                                                {item.type === 'video' ? <PlayCircle size={16} className="text-gray-400 group-hover:text-primary-600 transition-colors" /> : <File size={16} className="text-gray-400 group-hover:text-primary-600 transition-colors" />}
+                                                                <span className="text-gray-700 text-sm font-medium group-hover:text-primary-700 transition-colors">{item.title}</span>
                                                             </div>
                                                             <div className="flex items-center gap-4">
                                                                 {item.free && <span className="text-xs text-primary-600 bg-primary-50 px-2 py-0.5 rounded-full font-medium">Preview</span>}
                                                                 <span className="text-xs text-gray-500">{item.duration || item.size}</span>
                                                             </div>
-                                                        </div>
+                                                        </Link>
                                                     ))}
                                                 </div>
                                             </AccordionContent>
