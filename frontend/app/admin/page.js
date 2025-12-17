@@ -7,19 +7,15 @@ import {
     GraduationCap, Crown, Users, Award,
     BookOpen, Book, FileQuestion, FileCheck
 } from 'lucide-react';
+import API_BASE_URL from '@/lib/config';
 
 export default function AdminDashboard() {
-    // We'll keep the real data fetching to map to some of these cards
-    const [realStats, setRealStats] = useState({
-        totalPages: 0,
-        totalTemplates: 0,
-        totalViews: 0
-    });
+    const [stats, setStats] = useState({ totalPages: 0, totalTemplates: 0, totalViews: 0 });
 
     useEffect(() => {
         const fetchStats = async () => {
             try {
-                const res = await axios.get('/api/pages/stats');
+                const res = await axios.get(`${API_BASE_URL}/pages/stats`);
                 if (res.data.success) {
                     const allItems = res.data.data || [];
                     const pages = allItems.filter(p => (p.type || 'page') === 'page');

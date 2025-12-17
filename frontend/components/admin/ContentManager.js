@@ -28,10 +28,10 @@ export default function ContentManager({ view = 'page' }) {
         try {
             // Fetch Folders (only for current parent)
             const parentParam = currentFolder ? currentFolder : 'null';
-            const folderRes = await axios.get(`/api/folders?parent=${parentParam}&type=${view}`);
+            const folderRes = await axios.get(`${API_BASE_URL}/folders?parent=${parentParam}&type=${view}`);
 
             // Fetch Pages (only for current folder)
-            const pageRes = await axios.get(`/api/pages?folder=${parentParam}&type=${view}`);
+            const pageRes = await axios.get(`${API_BASE_URL}/pages?folder=${parentParam}&type=${view}`);
 
             if (folderRes.data.success) setFolders(folderRes.data.data || []);
             if (pageRes.data.success) setPages(pageRes.data.data || []);

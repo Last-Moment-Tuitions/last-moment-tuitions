@@ -1,15 +1,13 @@
 import grapesjs from 'grapesjs';
 import { gjsConfig } from './config';
+import API_BASE_URL from '@/lib/config';
 // Import 'grapesjs/dist/css/grapes.min.css'; // This normally needs to be imported in global CSS or locally
 
-export function initEditor(pageId) {
-    // Clone config to avoid mutating the original export
-    const config = { ...gjsConfig };
-
+export const setupEditor = (editor, pageId) => {
     // Set dynamic URLs for storage
     // Assuming the API is proxied via Next.js to http://localhost:3001
     // We need to use full URL for client-side fetch if proxy implies different port
-    const API_URL = '/api/api/pages';
+    const API_URL = `${API_BASE_URL}/pages`;
 
     // We are loading a specific page
     // Actually storageManager remote is tricky with specific IDs in URL properties

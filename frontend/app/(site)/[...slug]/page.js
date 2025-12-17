@@ -4,14 +4,13 @@ import { Button } from '@/components/ui';
 // This function fetches data from the backend
 async function getPageData(slugArray) {
     const slug = slugArray.join('/'); // e.g. "summer-bootcamp"
-    // Use NEXTAUTH_URL for production defaults, fallback to localhost:3000 for dev
-    // Vercel deployment needs absolute URL for server actions
-    const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+    // Use NEXT_PUBLIC_API_URL for production backend, fallback to localhost:3001/api 
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 
     try {
         // During build time (static generation), this might fail if DB isn't reachable
         // We should probably rely on dynamic fetching or standard simple fetch
-        const res = await fetch(`${baseUrl} /api/pages / slug / ${slug} `, {
+        const res = await fetch(`${baseUrl}/pages/slug/${slug}`, {
             cache: 'no-store', // ensures dynamic data
             next: { revalidate: 0 }
         });

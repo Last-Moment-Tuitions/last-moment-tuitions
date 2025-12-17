@@ -55,7 +55,7 @@ function CreatePageContent() {
         e.preventDefault();
         setLoading(true);
         try {
-            const res = await axios.post('/api/pages', formData);
+            const res = await axios.post(`${API_BASE_URL}/pages`, formData);
             if (res.data.success) {
                 const newPageId = res.data.data._id;
                 router.push(`/editor/${newPageId}`);

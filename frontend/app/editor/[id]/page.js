@@ -55,7 +55,7 @@ export default function EditorPage({ params }) {
         // Fetch Page Data
         const fetchPage = async () => {
             try {
-                const res = await axios.get(`/api/pages/${pageId}`); // This endpoint normally gets by slug but we can add get by ID
+                const res = await axios.get(`${API_BASE_URL}/pages/${pageId}`); // This endpoint normally gets by slug but we can add get by ID
                 // Wait, our API: GET /api/pages/:slug. 
                 // We should probably allow fetching by ID or Slug. 
                 // Let's modify backend to support fetching by ID if the string looks like an ObjectId, or we assume route is [id].
