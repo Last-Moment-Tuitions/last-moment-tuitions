@@ -55,7 +55,7 @@ export default function CreatePage() {
         e.preventDefault();
         setLoading(true);
         try {
-            const res = await axios.post('http://localhost:3001/api/pages', formData);
+            const res = await axios.post('/api/pages', formData);
             if (res.data.success) {
                 const newPageId = res.data.data._id;
                 router.push(`/editor/${newPageId}`);

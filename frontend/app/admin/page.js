@@ -19,7 +19,7 @@ export default function AdminDashboard() {
     useEffect(() => {
         const fetchStats = async () => {
             try {
-                const res = await axios.get('http://localhost:3001/api/pages');
+                const res = await axios.get('/api/pages/stats');
                 if (res.data.success) {
                     const allItems = res.data.data || [];
                     const pages = allItems.filter(p => (p.type || 'page') === 'page');

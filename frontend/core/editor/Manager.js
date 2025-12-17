@@ -9,7 +9,7 @@ export function initEditor(pageId) {
     // Set dynamic URLs for storage
     // Assuming the API is proxied via Next.js to http://localhost:3001
     // We need to use full URL for client-side fetch if proxy implies different port
-    const API_URL = 'http://localhost:3001/api/pages';
+    const API_URL = '/api/api/pages';
 
     // We are loading a specific page
     // Actually storageManager remote is tricky with specific IDs in URL properties
