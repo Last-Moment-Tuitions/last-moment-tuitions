@@ -22,7 +22,7 @@ export default function AdminDashboard() {
                     const templates = allItems.filter(p => p.type === 'template');
                     const views = pages.reduce((acc, curr) => acc + (curr.viewCount || 0), 0);
 
-                    setRealStats({
+                    setStats({
                         totalPages: pages.length,
                         totalTemplates: templates.length,
                         totalViews: views
@@ -42,8 +42,8 @@ export default function AdminDashboard() {
         { title: 'Premium Students', value: '0', sub: '0%', icon: Crown, color: 'bg-orange-50 text-orange-600' },
         { title: 'Total Users', value: '2', sub: '100%', icon: Users, color: 'bg-blue-50 text-blue-600' },
         { title: 'Total Roles', value: '1', sub: '100%', icon: Award, color: 'bg-purple-50 text-purple-600' },
-        { title: 'Total Subjects', value: realStats.totalPages.toString(), sub: 'From LMS', icon: BookOpen, color: 'bg-indigo-50 text-indigo-600' }, // Mapped to Real Pages
-        { title: 'Total Chapters', value: realStats.totalTemplates.toString(), sub: 'From LMS', icon: Book, color: 'bg-pink-50 text-pink-600' }, // Mapped to Real Templates
+        { title: 'Total Subjects', value: stats.totalPages.toString(), sub: 'From LMS', icon: BookOpen, color: 'bg-indigo-50 text-indigo-600' }, // Mapped to Real Pages
+        { title: 'Total Chapters', value: stats.totalTemplates.toString(), sub: 'From LMS', icon: Book, color: 'bg-pink-50 text-pink-600' }, // Mapped to Real Templates
         { title: 'Total Questions', value: '62', sub: '0%', icon: FileQuestion, color: 'bg-cyan-50 text-cyan-600' },
         { title: 'Total Tests', value: '4', sub: '0%', icon: FileCheck, color: 'bg-rose-50 text-rose-600' },
     ];
