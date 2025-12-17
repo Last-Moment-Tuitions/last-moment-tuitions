@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import axios from 'axios';
+import API_BASE_URL from '@/lib/config';
 import Link from 'next/link';
 import { Button } from '@/components/ui';
 import { Plus, Edit, Trash, ExternalLink, Search, Check, Folder, ChevronRight, Home, FolderPlus } from 'lucide-react';

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import axios from 'axios';
+import API_BASE_URL from '@/lib/config';
 import { initEditor } from '@/core/editor/Manager';
 import { loadBlocks } from '@/core/blocks/basic';
 import { loadAdvancedBlocks } from '@/core/blocks/advanced';

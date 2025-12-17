@@ -2,6 +2,7 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import axios from 'axios';
+import API_BASE_URL from '@/lib/config';
 import { Button } from '@/components/ui';
 import { Save, ArrowRight } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
