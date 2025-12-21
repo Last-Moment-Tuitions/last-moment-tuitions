@@ -17,6 +17,8 @@ export const AnimatedTestimonials = ({ testimonials, autoplay = false }) => {
         return index === active;
     };
 
+    const [randomRotations, setRandomRotations] = useState([]);
+
     useEffect(() => {
         if (autoplay) {
             const interval = setInterval(handleNext, 5000);
@@ -24,10 +26,11 @@ export const AnimatedTestimonials = ({ testimonials, autoplay = false }) => {
         }
     }, [autoplay]);
 
-    const randomRotate = () => {
-        // Random rotation between -10 and 10 degrees for visual interest on change
-        return Math.floor(Math.random() * 21) - 10;
-    }
+    useEffect(() => {
+        // Generate random rotations on client-side only to match server
+        const rotations = testimonials.map(() => Math.floor(Math.random() * 21) - 10);
+        setRandomRotations(rotations);
+    }, [testimonials]);
 
     return (
         <div className="max-w-sm md:max-w-4xl mx-auto antialiased font-sans px-4 md:px-8 lg:px-12 py-20">
@@ -42,13 +45,13 @@ export const AnimatedTestimonials = ({ testimonials, autoplay = false }) => {
                                         opacity: 0,
                                         scale: 0.9,
                                         z: -100,
-                                        rotate: randomRotate(),
+                                        rotate: randomRotations[index] || 0,
                                     }}
                                     animate={{
                                         opacity: isActive(index) ? 1 : 0.7,
                                         scale: isActive(index) ? 1 : 0.9,
                                         z: isActive(index) ? 0 : -100,
-                                        rotate: isActive(index) ? 0 : randomRotate(),
+                                        rotate: isActive(index) ? 0 : randomRotations[index] || 0,
                                         zIndex: isActive(index) ? 30 : testimonials.length + 2 - index,
                                         y: isActive(index) ? [0, -80, 0] : 0,
                                     }}
@@ -56,7 +59,7 @@ export const AnimatedTestimonials = ({ testimonials, autoplay = false }) => {
                                         opacity: 0,
                                         scale: 0.9,
                                         z: 100,
-                                        rotate: randomRotate(),
+                                        rotate: randomRotations[index] || 0,
                                     }}
                                     transition={{
                                         duration: 0.4,

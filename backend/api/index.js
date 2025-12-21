@@ -11,7 +11,7 @@ app.get('/', (req, res) => {
 
 // For local development
 if (require.main === module) {
-  const port = process.env.PORT || 3001;
+  const port = process.env.PORT || 3005;
   app.listen(port, () => {
     console.log(`Backend listening on port ${port}`);
   });

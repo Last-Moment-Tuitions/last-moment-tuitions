@@ -1,135 +1,136 @@
-import React from 'react';
+'use client';
+
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, BookOpen, Stethoscope, Cog, BriefcaseBusiness, GraduationCap } from 'lucide-react';
+import { Menu, X, ChevronDown, User, Search } from 'lucide-react';
 
-import { ChevronDown, Search } from 'lucide-react';
-
-export function Header() {
+export const Header = () => {
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [user, setUser] = useState(null);
     const pathname = usePathname();
 
-    const isActive = (path) => pathname === path;
-    const isGroupActive = (paths) => paths.some(path => pathname?.startsWith(path));
+    useEffect(() => {
+        const checkUser = () => {
+            const storedUser = localStorage.getItem('user');
+            if (storedUser) {
+                try {
+                    setUser(JSON.parse(storedUser));
+                } catch (e) {
+                    setUser(null);
+                }
+            } else {
+                setUser(null);
+            }
+        };
+
+        checkUser();
+
+        // Listen for storage changes (handles logouts/logins in other tabs or same tab manual triggers)
+        window.addEventListener('storage', checkUser);
+        window.addEventListener('authChange', checkUser);
+
+        return () => {
+            window.removeEventListener('storage', checkUser);
+            window.removeEventListener('authChange', checkUser);
+        };
+    }, [pathname]);
+
+    const navItems = [
+        { label: 'Home', href: '/' },
+        {
+            label: 'Government',
+            href: '/government',
+            children: [
+                { label: 'SSC', href: '/government/ssc' },
+                { label: 'Railways', href: '/government/railways' }
+            ]
+        },
+        {
+            label: 'Engineering',
+            href: '/engineering',
+            children: [
+                { label: 'Computer', href: '/engineering/computer' },
+                { label: 'Mechanical', href: '/engineering/mechanical' }
+            ]
+        },
+    ];
 
     return (
-        <header className="sticky top-0 z-50 bg-white border-b border-gray-100 shadow-sm font-sans">
-            <div className="container mx-auto px-4 h-20 flex items-center justify-between gap-4">
-
-                {/* Left Section: Logo & Search */}
-                <div className="flex items-center gap-4 xl:gap-8">
-                    {/* Logo & Branding */}
-                    <Link href="/" className="flex-shrink-0 flex items-center gap-3 group">
-                        <div className="w-10 h-10 rounded-full overflow-hidden border border-gray-100 shadow-sm group-hover:shadow-md transition-all">
-                            <img
-                                src="https://play-lh.googleusercontent.com/APeEZa4FLR80Q2huR4dQmpElLaBz_jw7kkkpFF38Kjm6Y_ehZjg3XIqH_8Vvo0WZBg"
-                                alt="Last Moment Tuitions Logo"
-                                className="w-full h-full object-cover"
-                            />
+        <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="flex justify-between items-center h-20">
+                    {/* Logo - Updated to match image */}
+                    <Link href="/" className="flex items-center gap-2 group">
+                        <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center border border-gray-100 shadow-sm group-hover:shadow-md transition-all">
+                            <img src="/logo.png" alt="LMT" className="w-8 h-8 object-contain" />
                         </div>
-                        <h1 className="text-xl md:text-2xl font-extrabold text-gray-900 tracking-tight whitespace-nowrap">
-                            Last Moment Tuitions
-                        </h1>
+                        <span className="font-bold text-xl text-gray-900 tracking-tight">Last Moment Tuitions</span>
                     </Link>
 
-                    {/* Search Bar - Visible on Desktop */}
-                    <div className="hidden xl:block relative w-64 2xl:w-80">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                        <input
-                            type="text"
-                            placeholder="What do you want to learn..."
-                            className="w-full pl-10 pr-4 py-2 rounded-full border border-gray-200 bg-gray-50 focus:bg-white focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all text-sm"
-                        />
-                    </div>
-                </div>
+                    {/* Desktop Navigation */}
+                    <nav className="hidden md:flex items-center gap-8">
+                        {/* Search Bar - Based on image */}
+                        <div className="relative">
+                            <input
+                                type="text"
+                                placeholder="What do you want to learn..."
+                                className="w-64 pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-primary-100 transition-all"
+                            />
+                            <svg className="w-4 h-4 text-gray-400 absolute left-3.5 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        </div>
 
-                {/* Center Section: Navigation */}
-                <ul className="hidden lg:flex items-center gap-1 xl:gap-2">
-                    <NavLink href="/" active={isActive('/')}>
-                        Home
-                    </NavLink>
+                        {navItems.map((item) => (
+                            <div key={item.label} className="relative group">
+                                <Link
+                                    href={item.href}
+                                    className="flex items-center gap-1 text-sm font-medium text-gray-600 hover:text-primary-600 transition-colors py-2"
+                                >
+                                    {item.label}
+                                    {item.children && <ChevronDown size={14} className="group-hover:rotate-180 transition-transform duration-200" />}
+                                </Link>
 
-                    <NavDropdown
-                        label="Government"
-                        active={isGroupActive(['/government'])}
-                        items={[
-                            { label: 'SEBI Grade A IT Officer', href: '/government/sebi-grade-a-it' },
-                            { label: 'IBPS SO', href: '/government/ibps-so' }
-                        ]}
-                    />
+                                {item.children && (
+                                    <div className="absolute top-full left-0 w-48 bg-white rounded-xl shadow-lg border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transform group-hover:translate-y-0 translate-y-2 transition-all duration-200 p-2">
+                                        {item.children.map((child) => (
+                                            <Link
+                                                key={child.label}
+                                                href={child.href}
+                                                className="block px-4 py-2 text-sm text-gray-600 hover:text-primary-600 hover:bg-gray-50 rounded-lg transition-colors"
+                                            >
+                                                {child.label}
+                                            </Link>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        ))}
 
-                    <NavDropdown
-                        label="Engineering"
-                        active={isGroupActive(['/exams/jee', '/exams/gate'])}
-                        items={[
-                            { label: 'JEE Mains', href: '/exams/jee' },
-                            { label: 'JEE Advanced', href: '/exams/jee' },
-                            { label: 'GATE', href: '/exams/gate' },
-                            { label: 'BITSAT', href: '/exams/jee' }
-                        ]}
-                    />
-
-
-                </ul>
-
-                {/* Right Section: Auth Buttons */}
-                <div className="hidden md:flex items-center gap-3 xl:gap-4">
-                    <Link href="/login" className="text-gray-700 font-semibold hover:text-primary-600 transition-colors text-sm whitespace-nowrap">Sign in</Link>
-                    <Button variant="primary" className="rounded-full px-5 py-2 text-sm font-bold shadow-lg shadow-primary-500/20 whitespace-nowrap">Create Account</Button>
+                        <div className="pl-4 border-l border-gray-200 flex items-center gap-4">
+                            {user ? (
+                                <Link href="/profile" className="flex items-center gap-2 group">
+                                    <div className="w-10 h-10 bg-primary-50 rounded-full flex items-center justify-center text-primary-600 font-bold border border-primary-100 group-hover:bg-primary-100 transition-colors">
+                                        <User size={20} />
+                                    </div>
+                                </Link>
+                            ) : (
+                                <>
+                                    <Link href="/login" className="text-sm font-medium text-gray-600 hover:text-primary-600 transition-colors">
+                                        Sign in
+                                    </Link>
+                                    <Link
+                                        href="/register"
+                                        className="px-5 py-2.5 bg-gray-900 text-white text-sm font-medium rounded-full hover:bg-gray-800 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200"
+                                    >
+                                        Create Account
+                                    </Link>
+                                </>
+                            )}
+                        </div>
+                    </nav>
                 </div>
             </div>
         </header>
-    );
-}
-
-function NavLink({ href, active, children }) {
-    return (
-        <li>
-            <Link
-                href={href}
-                className={`
-          flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 whitespace-nowrap
-          ${active
-                        ? 'text-primary-600 bg-gradient-to-br from-primary-50 to-accent-50'
-                        : 'text-gray-600 hover:text-primary-600 hover:bg-gray-100'
-                    }
-        `}
-            >
-                {children}
-            </Link>
-        </li>
-    );
-}
-
-function NavDropdown({ label, active, items }) {
-    return (
-        <li className="relative group">
-            <button
-                className={`
-                    flex items-center gap-1 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 whitespace-nowrap
-                    ${active
-                        ? 'text-primary-600 bg-gradient-to-br from-primary-50 to-accent-50'
-                        : 'text-gray-600 hover:text-primary-600 hover:bg-gray-100'
-                    }
-                `}
-            >
-                {label}
-                <ChevronDown size={14} className="group-hover:rotate-180 transition-transform duration-200" />
-            </button>
-
-            <div className="absolute left-0 top-full pt-1 w-56 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 transform group-hover:translate-y-0 translate-y-1">
-                <div className="bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden p-1">
-                    {items.map((item, index) => (
-                        <Link
-                            key={index}
-                            href={item.href}
-                            className="block px-4 py-3 text-sm text-gray-700 hover:bg-primary-50 hover:text-primary-700 rounded-lg transition-colors whitespace-nowrap"
-                        >
-                            {item.label}
-                        </Link>
-                    ))}
-                </div>
-            </div>
-        </li>
     );
 }
 

@@ -204,3 +204,19 @@ html {
   color: var(--color-primary-900);
 }
 
+/* Hide native browser password reveal and clear buttons */
+input::-ms-reveal,
+input::-ms-clear {
+  display: none;
+}
+
+/* For some versions of Chrome/Safari if they add similar features */
+::-webkit-contacts-auto-fill-button,
+::-webkit-credentials-auto-fill-button {
+  visibility: hidden;
+  display: none !important;
+  pointer-events: none;
+  position: absolute;
+  right: 0;
+}
+
