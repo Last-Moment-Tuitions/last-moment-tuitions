@@ -6,6 +6,7 @@ import { Button, Input, Label, GoogleButton } from '@/components/ui';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import API_BASE_URL from '@/lib/config';
 
 export default function SignInPage() {
     const [formData, setFormData] = useState({
@@ -24,7 +25,7 @@ export default function SignInPage() {
         e.preventDefault();
         setLoading(true);
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_API}/auth/login`, {
+            const res = await fetch(`${API_BASE_URL}/auth/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(formData),

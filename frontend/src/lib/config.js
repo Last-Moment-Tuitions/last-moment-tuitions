@@ -1,4 +1,4 @@
-let url = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+let url = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3005/api';
 if (!url.startsWith('http')) {
     url = `https://${url}`;
 }

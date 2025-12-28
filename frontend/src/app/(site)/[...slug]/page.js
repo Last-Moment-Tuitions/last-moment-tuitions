@@ -1,15 +1,15 @@
 import { notFound } from 'next/navigation';
 import { Button } from '@/components/ui';
 
+import API_BASE_URL from '@/lib/config';
+
 // This function fetches data from the backend
 async function getPageData(slugArray) {
     const slug = slugArray.join('/'); // e.g. "summer-bootcamp"
-    // Use NEXT_PUBLIC_API_URL for production backend, fallback to localhost:3001/api 
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3005/api';
 
     try {
         // Use the new slug-specific endpoint
-        const res = await fetch(`${baseUrl}/pages/slug/${slugString}`, {
+        const res = await fetch(`${API_BASE_URL}/pages/slug/${slug}`, {
             // Revalidate every 60 seconds (ISR)
             next: { revalidate: 60 }
         });

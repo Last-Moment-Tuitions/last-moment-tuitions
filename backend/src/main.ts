@@ -14,6 +14,9 @@ async function bootstrap() {
     // Security Headers
     app.use(helmet());
 
+    // Global Prefix
+    app.setGlobalPrefix('api');
+
     // CORS
     app.enableCors({
         origin: [configService.get<string>('FRONTEND_URL')],

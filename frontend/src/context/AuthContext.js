@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import API_BASE_URL from '@/lib/config';
 
 const AuthContext = createContext();
 
@@ -23,7 +24,7 @@ export function AuthProvider({ children }) {
             const sessionId = getSessionId();
             const headers = sessionId ? { 'x-session-id': sessionId } : {};
 
-            const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_API}/auth/me`, { headers });
+            const res = await fetch(`${API_BASE_URL}/auth/me`, { headers });
             if (res.ok) {
                 const userData = await res.json();
                 setUser(userData);
@@ -47,7 +48,7 @@ export function AuthProvider({ children }) {
         try {
             const sessionId = getSessionId();
             const headers = sessionId ? { 'x-session-id': sessionId } : {};
-            await fetch(`${process.env.NEXT_PUBLIC_BACKEND_API}/auth/logout`, {
+            await fetch(`${API_BASE_URL}/auth/logout`, {
                 method: 'POST',
                 headers
             });

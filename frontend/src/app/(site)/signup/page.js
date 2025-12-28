@@ -5,6 +5,7 @@ import { Mail, Lock, User, Phone } from 'lucide-react';
 import { Button, Input, Label, GoogleButton } from '@/components/ui';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import API_BASE_URL from '@/lib/config';
 
 export default function SignUpPage() {
     const [formData, setFormData] = useState({
@@ -25,7 +26,7 @@ export default function SignUpPage() {
         e.preventDefault();
         setLoading(true);
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_API}/auth/signup`, {
+            const res = await fetch(`${API_BASE_URL}/auth/signup`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
