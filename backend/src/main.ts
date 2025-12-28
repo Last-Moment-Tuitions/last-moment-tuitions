@@ -26,7 +26,7 @@ async function bootstrap() {
     // CORS
     app.enableCors({
         origin: [configService.get<string>('FRONTEND_URL')],
-        methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+        methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
         credentials: true,
     });
 
