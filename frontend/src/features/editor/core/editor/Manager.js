@@ -8,7 +8,7 @@ export const initEditor = (pageId) => {
     const config = { ...gjsConfig };
 
     // Set dynamic URLs for storage
-    // Assuming the API is proxied via Next.js to http://localhost:3001
+    // Assuming the API is proxied via Next.js to http://localhost:3005
     // We need to use full URL for client-side fetch if proxy implies different port
     const API_URL = `${API_BASE_URL}/pages`;
 

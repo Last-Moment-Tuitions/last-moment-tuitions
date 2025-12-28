@@ -5,14 +5,13 @@ import { Button } from '@/components/ui';
 async function getPageData(slugArray) {
     const slug = slugArray.join('/'); // e.g. "summer-bootcamp"
     // Use NEXT_PUBLIC_API_URL for production backend, fallback to localhost:3001/api 
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3005/api';
 
     try {
-        // During build time (static generation), this might fail if DB isn't reachable
-        // We should probably rely on dynamic fetching or standard simple fetch
-        const res = await fetch(`${baseUrl}/pages/slug/${slug}`, {
-            cache: 'no-store', // ensures dynamic data
-            next: { revalidate: 0 }
+        // Use the new slug-specific endpoint
+        const res = await fetch(`${baseUrl}/pages/slug/${slugString}`, {
+            // Revalidate every 60 seconds (ISR)
+            next: { revalidate: 60 }
         });
 
         if (!res.ok) return null;

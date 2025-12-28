@@ -5,7 +5,7 @@
         "backend"
     ],
     "scripts": {
-        "dev": "concurrently \"npm run dev --workspace=frontend\" \"npm run dev --workspace=backend\"",
+        "dev": "npm run dev --workspace=frontend",
         "build": "echo 'Vercel will build subdirectories'"
     },
     "devDependencies": {

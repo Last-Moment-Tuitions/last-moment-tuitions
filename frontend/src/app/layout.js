@@ -1,4 +1,5 @@
 import './globals.css';
+import { AuthProvider } from '@/context/AuthContext';
 
 export const metadata = {
   title: 'Prepfocus By Last Moment Tuitions',
@@ -13,7 +14,9 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body suppressHydrationWarning>
-        {children}
+        <AuthProvider>
+          {children}
+        </AuthProvider>
       </body>
     </html>
   );

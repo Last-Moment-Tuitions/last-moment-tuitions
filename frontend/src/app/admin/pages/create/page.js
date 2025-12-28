@@ -1,8 +1,7 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
-import axios from 'axios';
-import API_BASE_URL from '@/lib/config';
+import { useState, useEffect } from 'react';
+import { adminService } from '@/services/adminService';
 import { Button } from '@/components/ui';
 import { Save, ArrowRight } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -14,10 +13,9 @@ function CreatePageContent() {
     const [formData, setFormData] = useState({
         title: '',
         slug: '',
-        description: '',
+        metaDescription: '',
         type: 'page', // Default
         folder: null, // Default
-        content: []
     });
 
     useEffect(() => {
@@ -56,10 +54,22 @@ function CreatePageContent() {
         e.preventDefault();
         setLoading(true);
         try {
-            const res = await axios.post(`${API_BASE_URL}/pages`, formData);
-            if (res.data.success) {
-                const newPageId = res.data.data._id;
+            const payload = { ...formData };
+            if (!payload.folder) {
+                delete payload.folder;
+            }
+            const data = await adminService.createPage(payload);
+            if (data && data._id) {
+                const newPageId = data._id;
                 router.push(`/editor/${newPageId}`);
+            } else if (data && data.data && data.data._id) {
+                // Handle case where service returns full response structure
+                // But adminService returns response.data directly.
+                // My backend returns the created object directly for create(), 
+                // but let's check PageController create().
+                // It returns return this.pagesService.create(createPageDto); which returns the document.
+                // So data._id should exist.
+                router.push(`/editor/${data._id}`);
             }
         } catch (error) {
             console.error(error);
@@ -153,8 +163,8 @@ function CreatePageContent() {
                         <div className="space-y-2">
                             <label className="block text-sm font-semibold text-gray-900">Description</label>
                             <textarea
-                                value={formData.description}
-                                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                                value={formData.metaDescription}
+                                onChange={(e) => setFormData({ ...formData, metaDescription: e.target.value })}
                                 className="block w-full px-4 py-3 text-sm border border-gray-200 rounded-lg focus:border-black focus:ring-1 focus:ring-black transition-all shadow-sm min-h-[100px] resize-y placeholder:text-gray-400"
                                 placeholder="Optional description..."
                                 disabled={loading}

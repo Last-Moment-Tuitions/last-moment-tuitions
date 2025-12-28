@@ -17,7 +17,7 @@ The project is split into two distinct workspaces:
 2.  **`backend/`** (Express.js)
     *   **API Layer**: Handles all logic (`/api/*`), Database connections, and CRUD operations.
     *   **Database**: MongoDB (Page content, User data, Analytics).
-    *   **Port**: `3001` (Proxied by Next.js in dev)
+    *   **Port**: `3005` (Proxied by Next.js in dev)
 
 ---
 

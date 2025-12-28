@@ -76,7 +76,7 @@ export function Editor({ pageId }) {
         };
 
         try {
-            await axios.put(`/api/pages/${pageId}`, data);
+            await axios.put(`${API_BASE_URL}/pages/${pageId}`, data);
             showToast('Page saved successfully!', 'success');
         } catch (error) {
             console.error(error);

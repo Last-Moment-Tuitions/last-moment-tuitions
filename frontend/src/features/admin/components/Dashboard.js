@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import axios from 'axios';
+import { adminService } from '@/services/adminService';
 import {
     Search, Bell, User,
     GraduationCap, Crown, Users, Award,
@@ -15,26 +15,21 @@ export function Dashboard() {
     useEffect(() => {
         const fetchStats = async () => {
             try {
-                const res = await axios.get(`${API_BASE_URL}/pages`); // Reverted to /pages because stats endpoint was not in my backend refactor unless I missed it. 
-                // Wait, original file had `${API_BASE_URL}/pages/stats`.
-                // My backend refactor handles `GET /pages`.
-                // I did NOT implment `GET /pages/stats` in my refactor.
-                // I must fix the backend to support stats or calculate it here.
-                // `GET /pages` returns all pages (lightweight).
-                // So I can just fetch all and calculate.
+                // Use adminService directly
+                const pages = await adminService.getPages();
+                // Filter logic remains the same, assuming api returns array of pages
+                // If api returns { success: true, data: [...] }, adjust accordingly.
+                // The backend implementation returns the array directly.
 
-                if (res.data.success) {
-                    const allItems = res.data.data || [];
-                    const pages = allItems.filter(p => (p.type || 'page') === 'page');
-                    const templates = allItems.filter(p => p.type === 'template');
-                    const views = pages.reduce((acc, curr) => acc + (curr.viewCount || 0), 0);
+                const realPages = pages.filter(p => (p.type || 'page') === 'page');
+                const templates = pages.filter(p => p.type === 'template');
+                const views = realPages.reduce((acc, curr) => acc + (curr.viewCount || 0), 0);
 
-                    setStats({
-                        totalPages: pages.length,
-                        totalTemplates: templates.length,
-                        totalViews: views
-                    });
-                }
+                setRealStats({
+                    totalPages: realPages.length,
+                    totalTemplates: templates.length,
+                    totalViews: views
+                });
             } catch (error) {
                 console.error('Failed to fetch stats', error);
             }
