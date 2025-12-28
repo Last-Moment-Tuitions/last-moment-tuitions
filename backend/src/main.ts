@@ -1,5 +1,7 @@
 
 import { NestFactory } from '@nestjs/core';
+import { NestExpressApplication, ExpressAdapter } from '@nestjs/platform-express';
+import { functionalLogger } from './common/middleware/logger.middleware';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { HttpAdapterHost } from '@nestjs/core';
@@ -8,15 +10,19 @@ import { ConfigService } from '@nestjs/config';
 import { AllExceptionsFilter } from './common/filters/http-exception.filter';
 
 async function bootstrap() {
-    const app = await NestFactory.create(AppModule);
+    const app = await NestFactory.create<NestExpressApplication>(AppModule, new ExpressAdapter());
     const configService = app.get(ConfigService);
 
     // Security Headers
     app.use(helmet());
 
+    app.use(functionalLogger);
+
     // Global Prefix
     app.setGlobalPrefix('api');
 
+
+    console.log(configService.get<string>('FRONTEND_URL'), 'frontend url');
     // CORS
     app.enableCors({
         origin: [configService.get<string>('FRONTEND_URL')],
