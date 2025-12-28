@@ -3,11 +3,13 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Home, BookOpen, Stethoscope, Cog, BriefcaseBusiness, GraduationCap } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
 
 import { ChevronDown, Search } from 'lucide-react';
 
 export function Header() {
     const pathname = usePathname();
+    const { user, logout } = useAuth();
 
     const isActive = (path) => pathname === path;
     const isGroupActive = (paths) => paths.some(path => pathname?.startsWith(path));
@@ -79,8 +81,25 @@ export function Header() {
 
                 {/* Right Section: Auth Buttons */}
                 <div className="hidden md:flex items-center gap-3 xl:gap-4">
-                    <Link href="/login" className="text-gray-700 font-semibold hover:text-primary-600 transition-colors text-sm whitespace-nowrap">Sign in</Link>
-                    <Button variant="primary" className="rounded-full px-5 py-2 text-sm font-bold shadow-lg shadow-primary-500/20 whitespace-nowrap">Create Account</Button>
+                    {user ? (
+                        <div className="flex items-center gap-4">
+                            <span className="text-sm font-semibold text-gray-700">
+                                Hello, {user.firstName || 'User'}
+                            </span>
+                            <Button
+                                onClick={logout}
+                                variant="outline"
+                                className="rounded-full px-5 py-2 text-sm font-bold shadow-sm whitespace-nowrap"
+                            >
+                                Logout
+                            </Button>
+                        </div>
+                    ) : (
+                        <>
+                            <Link href="/signin" className="text-gray-700 font-semibold hover:text-primary-600 transition-colors text-sm whitespace-nowrap">Sign in</Link>
+                            <Button href="/signup" variant="primary" className="rounded-full px-5 py-2 text-sm font-bold shadow-lg shadow-primary-500/20 whitespace-nowrap">Create Account</Button>
+                        </>
+                    )}
                 </div>
             </div>
         </header>

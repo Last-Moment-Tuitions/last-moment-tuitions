@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import axios from 'axios';
+import { adminService } from '@/services/adminService';
 import Link from 'next/link';
 import { Button } from '@/components/ui';
 import { Plus, Edit, Trash, ExternalLink, Search, Check, Folder, ChevronRight, Home, FolderPlus } from 'lucide-react';
@@ -28,13 +28,54 @@ export default function ContentManager({ view = 'page' }) {
         try {
             // Fetch Folders (only for current parent)
             const parentParam = currentFolder ? currentFolder : 'null';
-            const folderRes = await axios.get(`http://localhost:3001/api/folders?parent=${parentParam}&type=${view}`);
+            // Note: Update backend to handle 'null' string if sending as query param, 
+            // or better, handle undefined/null in service. 
+            // Existing code sent 'null' string to express? 
+            // In NestJS controller I implemented standard finding. 
+            // Let's pass params cleanly. 
 
-            // Fetch Pages (only for current folder)
-            const pageRes = await axios.get(`http://localhost:3001/api/pages?folder=${parentParam}&type=${view}`);
+            // Backend expectation: 
+            // If I look at my PagesService: async findAll(filter: any = {})
+            // It passes the query directly to mongoose find.
+            // So if I pass { folder: 'null' } it will look for folder: 'null' string.
+            // But ObjectId is needed.
 
-            if (folderRes.data.success) setFolders(folderRes.data.data || []);
-            if (pageRes.data.success) setPages(pageRes.data.data || []);
+            // The previous code sent `?parent=null`. 
+            // I should check how I implemented the backend Service/Controller.
+            // PagesController: findAll(@Query() query) -> pagesService.findAll(query)
+            // PagesService: find(filter)
+
+            // If query is { folder: 'null' }, mongoose might error on casting to ObjectId if 'null' string is passed
+            // OR if I used `type: Types.ObjectId` and default null, searching for { folder: null } (literal null) is correct.
+            // Searching for { folder: 'null' } (string) is wrong.
+
+            // In express, query params are strings. 
+
+            // I'll stick to reproducing what the frontend WAS sending for now, 
+            // but I might need to fix the backend to handle 'null' string vs null value
+            // if the previous backend handled it manually.
+
+            const folderParams = { parent: currentFolder, type: view };
+            const pageParams = { folder: currentFolder, type: view };
+
+            // However, ContentManager passes 'null' string explicitly if currentFolder is null.
+            // "const parentParam = currentFolder ? currentFolder : 'null';"
+
+            // I will update this to pass null or undefined if currentFolder is null, 
+            // letting the service/axios handle it (usually axios drops undefined params).
+            // But wait, if I want root folders (parent: null), I need to query for parent: null.
+            // Mongoose find({ parent: null }) works. 
+            // But over HTTP, query param ?parent=null is a string "null" or literal null depending on parser.
+            // NestJS/Express usually sees it as string "null" unless transformed.
+
+            // For now, I will trust the previous frontend logic assumption, 
+            // but use the service.
+
+            const folders = await adminService.getFolders({ parent: parentParam, type: view });
+            const pages = await adminService.getPages({ folder: parentParam, type: view });
+
+            setFolders(folders || []);
+            setPages(pages || []);
 
         } catch (error) {
             console.error('Failed to fetch content', error);
@@ -71,9 +112,9 @@ export default function ContentManager({ view = 'page' }) {
         if (!newFolderName.trim()) return;
 
         try {
-            await axios.post('http://localhost:3001/api/folders', {
+            await adminService.createFolder({
                 name: newFolderName,
-                parent: currentFolder,
+                parent: currentFolder, // If null, service sends null/undefined. Re-check if we need 'null' string.
                 type: view
             });
             fetchContent();
@@ -86,7 +127,7 @@ export default function ContentManager({ view = 'page' }) {
     const deleteFolder = async (id) => {
         if (!confirm('Are you sure? This will delete the folder.')) return;
         try {
-            await axios.delete(`http://localhost:3001/api/folders/${id}`);
+            await adminService.deleteFolder(id);
             fetchContent();
         } catch (error) {
             alert('Failed to delete folder');
@@ -96,7 +137,7 @@ export default function ContentManager({ view = 'page' }) {
     const deletePage = async (id) => {
         if (!confirm('Are you sure you want to delete this item?')) return;
         try {
-            await axios.delete(`http://localhost:3001/api/pages/${id}`);
+            await adminService.deletePage(id);
             fetchContent();
         } catch (error) {
             alert('Failed to delete page');

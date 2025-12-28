@@ -1,0 +1,131 @@
+
+> backend@0.0.1 test:e2e
+> jest --config ./test/jest-e2e.json test/device-session.e2e-spec.ts
+
+  console.log
+    [DEBUG] Session Created: Key=session:4b0e5cbe-4a7e-4a93-bef1-9a4588948e6d, User=694fe40f496206bfd9026d4c
+
+      at AuthService.createSession (../src/auth/auth.service.ts:197:17)
+
+[31m[Nest] 14287  - [39m12/27/2025, 7:20:08 PM [31m  ERROR[39m [38;5;3m[ExceptionsHandler] [39m[31muser.save is not a function[39m
+TypeError: user.save is not a function
+    at AuthService.createSession (/Users/monumahto/Desktop/newLmt/last-moment-tuitions/backend/src/auth/auth.service.ts:206:20)
+    at processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at /Users/monumahto/Desktop/newLmt/last-moment-tuitions/node_modules/@nestjs/core/router/router-execution-context.js:46:28
+    at /Users/monumahto/Desktop/newLmt/last-moment-tuitions/node_modules/@nestjs/core/router/router-proxy.js:9:17
+  console.log
+    [DEBUG] Reusing session (4b0e5cbe-4a7e-4a93-bef1-9a4588948e6d) for device (0c5c363530535d0a734b469960389f084f3705fb307b75f577b7284c0f6e8ace)
+
+      at AuthService.createSession (../src/auth/auth.service.ts:157:29)
+
+  console.log
+    DEBUG Test 2: Expected undefined Got 4b0e5cbe-4a7e-4a93-bef1-9a4588948e6d
+
+      at Object.<anonymous> (device-session.e2e-spec.ts:77:17)
+
+  console.log
+    [DEBUG] Session Created: Key=session:63d2c9ee-b0f4-4774-ae7e-6a811bf5182e, User=694fe40f496206bfd9026d4c
+
+      at AuthService.createSession (../src/auth/auth.service.ts:197:17)
+
+[31m[Nest] 14287  - [39m12/27/2025, 7:20:08 PM [31m  ERROR[39m [38;5;3m[ExceptionsHandler] [39m[31muser.save is not a function[39m
+TypeError: user.save is not a function
+    at AuthService.createSession (/Users/monumahto/Desktop/newLmt/last-moment-tuitions/backend/src/auth/auth.service.ts:206:20)
+    at processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at /Users/monumahto/Desktop/newLmt/last-moment-tuitions/node_modules/@nestjs/core/router/router-execution-context.js:46:28
+    at /Users/monumahto/Desktop/newLmt/last-moment-tuitions/node_modules/@nestjs/core/router/router-proxy.js:9:17
+  console.log
+    DEBUG Test 4 Exists: { A: 0, B: 0 }
+
+      at Object.<anonymous> (device-session.e2e-spec.ts:98:17)
+
+FAIL test/device-session.e2e-spec.ts
+  Device-Aware Session Management (E2E)
+    ✓ 0. Setup: Register User (189 ms)
+    ✕ 1. Login from Device A -> Creates Session A (136 ms)
+    ✕ 2. Login AGAIN from Device A -> REUSES Session A (77 ms)
+    ✕ 3. Login from Device B (Incognito/Mobile) -> Creates Session B (NEW) (43 ms)
+    ✕ 4. Both sessions should exist in Redis & Mongo (2 ms)
+
+  ● Device-Aware Session Management (E2E) › 1. Login from Device A -> Creates Session A
+
+    expected 200 "OK", got 500 "Internal Server Error"
+
+      56 |             .set('User-Agent', deviceA_UA)
+      57 |             .send({ email: testUser.email, password: testUser.password })
+    > 58 |             .expect(200);
+         |              ^
+      59 |
+      60 |         sessionA = res.body.accessToken;
+      61 |         expect(sessionA).toBeDefined();
+
+      at Object.<anonymous> (device-session.e2e-spec.ts:58:14)
+      ----
+      at Test._assertStatus (../../node_modules/supertest/lib/test.js:252:14)
+      at ../../node_modules/supertest/lib/test.js:308:13
+      at Test._assertFunction (../../node_modules/supertest/lib/test.js:285:13)
+      at Test.assert (../../node_modules/supertest/lib/test.js:164:23)
+      at Server.localAssert (../../node_modules/supertest/lib/test.js:120:14)
+
+  ● Device-Aware Session Management (E2E) › 2. Login AGAIN from Device A -> REUSES Session A
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: undefined
+    Received: "4b0e5cbe-4a7e-4a93-bef1-9a4588948e6d"
+
+      76 |
+      77 |         console.log('DEBUG Test 2: Expected', sessionA, 'Got', res.body.accessToken);
+    > 78 |         expect(res.body.accessToken).toBe(sessionA);
+         |                                      ^
+      79 |     });
+      80 |
+      81 |     it('3. Login from Device B (Incognito/Mobile) -> Creates Session B (NEW)', async () => {
+
+      at Object.<anonymous> (device-session.e2e-spec.ts:78:38)
+
+  ● Device-Aware Session Management (E2E) › 3. Login from Device B (Incognito/Mobile) -> Creates Session B (NEW)
+
+    expected 200 "OK", got 500 "Internal Server Error"
+
+      84 |             .set('User-Agent', deviceB_UA) // Different UA
+      85 |             .send({ email: testUser.email, password: testUser.password })
+    > 86 |             .expect(200);
+         |              ^
+      87 |
+      88 |         sessionB = res.body.accessToken;
+      89 |         console.log('DEBUG Test 3: Session B:', sessionB);
+
+      at Object.<anonymous> (device-session.e2e-spec.ts:86:14)
+      ----
+      at Test._assertStatus (../../node_modules/supertest/lib/test.js:252:14)
+      at ../../node_modules/supertest/lib/test.js:308:13
+      at Test._assertFunction (../../node_modules/supertest/lib/test.js:285:13)
+      at Test.assert (../../node_modules/supertest/lib/test.js:164:23)
+      at Server.localAssert (../../node_modules/supertest/lib/test.js:120:14)
+
+  ● Device-Aware Session Management (E2E) › 4. Both sessions should exist in Redis & Mongo
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 1
+    Received: 0
+
+       98 |         console.log('DEBUG Test 4 Exists:', { A: existsA, B: existsB });
+       99 |
+    > 100 |         expect(existsA).toBe(1);
+          |                         ^
+      101 |         expect(existsB).toBe(1);
+      102 |
+      103 |         const user = await userModel.findOne({ email: testUser.email });
+
+      at Object.<anonymous> (device-session.e2e-spec.ts:100:25)
+
+Test Suites: 1 failed, 1 total
+Tests:       4 failed, 1 passed, 5 total
+Snapshots:   0 total
+Time:        3.59 s, estimated 4 s
+Ran all test suites matching /test\/device-session.e2e-spec.ts/i.
+Jest did not exit one second after the test run has completed.
+
+'This usually means that there are asynchronous operations that weren't stopped in your tests. Consider running Jest with `--detectOpenHandles` to troubleshoot this issue.

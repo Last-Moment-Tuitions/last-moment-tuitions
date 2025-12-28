@@ -8,7 +8,7 @@ async function getPageData(slug) {
 
     try {
         // Use the new slug-specific endpoint
-        const res = await fetch(`http://localhost:3001/api/pages/slug/${slugString}`, {
+        const res = await fetch(`http://localhost:3005/api/pages/slug/${slugString}`, {
             // Revalidate every 60 seconds (ISR)
             next: { revalidate: 60 }
         });
@@ -57,7 +57,7 @@ const BlockRenderer = ({ block }) => {
 // Helper to fetch template content by ID
 async function getTemplateContent(id) {
     try {
-        const res = await fetch(`http://localhost:3001/api/pages/id/${id}`, { next: { revalidate: 60 } });
+        const res = await fetch(`http://localhost:3005/api/pages/id/${id}`, { next: { revalidate: 60 } });
         if (!res.ok) return null;
         const json = await res.json();
         return json.success ? json.data : null;
@@ -90,7 +90,7 @@ async function resolveTemplateRefs(html) {
     for (const { fullTag, templateId } of replacements) {
         try {
             // Fetch the template content
-            const res = await fetch(`http://localhost:3001/api/pages/id/${templateId}`, {
+            const res = await fetch(`http://localhost:3005/api/pages/id/${templateId}`, {
                 cache: 'no-store' // Updated cache strategy
             });
 
@@ -121,7 +121,7 @@ export default async function DynamicPage({ params }) {
     const slugArray = resolvedParams.slug;
     const slug = slugArray.join('/');
 
-    const page = await getPageData(slug); // Function named getPageData, not getPage
+    const page = await getPageData(slugArray); // Function named getPageData, not getPage
 
     if (!page) {
         notFound();

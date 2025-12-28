@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import axios from 'axios';
+import { adminService } from '@/services/adminService';
 import {
     Search, Bell, User,
     GraduationCap, Crown, Users, Award,
@@ -19,19 +19,21 @@ export default function AdminDashboard() {
     useEffect(() => {
         const fetchStats = async () => {
             try {
-                const res = await axios.get('http://localhost:3001/api/pages');
-                if (res.data.success) {
-                    const allItems = res.data.data || [];
-                    const pages = allItems.filter(p => (p.type || 'page') === 'page');
-                    const templates = allItems.filter(p => p.type === 'template');
-                    const views = pages.reduce((acc, curr) => acc + (curr.viewCount || 0), 0);
+                // Use adminService directly
+                const pages = await adminService.getPages();
+                // Filter logic remains the same, assuming api returns array of pages
+                // If api returns { success: true, data: [...] }, adjust accordingly.
+                // The backend implementation returns the array directly.
 
-                    setRealStats({
-                        totalPages: pages.length,
-                        totalTemplates: templates.length,
-                        totalViews: views
-                    });
-                }
+                const realPages = pages.filter(p => (p.type || 'page') === 'page');
+                const templates = pages.filter(p => p.type === 'template');
+                const views = realPages.reduce((acc, curr) => acc + (curr.viewCount || 0), 0);
+
+                setRealStats({
+                    totalPages: realPages.length,
+                    totalTemplates: templates.length,
+                    totalViews: views
+                });
             } catch (error) {
                 console.error('Failed to fetch stats', error);
             }
