@@ -12,7 +12,7 @@ async function bootstrap() {
     const configService = app.get(config_1.ConfigService);
     app.use((0, helmet_1.default)());
     app.enableCors({
-        origin: ['http://localhost:3000', 'http://localhost:3001'],
+        origin: [configService.get('FRONTEND_URL')],
         methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
         credentials: true,
     });
