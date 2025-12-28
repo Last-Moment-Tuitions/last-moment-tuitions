@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { adminService } from '@/services/adminService';
 import { Button } from '@/components/ui';
 import { Save, ArrowRight } from 'lucide-react';
