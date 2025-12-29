@@ -24,13 +24,18 @@ async function bootstrap() {
 
     console.log(configService.get<string>('FRONTEND_URL'), 'frontend url');
     // CORS
+    const frontendUrl = configService.get<string>('FRONTEND_URL');
+    const origins = frontendUrl ? frontendUrl.split(',') : ['http://localhost:3000'];
+
     app.enableCors({
-        origin: [configService.get<string>('FRONTEND_URL'), 'https://last-moment-tuitions-frontend.vercel.app', 'https://last-moment-tuitions-frontend.vercel.app/'],
+        origin: origins,
         methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
         allowedHeaders: [
             'Content-Type',
             'Authorization',
             'X-Session-Id',
+            'X-Requested-With',
+            'Accept',
         ],
         credentials: true,
     });
