@@ -25,8 +25,13 @@ async function bootstrap() {
     console.log(configService.get<string>('FRONTEND_URL'), 'frontend url');
     // CORS
     app.enableCors({
-        origin: [configService.get<string>('FRONTEND_URL')],
+        origin: [configService.get<string>('FRONTEND_URL'), 'https://last-moment-tuitions-frontend.vercel.app', 'https://last-moment-tuitions-frontend.vercel.app/'],
         methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+        allowedHeaders: [
+            'Content-Type',
+            'Authorization',
+            'X-Session-Id',
+        ],
         credentials: true,
     });
 
