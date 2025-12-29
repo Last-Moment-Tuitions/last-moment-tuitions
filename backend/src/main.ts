@@ -24,11 +24,8 @@ async function bootstrap() {
 
     console.log(configService.get<string>('FRONTEND_URL'), 'frontend url');
     // CORS
-    const frontendUrl = configService.get<string>('FRONTEND_URL');
-    const origins = frontendUrl ? frontendUrl.split(',') : ['http://localhost:3000'];
-
     app.enableCors({
-        origin: origins,
+        origin: [configService.get<string>('FRONTEND_URL')],
         methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
         allowedHeaders: [
             'Content-Type',
