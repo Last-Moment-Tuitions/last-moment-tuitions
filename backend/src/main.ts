@@ -21,8 +21,6 @@ async function bootstrap() {
     // Global Prefix
     app.setGlobalPrefix('api');
 
-
-    console.log(configService.get<string>('FRONTEND_URL'), 'frontend url');
     // CORS
     app.enableCors({
         origin: [configService.get<string>('FRONTEND_URL')],
