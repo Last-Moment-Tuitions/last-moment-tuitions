@@ -30,7 +30,7 @@
                 },
                 {
                     "key": "Access-Control-Allow-Headers",
-                    "value": "Authorization, X-Session-Id, X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version"
+                    "value": "Authorization, X-Session-Id, X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, X-SESSION-ID"
                 }
             ]
         }
