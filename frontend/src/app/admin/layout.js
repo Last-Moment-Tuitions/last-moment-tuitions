@@ -1,66 +1,85 @@
+'use client';
+
 import Link from 'next/link';
-import { LayoutDashboard, FileText, Image as ImageIcon, LogOut, GraduationCap, LayoutTemplate } from 'lucide-react';
+import { usePathname } from 'next/navigation';
+import {
+    LayoutDashboard, PlusCircle, Layers, CreditCard,
+    MessageCircle, Settings, LogOut, GraduationCap
+} from 'lucide-react';
 
 export default function AdminLayout({ children }) {
+    const pathname = usePathname();
+
+    const navItems = [
+        { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
+        { name: 'Create New Course', href: '/admin/courses/create', icon: PlusCircle },
+        { name: 'My Courses', href: '/admin/courses', icon: Layers },
+        { name: 'Earning', href: '/admin/earnings', icon: CreditCard },
+        { name: 'Message', href: '/admin/messages', icon: MessageCircle, badge: 2 },
+        { name: 'Settings', href: '/admin/settings', icon: Settings },
+    ];
+
     return (
-        <div className="flex h-screen bg-gray-100 font-sans text-gray-900">
-            {/* Sidebar */}
-            <aside className="w-64 bg-gray-900 text-white flex flex-col">
-                <div className="p-6 border-b border-gray-800 flex items-center gap-3">
-                    <div className="p-2 bg-blue-600 rounded-lg">
-                        <GraduationCap className="w-6 h-6 text-white" />
-                    </div>
-                    <div>
-                        <h2 className="text-sm font-bold tracking-tight leading-none uppercase text-gray-400">Admin</h2>
-                        <h1 className="text-base font-bold tracking-tight text-white mt-0.5">Last Moment Tuitions</h1>
+        <div className="flex min-h-screen bg-[#F5F7FA] font-sans text-gray-900">
+            {/* Sidebar - Figma Width 280px */}
+            <aside className="w-[280px] bg-[#1D2026] text-white flex flex-col shrink-0 transition-all duration-300 fixed h-full z-30">
+                {/* Logo Area */}
+                <div className="h-[70px] flex items-center px-6 border-b border-[#363B47]">
+                    <div className="flex items-center gap-2">
+                        <div className="p-1.5 bg-primary-600 rounded">
+                            <GraduationCap className="w-6 h-6 text-white" />
+                        </div>
+                        <span className="text-xl font-semibold tracking-tight">E-tutor</span>
                     </div>
                 </div>
 
-                <nav className="flex-1 p-4 space-y-6">
-                    <div className="space-y-1">
-                        <div className="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Overview</div>
-                        <Link href="/admin" className="flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-gray-800 transition-colors text-sm font-medium text-gray-300 hover:text-white">
-                            <LayoutDashboard className="w-4 h-4" />
-                            Dashboard
-                        </Link>
-                    </div>
+                {/* Navigation */}
+                <nav className="flex-1 py-6 space-y-1 overflow-y-auto">
+                    {navItems.map((item) => {
+                        // Exact match for dashboard, startsWith for others to handle subpages
+                        const isActive = item.href === '/admin'
+                            ? pathname === '/admin'
+                            : pathname.startsWith(item.href);
 
-                    <div className="space-y-1">
-                        <div className="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Manage Content</div>
-                        <Link href="/admin/pages" className="flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-gray-800 transition-colors text-sm font-medium text-gray-300 hover:text-white">
-                            <FileText className="w-4 h-4" />
-                            Pages
-                        </Link>
-                        <Link href="/admin/templates" className="flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-gray-800 transition-colors text-sm font-medium text-gray-300 hover:text-white">
-                            <LayoutTemplate className="w-4 h-4" />
-                            Templates
-                        </Link>
-                    </div>
-
-                    <div className="space-y-1">
-                        <div className="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Assets</div>
-                        <Link href="/admin/media" className="flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-gray-800 transition-colors text-sm font-medium text-gray-300 hover:text-white">
-                            <ImageIcon className="w-4 h-4" />
-                            Media Library
-                        </Link>
-                    </div>
+                        return (
+                            <Link
+                                key={item.name}
+                                href={item.href}
+                                className={`relative flex items-center gap-3 px-6 py-3.5 text-sm font-medium transition-all
+                                    ${isActive
+                                        ? 'bg-primary-600 text-white shadow-[inset_4px_0_0_0_white]' // Using Primary Blue instead of Orange #FF6636
+                                        : 'text-[#8C94A3] hover:bg-[#363B47] hover:text-white'
+                                    }`}
+                            >
+                                <item.icon className={`w-5 h-5 ${isActive ? 'text-white' : 'text-[#8C94A3] group-hover:text-white'}`} />
+                                <span>{item.name}</span>
+                                {item.badge && (
+                                    <span className="ml-auto bg-primary-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+                                        {item.badge}
+                                    </span>
+                                )}
+                            </Link>
+                        );
+                    })}
                 </nav>
 
-                <div className="p-4 border-t border-gray-800">
-                    <button className="flex items-center gap-3 px-4 py-3 w-full rounded-lg hover:bg-red-500/10 hover:text-red-400 transition-colors text-sm font-medium text-gray-400">
+                {/* Sign Out (Fixed at bottom like Figma) */}
+                <div className="p-6 border-t border-[#363B47]">
+                    <button className="flex items-center gap-3 w-full text-[#8C94A3] hover:text-white transition-colors text-sm font-medium">
                         <LogOut className="w-5 h-5" />
                         Sign Out
                     </button>
                 </div>
             </aside>
 
-            {/* Main Content */}
-            <main className="flex-1 overflow-auto bg-white">
-                {/* Removed padding here to let children control it/full bleed if needed, but added back in specific pages usually */}
-                <div className="">
+            {/* Main Content Wrapper - Offset for fixed sidebar */}
+            <div className="flex-1 ml-[280px] w-[calc(100%-280px)]">
+                {/* Top Header Placeholder if needed globally, but Dashboard has its own. 
+                     The layout just renders children. */}
+                <main className="min-h-screen">
                     {children}
-                </div>
-            </main>
+                </main>
+            </div>
         </div>
     );
 }

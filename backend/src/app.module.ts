@@ -10,6 +10,7 @@ import { SupabaseModule } from './supabase/supabase.module';
 import { AdminModule } from './admin/admin.module';
 import { PagesModule as PublicPagesModule } from './modules/pages/pages.module';
 import { FoldersModule as PublicFoldersModule } from './modules/folders/folders.module';
+import { CoursesModule } from './modules/courses/courses.module';
 import { AppLoggerMiddleware } from './common/middleware/logger.middleware';
 
 @Module({
@@ -30,6 +31,7 @@ import { AppLoggerMiddleware } from './common/middleware/logger.middleware';
     AdminModule,
     PublicPagesModule,
     PublicFoldersModule,
+    CoursesModule,
   ],
 })
 export class AppModule implements NestModule {

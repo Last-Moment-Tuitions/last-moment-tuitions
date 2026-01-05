@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     Search, Filter, ChevronDown,
     LayoutGrid, List, Star,
@@ -11,175 +11,7 @@ import {
     Accordion, AccordionItem, AccordionTrigger, AccordionContent,
     Badge
 } from '@/components/ui';
-
-// Mock Data - 15 items to show 5 rows on desktop (3 cols) with WORKING images
-const COURSES = [
-    {
-        id: 1,
-        title: "Complete Java Programming Masterclass",
-        category: "Programming",
-        price: 499,
-        originalPrice: 1999,
-        rating: 4.8,
-        students: "15,444",
-        image: "https://images.unsplash.com/photo-1587620962725-abab7fe55159?q=80&w=1000&auto=format&fit=crop",
-        instructor: "Rahul Sharma"
-    },
-    {
-        id: 2,
-        title: "UPSC Civil Services Prelims 2024 - Complete Guide",
-        category: "Government",
-        price: 2499,
-        originalPrice: 4999,
-        rating: 4.9,
-        students: "24,000",
-        image: "https://images.unsplash.com/photo-1497633762265-9d179a990aa6?q=80&w=1000&auto=format&fit=crop",
-        instructor: "Dr. Anjali Verma"
-    },
-    {
-        id: 3,
-        title: "Engineering Mathematics I & II for Sem 1",
-        category: "Engineering",
-        price: 999,
-        originalPrice: 1599,
-        rating: 4.7,
-        students: "9,728",
-        image: "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?q=80&w=1000&auto=format&fit=crop",
-        instructor: "Prof. Das"
-    },
-    {
-        id: 4,
-        title: "IBPS PO & Clerk Complete Preparation Batch",
-        category: "Preparation Exams",
-        price: 1499,
-        originalPrice: 2999,
-        rating: 4.6,
-        students: "12,444",
-        image: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?q=80&w=1000&auto=format&fit=crop",
-        instructor: "Banking Adda"
-    },
-    {
-        id: 5,
-        title: "Python for Data Science and Machine Learning",
-        category: "Programming",
-        price: 699,
-        originalPrice: 1299,
-        rating: 4.5,
-        students: "8,637",
-        image: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?q=80&w=1000&auto=format&fit=crop",
-        instructor: "Arun Kumar"
-    },
-    {
-        id: 6,
-        title: "SSC CGL Tier 1 & 2 Comprehensive Course",
-        category: "Government",
-        price: 1999,
-        originalPrice: 3500,
-        rating: 4.7,
-        students: "33,671",
-        image: "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?q=80&w=1000&auto=format&fit=crop",
-        instructor: "SSC Mentors"
-    },
-    {
-        id: 7,
-        title: "Data Structures & Algorithms in C++",
-        category: "Engineering",
-        price: 799,
-        originalPrice: 1499,
-        rating: 4.8,
-        students: "5,444",
-        image: "https://images.unsplash.com/photo-1555066931-4365d14bab8c?q=80&w=1000&auto=format&fit=crop",
-        instructor: "CodeWithHarry"
-    },
-    {
-        id: 8,
-        title: "NEET 2024 Biology Crash Course",
-        category: "Preparation Exams",
-        price: 1299,
-        originalPrice: 2499,
-        rating: 4.9,
-        students: "7,637",
-        image: "https://images.unsplash.com/photo-1576091160550-217358c7e618?q=80&w=1000&auto=format&fit=crop",
-        instructor: "Dr. Neha"
-    },
-    {
-        id: 9,
-        title: "Full Stack Web Development Bootcamp (MERN)",
-        category: "Programming",
-        price: 2999,
-        originalPrice: 5999,
-        rating: 4.8,
-        students: "11,434",
-        image: "https://images.unsplash.com/photo-1621839673705-6617adf9e890?q=80&w=1000&auto=format&fit=crop",
-        instructor: "DevOps Tech"
-    },
-    {
-        id: 10,
-        title: "Railway Group D & NTPC Exams",
-        category: "Government",
-        price: 899,
-        originalPrice: 1899,
-        rating: 4.4,
-        students: "45,000",
-        image: "https://images.unsplash.com/photo-1473649085228-583485e6e4d7?q=80&w=1000&auto=format&fit=crop",
-        instructor: "Railway Guru"
-    },
-    {
-        id: 11,
-        title: "Thermodynamics for Mechanical Engineers",
-        category: "Engineering",
-        price: 599,
-        originalPrice: 999,
-        rating: 4.6,
-        students: "3,200",
-        image: "https://images.unsplash.com/photo-1532094349884-543bc11b234d?q=80&w=1000&auto=format&fit=crop",
-        instructor: "Mech World"
-    },
-    {
-        id: 12,
-        title: "CAT 2024 - Quantitative Aptitude Mastery",
-        category: "Preparation Exams",
-        price: 1599,
-        originalPrice: 2599,
-        rating: 4.8,
-        students: "8,900",
-        image: "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?q=80&w=1000&auto=format&fit=crop",
-        instructor: "MBA Easy"
-    },
-    {
-        id: 13,
-        title: "React Native - Build Mobile Apps",
-        category: "Programming",
-        price: 999,
-        originalPrice: 1999,
-        rating: 4.7,
-        students: "6,700",
-        image: "https://images.unsplash.com/photo-1551650975-87deedd944c3?q=80&w=1000&auto=format&fit=crop",
-        instructor: "React Pro"
-    },
-    {
-        id: 14,
-        title: "RBI Grade B Officer Phase 1 & 2",
-        category: "Government",
-        price: 3499,
-        originalPrice: 6999,
-        rating: 4.9,
-        students: "5,600",
-        image: "https://images.unsplash.com/photo-1556742049-0cfed4f7a07d?q=80&w=1000&auto=format&fit=crop",
-        instructor: "Finance Hub"
-    },
-    {
-        id: 15,
-        title: "Digital Logic Design for Computer Engineering",
-        category: "Engineering",
-        price: 499,
-        originalPrice: 999,
-        rating: 4.5,
-        students: "4,100",
-        image: "https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=1000&auto=format&fit=crop",
-        instructor: "CS Basics"
-    }
-];
+import { coursesApi } from '@/services/courses.api';
 
 const CATEGORIES = [
     { id: 'gov', label: 'Government', count: 42, icon: <Building2 size={18} /> },
@@ -190,6 +22,91 @@ const CATEGORIES = [
 
 export default function CoursesPage() {
     const [viewMode, setViewMode] = useState('grid');
+    const [courses, setCourses] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    useEffect(() => {
+        fetchCourses();
+    }, []);
+
+    const fetchCourses = async () => {
+        try {
+            setLoading(true);
+            const response = await coursesApi.getAllCourses({ status: 'published' });
+
+            // Transform backend data to match CourseCard props
+            const transformedCourses = response.data.map(course => ({
+                id: course._id,
+                title: course.title,
+                category: course.category,
+                price: course.price / 100, // Convert from paisa to rupees
+                originalPrice: course.original_price / 100,
+                rating: course.average_rating,
+                students: course.enrollment_count.toLocaleString(),
+                image: course.thumbnail || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=1000&auto=format&fit=crop',
+                instructor: course.instructor?.name || 'Unknown Instructor'
+            }));
+
+            setCourses(transformedCourses);
+            setError(null);
+        } catch (err) {
+            console.error('Failed to fetch courses:', err);
+            setError('Failed to load courses. Please try again later.');
+            setCourses([]);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    if (loading) {
+        return (
+            <div className="bg-gray-50 min-h-screen py-8 font-sans">
+                <div className="container mx-auto px-4">
+                    <div className="flex items-center justify-center min-h-[400px]">
+                        <div className="text-center">
+                            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
+                            <p className="text-gray-600">Loading courses...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="bg-gray-50 min-h-screen py-8 font-sans">
+                <div className="container mx-auto px-4">
+                    <div className="flex items-center justify-center min-h-[400px]">
+                        <div className="text-center">
+                            <p className="text-red-600 mb-4">{error}</p>
+                            <Button onClick={fetchCourses} variant="primary">
+                                Try Again
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    if (courses.length === 0) {
+        return (
+            <div className="bg-gray-50 min-h-screen py-8 font-sans">
+                <div className="container mx-auto px-4">
+                    <h1 className="text-3xl font-extrabold text-gray-900 mb-4">Explore Courses</h1>
+                    <div className="flex items-center justify-center min-h-[400px]">
+                        <div className="text-center">
+                            <GraduationCap className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                            <h3 className="text-xl font-bold text-gray-900 mb-2">No Courses Available</h3>
+                            <p className="text-gray-600">Check back soon for new courses!</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="bg-gray-50 min-h-screen py-8 font-sans">
@@ -225,7 +142,7 @@ export default function CoursesPage() {
                     {/* Meta Bar */}
                     <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
                         <p className="text-gray-600 font-medium">
-                            Showing <span className="text-gray-900 font-bold">{COURSES.length}</span> courses
+                            Showing <span className="text-gray-900 font-bold">{courses.length}</span> courses
                         </p>
 
                         <div className="flex items-center gap-4">
@@ -328,7 +245,7 @@ export default function CoursesPage() {
                     {/* Main Content Grid */}
                     <main className="flex-1">
                         <div className={`grid ${viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 xl:grid-cols-3' : 'grid-cols-1'} gap-6`}>
-                            {COURSES.map((course) => (
+                            {courses.map((course) => (
                                 <CourseCard
                                     key={course.id}
                                     title={course.title}
