@@ -30,6 +30,7 @@ export class AuthService {
             ...signupDto,
             passwordHash: hashedPassword,
             authProviders: ['local'],
+            signupMethod: 'local',
         });
     }
 
@@ -67,6 +68,7 @@ export class AuthService {
                 lastName: supabaseUser.user_metadata?.full_name?.split(' ')[1] || '',
                 supabaseId,
                 authProviders: ['google'],
+                signupMethod: 'google',
                 isActive: true,
             });
         } else {

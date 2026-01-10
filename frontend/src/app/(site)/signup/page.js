@@ -6,6 +6,7 @@ import { Button, Input, Label, GoogleButton } from '@/components/ui';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import API_BASE_URL from '@/lib/config';
+import { supabase } from '@/lib/supabase';
 
 export default function SignUpPage() {
     const [formData, setFormData] = useState({
@@ -20,6 +21,21 @@ export default function SignUpPage() {
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.id]: e.target.value });
+    };
+
+    const handleGoogleLogin = async () => {
+        try {
+            const { error } = await supabase.auth.signInWithOAuth({
+                provider: 'google',
+                options: {
+                    redirectTo: `${window.location.origin}/auth/callback`,
+                },
+            });
+            if (error) throw error;
+        } catch (error) {
+            console.error('Google Login Error:', error);
+            alert('Failed to initiate Google Login');
+        }
     };
 
     const handleSubmit = async (e) => {
@@ -183,7 +199,7 @@ export default function SignUpPage() {
                         </div>
                     </div>
 
-                    <GoogleButton />
+                    <GoogleButton onClick={handleGoogleLogin} />
 
                     <p className="mt-8 text-center text-sm text-gray-600">
                         Already have an account?{' '}

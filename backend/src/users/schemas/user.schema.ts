@@ -9,6 +9,9 @@ export class User {
     @Prop({ required: true, unique: true, index: true, trim: true })
     email: string;
 
+    @Prop({ required: true, default: 'local' })
+    signupMethod: string; // 'local' | 'google'
+
     @Prop({ select: false }) // Argon2 hash, never return by default
     passwordHash: string;
 
@@ -21,7 +24,7 @@ export class User {
     @Prop({ required: true })
     lastName: string;
 
-    @Prop({ required: true, type: Number })
+    @Prop({ required: false, type: Number })
     phone: number;
 
     @Prop({ default: true })
