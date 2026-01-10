@@ -21,9 +21,25 @@ async function bootstrap() {
     // Global Prefix
     app.setGlobalPrefix('api');
 
-    // CORS
+    // CORS - Allow all localhost origins for development
     app.enableCors({
-        origin: [configService.get<string>('FRONTEND_URL')],
+        origin: (origin, callback) => {
+            // Allow requests with no origin (like mobile apps, curl, Postman)
+            if (!origin) return callback(null, true);
+            
+            // Allow all localhost origins
+            if (origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:')) {
+                return callback(null, true);
+            }
+            
+            // Production: use env variable
+            const allowedOrigins = [configService.get<string>('FRONTEND_URL')].filter(Boolean);
+            if (allowedOrigins.includes(origin)) {
+                return callback(null, true);
+            }
+            
+            callback(new Error('Not allowed by CORS'));
+        },
         methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
         allowedHeaders: [
             'Content-Type',
