@@ -1,5 +1,6 @@
 import './globals.css';
 import { AuthProvider } from '@/context/AuthContext';
+import { Toaster } from 'sonner';
 
 export const metadata = {
   title: 'Prepfocus By Last Moment Tuitions',
@@ -12,11 +13,12 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body suppressHydrationWarning>
         <AuthProvider>
           {children}
         </AuthProvider>
+        <Toaster position="top-center" richColors />
       </body>
     </html>
   );

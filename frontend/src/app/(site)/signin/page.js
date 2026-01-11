@@ -3,11 +3,13 @@
 import Link from 'next/link';
 import { Mail, Lock, Check } from 'lucide-react';
 import { Button, Input, Label, GoogleButton } from '@/components/ui';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import API_BASE_URL from '@/lib/config';
 import { supabase } from '@/lib/supabase';
+
+import { toast } from 'sonner';
 
 export default function SignInPage() {
     const [formData, setFormData] = useState({
@@ -15,10 +17,21 @@ export default function SignInPage() {
         password: ''
     });
     const [loading, setLoading] = useState(false);
+    const [mounted, setMounted] = useState(false);
+
     const router = useRouter();
     const { login } = useAuth();
 
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    if (!mounted) {
+        return null; // Don't render anything until mounted on client
+    }
+
     const handleGoogleLogin = async () => {
+        const toastId = toast.loading('Initiating Google Login...');
         try {
             const { error } = await supabase.auth.signInWithOAuth({
                 provider: 'google',
@@ -29,7 +42,7 @@ export default function SignInPage() {
             if (error) throw error;
         } catch (error) {
             console.error('Google Login Error:', error);
-            alert('Failed to initiate Google Login');
+            toast.error('Failed to initiate Google Login', { id: toastId });
         }
     };
 
@@ -40,6 +53,7 @@ export default function SignInPage() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
+        const toastId = toast.loading('Verifying credentials...');
         try {
             const res = await fetch(`${API_BASE_URL}/auth/login`, {
                 method: 'POST',
@@ -52,15 +66,16 @@ export default function SignInPage() {
                 // Store opaque session ID in cookie (secure, path=/)
                 document.cookie = `sessionId=${data.accessToken}; path=/; max-age=${data.expiresIn}; SameSite=Lax; Secure`;
 
+                toast.success('Login successful! Welcome back.', { id: toastId });
                 // Update global auth state and redirect
                 login(data.user);
             } else {
                 const errorData = await res.json();
-                alert(`Login failed: ${errorData.message}`);
+                toast.error(errorData.message || 'Login failed', { id: toastId });
             }
         } catch (error) {
             console.error('Login error:', error);
-            alert('An error occurred during login.');
+            toast.error('Connection error. Please try again.', { id: toastId });
         } finally {
             setLoading(false);
         }
@@ -85,11 +100,9 @@ export default function SignInPage() {
                         </span>
                     </h1>
                     <p className="text-lg text-gray-300 leading-relaxed italic">
-                        "Education is the passport to the future, for tomorrow belongs to those who prepare for it today."
+                        &quot;Education is the passport to the future, for tomorrow belongs to those who prepare for it today.&quot;
                     </p>
-                    <div className="mt-8 font-semibold text-primary-300 tracking-wide uppercase text-sm">
-                        Last Moment Tuitions
-                    </div>
+
                 </div>
             </div>
 
@@ -97,13 +110,6 @@ export default function SignInPage() {
             <div className="w-full lg:w-1/2 flex items-center justify-center p-8 lg:p-24">
                 <div className="max-w-md w-full">
                     <div className="text-center mb-10">
-                        <Link href="/" className="inline-flex items-center gap-2 mb-8 group">
-                            <div className="h-10 w-10 bg-gradient-to-br from-primary-600 to-accent-600 rounded-lg flex items-center justify-center text-white font-bold text-xl shadow-lg group-hover:shadow-primary-500/30 transition-shadow">
-                                L
-                            </div>
-                            <span className="text-xl font-bold text-gray-900">Last Moment Tuitions</span>
-                        </Link>
-
                         <h2 className="text-3xl font-bold text-gray-900 mb-2">Welcome back</h2>
                         <p className="text-gray-500">
                             Please enter your details to sign in
@@ -116,7 +122,7 @@ export default function SignInPage() {
                             <Input
                                 id="email"
                                 type="email"
-                                placeholder="name@example.com"
+                                placeholder="email@example.com"
                                 icon={<Mail className="h-5 w-5" />}
                                 required
                                 value={formData.email}
