@@ -45,4 +45,4 @@ This is a production-grade authentication system built with **NestJS**, **MongoD
     It's the single source of truth for "Who is logged in?". It handles the high frequency of validation checks (every request) with sub-millisecond latency.
 
 -   **Why Supabase?**
-    Used specifically for verifying Google Identity tokens, delegating the complexity of OAuth dance while keeping our own Session Management control.
+Used specifically for verifying Google Identity tokens, delegating the complexity of OAuth dance while keeping our own Session Management control.
