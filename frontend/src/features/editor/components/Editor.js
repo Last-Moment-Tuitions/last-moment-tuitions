@@ -1,8 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import axios from 'axios';
-import API_BASE_URL from '@/lib/config';
+import { adminService } from '@/services/adminService';
 import { initEditor } from '@/features/editor/core/editor/Manager';
 import { loadBlocks } from '@/features/editor/core/blocks/basic';
 import { loadAdvancedBlocks } from '@/features/editor/core/blocks/advanced';
@@ -33,8 +32,8 @@ export function Editor({ pageId }) {
         // Fetch Page Data
         const fetchPage = async () => {
             try {
-                const res = await axios.get(`${API_BASE_URL}/pages/id/${pageId}`);
-                const page = res.data.data;
+                const res = await adminService.getPage(pageId);
+                const page = res.data || res; // adminService returns response.data
 
                 if (page.gjsComponents && page.gjsComponents.length > 0) {
                     editor.loadProjectData({
@@ -67,16 +66,17 @@ export function Editor({ pageId }) {
         if (!editor || !pageId) return;
 
         setSaving(true);
-        const data = {
-            gjsComponents: editor.getComponents(),
-            gjsStyles: editor.getStyle(),
-            gjsHtml: editor.getHtml(),
-            gjsCss: editor.getCss(),
-            gjsAssets: editor.getAssets(),
-        };
-
         try {
-            await axios.put(`${API_BASE_URL}/pages/${pageId}`, data);
+            // Correctly serialize GrapesJS data to avoid circular references and massive objects
+            const data = {
+                gjsComponents: editor.getComponents().toJSON(),
+                gjsStyles: editor.getStyle().toJSON(),
+                gjsHtml: editor.getHtml(),
+                gjsCss: editor.getCss(),
+                gjsAssets: editor.Assets.getAll().toJSON(),
+            };
+
+            await adminService.updatePage(pageId, data);
             showToast('Page saved successfully!', 'success');
         } catch (error) {
             console.error(error);

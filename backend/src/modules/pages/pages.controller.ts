@@ -5,7 +5,13 @@ import { UpdatePageDto } from './dto/update-page.dto';
 
 @Controller('pages')
 export class PagesController {
-  constructor(private readonly pagesService: PagesService) {}
+  constructor(private readonly pagesService: PagesService) { }
+
+  @Get('nav')
+  async getNav() {
+    const nav = await this.pagesService.getNavHierarchy();
+    return { success: true, data: nav };
+  }
 
   @Post()
   async create(@Body() createPageDto: CreatePageDto) {

@@ -1,6 +1,7 @@
 
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication, ExpressAdapter } from '@nestjs/platform-express';
+import { json, urlencoded } from 'express';
 import { functionalLogger } from './common/middleware/logger.middleware';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
@@ -18,6 +19,10 @@ async function bootstrap() {
 
     app.use(functionalLogger);
 
+    // Increase body size limit for large GrapesJS payloads
+    app.use(json({ limit: '50mb' }));
+    app.use(urlencoded({ extended: true, limit: '50mb' }));
+
     // Global Prefix
     app.setGlobalPrefix('api');
 
@@ -26,18 +31,18 @@ async function bootstrap() {
         origin: (origin, callback) => {
             // Allow requests with no origin (like mobile apps, curl, Postman)
             if (!origin) return callback(null, true);
-            
+
             // Allow all localhost origins
             if (origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:')) {
                 return callback(null, true);
             }
-            
+
             // Production: use env variable
             const allowedOrigins = [configService.get<string>('FRONTEND_URL')].filter(Boolean);
             if (allowedOrigins.includes(origin)) {
                 return callback(null, true);
             }
-            
+
             callback(new Error('Not allowed by CORS'));
         },
         methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',

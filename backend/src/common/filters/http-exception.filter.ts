@@ -20,7 +20,9 @@ export class AllExceptionsFilter implements ExceptionFilter {
             statusCode: httpStatus,
             timestamp: new Date().toISOString(),
             path: httpAdapter.getRequestUrl(ctx.getRequest()),
-            message: exception instanceof HttpException ? exception.message : 'Internal Server Error',
+            message: exception instanceof HttpException
+                ? (typeof exception.getResponse() === 'object' ? (exception.getResponse() as any).message : exception.message)
+                : 'Internal Server Error',
         };
 
         // In production, log the real error safely, but don't return stack traces
