@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Schema as MongooseSchema } from 'mongoose';
+import { PageStatus } from '../enums/page-status.enum';
 
 export type PageDocument = HydratedDocument<Page>;
 
@@ -29,7 +30,11 @@ export class Page {
   @Prop({ type: [MongooseSchema.Types.Mixed], default: [] })
   gjsStyles: any[];
 
-  @Prop({ type: String, enum: ['draft', 'published', 'archived'], default: 'draft' })
+  @Prop({
+    type: String,
+    enum: Object.values(PageStatus), // Uses the enum values
+    default: PageStatus.DRAFT
+  })
   status: string;
 
   @Prop({ default: 0 })
