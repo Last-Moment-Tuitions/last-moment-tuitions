@@ -12,6 +12,7 @@ import { PagesModule as PublicPagesModule } from './modules/pages/pages.module';
 import { FoldersModule as PublicFoldersModule } from './modules/folders/folders.module';
 import { CoursesModule } from './modules/courses/courses.module';
 import { AppLoggerMiddleware } from './common/middleware/logger.middleware';
+import { TestimonialsModule } from './modules/testimonials/testimonials.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { AppLoggerMiddleware } from './common/middleware/logger.middleware';
     PublicPagesModule,
     PublicFoldersModule,
     CoursesModule,
+    TestimonialsModule,
   ],
 })
 export class AppModule implements NestModule {

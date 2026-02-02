@@ -1,4 +1,5 @@
-import React from 'react';
+"use client";
+import React, { useState, useEffect } from 'react';
 import {
     Search,
     ShoppingBag,
@@ -27,11 +28,21 @@ import { FadeIn, StaggerContainer, StaggerItem, ScaleIn } from '@/components/Ani
 import { HeroBackground } from '@/components/HeroAnimation';
 import { HeroMerged } from '@/components/HeroMerged';
 import { FaqSection } from '@/components/FaqSection';
-import { AnimatedTestimonials } from '@/components/AnimatedTestimonials';
+import TestimonialSection from '@/components/TestimonialSection';
+import { testimonialService } from '@/services/testimonialService';
 import { StickyScroll } from '@/components/StickyScrollLayout';
 
 export default function HomePage() {
-    const [isMenuOpen, setIsMenuOpen] = React.useState(false);
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [testimonials, setTestimonials] = useState([]);
+
+    useEffect(() => {
+        const fetchTestimonials = async () => {
+            const data = await testimonialService.getByPage('Homepage');
+            setTestimonials(data);
+        };
+        fetchTestimonials();
+    }, []);
 
     // Mock Data
     const categories = [
@@ -176,6 +187,7 @@ export default function HomePage() {
         <div className="min-h-screen bg-white font-sans text-gray-900">
 
             {/* Hero Section */}
+
             <HeroMerged>
                 {/* Pill Badge */}
                 <FadeIn delay={0}>
@@ -329,15 +341,19 @@ export default function HomePage() {
             </section>
 
             {/* Testimonials */}
-            <section className="py-12 bg-gray-50">
+            {/* <section className="py-12 bg-gray-50">
                 <div className="container mx-auto px-4">
                     <div className="text-center mb-10">
                         <FadeIn>
                             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">Loved by our students</h2>
                             <p className="text-gray-600 text-lg">Hear what our successful students have to say</p>
                         </FadeIn>
-                    </div>
-                    <AnimatedTestimonials
+                    </div> */}
+
+            <TestimonialSection testimonials={testimonials} />
+
+
+            {/* <AnimatedTestimonials
                         autoplay={true}
                         testimonials={[
                             {
@@ -371,9 +387,9 @@ export default function HomePage() {
                                 src: "https://images.unsplash.com/photo-1633332755192-727a05c4013d?q=80&w=3560&auto=format&fit=crop"
                             },
                         ]}
-                    />
-                </div>
-            </section>
+                    /> */}
+            {/* </div>
+            </section> */}
 
             {/* Become an Instructor */}
             <section className="py-20">

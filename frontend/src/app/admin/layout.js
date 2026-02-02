@@ -4,7 +4,9 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
     LayoutDashboard, PlusCircle, Layers, CreditCard,
-    MessageCircle, Settings, LogOut, GraduationCap
+    MessageCircle, Settings, LogOut, GraduationCap,
+    CircleUser,
+    Star
 } from 'lucide-react';
 
 export default function AdminLayout({ children }) {
@@ -17,6 +19,7 @@ export default function AdminLayout({ children }) {
         { name: 'Pages', href: '/admin/pages', icon: Layers },
         { name: 'Earning', href: '/admin/earnings', icon: CreditCard },
         { name: 'Message', href: '/admin/messages', icon: MessageCircle, badge: 2 },
+        { name: 'Testimonials', href: '/admin/testimonials', icon: Star },
         { name: 'Settings', href: '/admin/settings', icon: Settings },
     ];
 
