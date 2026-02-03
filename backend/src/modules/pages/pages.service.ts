@@ -48,17 +48,18 @@ export class PagesService {
   }
 
   async findAll(query: any) {
-    const { folder, type } = query;
+    const { folder, type, status } = query;
     const filter: any = {};
     if (folder !== undefined) {
       filter.folder = (folder === 'null' || !folder) ? null : folder;
     }
     if (type) filter.type = type;
-
-    // Filter only published pages for public view
-     if (filter.status === undefined) {
+  
+    if (status && status !== 'all') {
+        filter.status = status;
+    } else if (!status) {
          filter.status = 'published';
-     }
+    }
 
     return this.pageModel.find(filter)
       .select('title slug updatedAt folder type status viewCount')

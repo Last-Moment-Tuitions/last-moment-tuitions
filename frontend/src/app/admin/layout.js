@@ -15,6 +15,7 @@ export default function AdminLayout({ children }) {
         { name: 'Create New Course', href: '/admin/courses/create', icon: PlusCircle },
         { name: 'My Courses', href: '/admin/courses', icon: Layers },
         { name: 'Pages', href: '/admin/pages', icon: Layers },
+        { name: 'Menus', href: '/admin/menus', icon: Layers },
         { name: 'Earning', href: '/admin/earnings', icon: CreditCard },
         { name: 'Message', href: '/admin/messages', icon: MessageCircle, badge: 2 },
         { name: 'Settings', href: '/admin/settings', icon: Settings },
