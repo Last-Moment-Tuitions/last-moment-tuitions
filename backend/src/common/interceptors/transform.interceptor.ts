@@ -23,19 +23,32 @@ export class TransformInterceptor<T>
     ): Observable<Response<T>> {
         return next.handle().pipe(
             map((data) => {
-                // If the data already has a specific structure or is null/undefined
-                const message = data?.message || 'Request successful';
-                const details = data?.details !== undefined ? data.details : (data?.message ? (Object.keys(data).length > 1 ? data : null) : data);
-
-                // Special handling to avoid nesting if data is already in the format
+                // Check if data is already in standard format (recursive prevention)
                 if (data && typeof data === 'object' && 'success' in data && 'message' in data) {
                     return data;
+                }
+
+                // Default values
+                let message = 'Request successful';
+                let details = data || null;
+
+                // If data is an object with a 'message' property
+                if (data && typeof data === 'object' && 'message' in data) {
+                    message = data.message;
+
+                    // If the object ONLY has 'message', then details is null
+                    if (Object.keys(data).length === 1) {
+                        details = null;
+                    } else {
+                        // Otherwise, details is the data itself (or we could strip message, but usually keeping it is fine/safer)
+                        details = data;
+                    }
                 }
 
                 return {
                     success: true,
                     message: message,
-                    details: data?.message && Object.keys(data).length === 1 ? null : (data || null),
+                    details: details,
                 };
             }),
         );

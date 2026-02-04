@@ -1,7 +1,7 @@
 "use client";
 
 import Link from 'next/link';
-import { Mail, Lock, Eye, EyeOff, Facebook, Apple } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { Button, Input, Label } from '@/components/ui';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -167,10 +167,8 @@ export default function SignInPage() {
                     </div>
 
                     {/* Social Buttons */}
-                    <div className="grid grid-cols-3 gap-3">
-                        <SocialButton onClick={() => handleSocialLogin('Google')} icon={<img src="https://www.svgrepo.com/show/475656/google-color.svg" className="h-5 w-5" alt="G" />} label="Google" />
-                        <SocialButton onClick={() => handleSocialLogin('Facebook')} icon={<Facebook className="h-5 w-5 text-[#1877F2] fill-[#1877F2]" />} label="Facebook" />
-                        <SocialButton onClick={() => handleSocialLogin('Apple')} icon={<Apple className="h-5 w-5 text-black fill-black" />} label="Apple" />
+                    <div className="grid grid-cols-1 gap-3">
+                        <SocialButton onClick={() => handleSocialLogin('Google')} icon={<img src="https://www.svgrepo.com/show/475656/google-color.svg" className="h-5 w-5" alt="G" />} label="Continue with Google" />
                     </div>
                 </div>
             </div>
