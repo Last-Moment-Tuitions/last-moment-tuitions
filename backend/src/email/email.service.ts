@@ -1,20 +1,29 @@
 
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Resend } from 'resend';
+import * as nodemailer from 'nodemailer';
 
 @Injectable()
 export class EmailService {
-    private resend: Resend;
+    private transporter: nodemailer.Transporter;
 
     constructor(private configService: ConfigService) {
-        this.resend = new Resend(this.configService.get<string>('RESEND_API_KEY'));
+        this.transporter = nodemailer.createTransport({
+            service: 'gmail',
+            host: this.configService.get<string>('SMTP_HOST'),
+            port: this.configService.get<number>('SMTP_PORT'),
+            secure: true, // true for 465
+            auth: {
+                user: this.configService.get<string>('SMTP_USER'),
+                pass: this.configService.get<string>('SMTP_PASS'),
+            },
+        });
     }
 
     async sendOtpEmail(email: string, otp: string) {
         try {
-            const { data, error } = await this.resend.emails.send({
-                from: 'Last Moment Tuitions <onboarding@resend.dev>',
+            const info = await this.transporter.sendMail({
+                from: '"Last Moment Tuitions" <' + this.configService.get<string>('SMTP_USER') + '>', // sender address
                 to: email,
                 subject: 'Your OTP Code - Last Moment Tuitions',
                 html: `
@@ -44,7 +53,7 @@ export class EmailService {
                                     <div class="otp-code">${otp}</div>
                                 </div>
                                 
-                                <p><strong>This code will expire in 5 minutes.</strong></p>
+                                <p><strong>This code will expire in 60 seconds.</strong></p>
                                 <p>If you didn't request this, please ignore this email.</p>
                                 
                                 <div class="footer">
@@ -57,16 +66,11 @@ export class EmailService {
                 `,
             });
 
-            if (error) {
-                console.error('[EmailService] Error sending email:', error);
-                throw new Error('Failed to send OTP email');
-            }
-
-            console.log('[EmailService] OTP email sent successfully:', data);
-            return data;
+            console.log('[EmailService] OTP email sent successfully. MessageId:', info.messageId);
+            return info;
         } catch (error) {
-            console.error('[EmailService] Exception:', error);
-            throw error;
+            console.error('[EmailService] Error sending email:', error);
+            throw new Error('Failed to send OTP email');
         }
     }
 }

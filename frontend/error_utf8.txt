@@ -1,0 +1,58 @@
+﻿node.exe : D:\rani\lmt\last-
+moment-tuitions\frontend\nod
+e_modules\next\dist\server\c
+onfig.js:1326
+At D:\rani\lmt\last-moment-t
+uitions\frontend\node_module
+s\.bin\next.ps1:15 char:3
++   & "node$exe"  "$basedir/
+../next/dist/bin/next" $args
++   ~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          
+    : NotSpecified: (D:\ra  
+  ni\lmt\las...\config.js   
+ :1326:String) [], Remot    
+eException
+    + FullyQualifiedErrorId 
+    : NativeCommandError
+ 
+    config.experimental ??= 
+{};
+                        ^^^
+
+SyntaxError: Unexpected 
+token '??='
+    at wrapSafe (internal/mo
+dules/cjs/loader.js:1029:16)
+    at Module._compile (inte
+rnal/modules/cjs/loader.js:1
+078:27)
+    at Object.Module._extens
+ions..js (internal/modules/c
+js/loader.js:1143:10)
+    at Module.load (internal
+/modules/cjs/loader.js:979:3
+2)
+    at 
+Function.Module._load (inter
+nal/modules/cjs/loader.js:81
+9:12)
+    at Module.require (inter
+nal/modules/cjs/loader.js:10
+03:19)
+    at Module.mod.require (D
+:\rani\lmt\last-moment-tuiti
+ons\frontend\node_modules\ne
+xt\dist\server\require-hook.
+js:68:28)
+    at require (internal/mod
+ules/cjs/helpers.js:107:18)
+    at Object.<anonymous> (D
+:\rani\lmt\last-moment-tuiti
+ons\frontend\node_modules\ne
+xt\dist\cli\next-test.js:26:
+56)
+    at Module._compile (inte
+rnal/modules/cjs/loader.js:1
+114:14)

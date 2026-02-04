@@ -256,8 +256,8 @@ export class AuthService {
         // Generate 6 digit OTP
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
-        // Store in Redis with 5 min TTL
-        await this.redis.set(`otp:${email}`, otp, 'EX', 300);
+        // Store in Redis with 1 min TTL
+        await this.redis.set(`otp:${email}`, otp, 'EX', 60);
 
         // Send OTP via email
         await this.emailService.sendOtpEmail(email, otp);
