@@ -23,32 +23,35 @@ export class TransformInterceptor<T>
     ): Observable<Response<T>> {
         return next.handle().pipe(
             map((data) => {
-                // Check if data is already in standard format (recursive prevention)
-                if (data && typeof data === 'object' && 'success' in data && 'message' in data) {
+                // If data is already in the correct format, return it as is
+                if (data && typeof data === 'object' && 'success' in data && typeof data.success === 'boolean') {
                     return data;
                 }
 
                 // Default values
                 let message = 'Request successful';
-                let details = data || null;
+                let details = data; // Default details is the raw data
+                let success = true; // Assume success for normal responses
 
-                // If data is an object with a 'message' property
-                if (data && typeof data === 'object' && 'message' in data) {
-                    message = data.message;
-
-                    // If the object ONLY has 'message', then details is null
-                    if (Object.keys(data).length === 1) {
-                        details = null;
-                    } else {
-                        // Otherwise, details is the data itself (or we could strip message, but usually keeping it is fine/safer)
-                        details = data;
+                // If data is an object with a 'message' property, extract it
+                if (data && typeof data === 'object' && !Array.isArray(data)) {
+                    if ('message' in data) {
+                        message = data.message;
+                        // If data only contained 'message', details should be null
+                        // Otherwise, details can be the rest of the object or null if desired
+                        const keys = Object.keys(data);
+                        if (keys.length === 1 && keys[0] === 'message') {
+                            details = null;
+                        } else {
+                            details = data;
+                        }
                     }
                 }
 
                 return {
-                    success: true,
-                    message: message,
-                    details: details,
+                    success,
+                    message,
+                    details,
                 };
             }),
         );

@@ -1,8 +1,8 @@
 "use client";
 
 import Link from 'next/link';
-import { Mail, Lock, User, Phone, Eye, EyeOff, Facebook, Apple } from 'lucide-react';
-import { Button, Input, Label } from '@/components/ui';
+import { Mail, Lock, User, Phone, Eye, EyeOff } from 'lucide-react';
+import { Button, Input, Label, GoogleButton } from '@/components/ui';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import API_BASE_URL from '@/lib/config';
@@ -63,19 +63,19 @@ export default function SignUpPage() {
         }
     };
 
-    const handleSocialLogin = async (provider) => {
-        const toastId = toast.loading(`Initiating ${provider} Sign Up...`);
+    const handleGoogleLogin = async () => {
+        const toastId = toast.loading('Initiating Google Sign Up...');
         try {
             const { error } = await supabase.auth.signInWithOAuth({
-                provider: provider.toLowerCase(),
+                provider: 'google',
                 options: {
                     redirectTo: `${window.location.origin}/auth/callback`,
                 },
             });
             if (error) throw error;
         } catch (error) {
-            console.error(`${provider} Sign Up Error:`, error);
-            toast.error(`Failed to initiate ${provider} Sign Up`, { id: toastId });
+            console.error('Google Sign Up Error:', error);
+            toast.error('Failed to initiate Google Sign Up', { id: toastId });
         }
     };
 
@@ -282,27 +282,10 @@ export default function SignUpPage() {
                         </div>
                     </div>
 
-                    {/* Social Buttons */}
-                    <div className="grid grid-cols-3 gap-3">
-                        <SocialButton onClick={() => handleSocialLogin('Google')} icon={<img src="https://www.svgrepo.com/show/475656/google-color.svg" className="h-5 w-5" alt="G" />} label="Google" />
-                        <SocialButton onClick={() => handleSocialLogin('Facebook')} icon={<Facebook className="h-5 w-5 text-[#1877F2] fill-[#1877F2]" />} label="Facebook" />
-                        <SocialButton onClick={() => handleSocialLogin('Apple')} icon={<Apple className="h-5 w-5 text-black fill-black" />} label="Apple" />
-                    </div>
+                    <GoogleButton onClick={handleGoogleLogin} />
                 </div>
             </div>
         </div>
     );
 }
 
-function SocialButton({ icon, label, onClick }) {
-    return (
-        <button
-            type="button"
-            onClick={onClick}
-            className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl border border-gray-100 hover:bg-gray-50 transition-all font-semibold text-xs text-gray-700 hover:shadow-sm"
-        >
-            {icon}
-            <span className="hidden sm:inline">{label}</span>
-        </button>
-    );
-}
