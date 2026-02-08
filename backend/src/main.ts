@@ -40,6 +40,7 @@ async function bootstrap() {
 
             // Production: use env variable
             const allowedOrigins = [configService.get<string>('FRONTEND_URL')].filter(Boolean);
+            console.log(allowedOrigins, 'origins');
             if (allowedOrigins.includes(origin)) {
                 return callback(null, true);
             }
