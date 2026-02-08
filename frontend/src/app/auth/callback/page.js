@@ -43,7 +43,7 @@ export default function AuthCallbackPage() {
 
                 const data = await res.json();
 
-                document.cookie = `sessionId=${data.accessToken}; path=/; max-age=${data.expiresIn}; SameSite=Lax; Secure`;
+                document.cookie = `sessionId=${data.token}; path=/; max-age=${data.expiresIn}; SameSite=Lax; Secure`;
 
                 login(data.user);
 
