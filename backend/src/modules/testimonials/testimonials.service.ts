@@ -2,6 +2,7 @@ import { Injectable, Inject } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Testimonial } from './schemas/testimonial.schema';
+import { CreateTestimonialDto } from './dto/create-testimonial.dto';
 import Redis from 'ioredis';
 
 @Injectable()
@@ -37,15 +38,17 @@ export class TestimonialsService {
         return testimonials;
     }
 
-    async create(data: any) {
+    async create(data: CreateTestimonialDto) {
         const created = new this.testimonialModel(data);
         const saved = await created.save();
-        await this.clearCache(); // Keep data consistent
+        await this.clearCache();
         return saved;
     }
 
-    async update(id: string, data: any) {
-        const updated = await this.testimonialModel.findByIdAndUpdate(id, data, { new: true }).exec();
+    async update(id: string, data: Partial<CreateTestimonialDto>) {
+        const updated = await this.testimonialModel
+            .findByIdAndUpdate(id, data, { new: true })
+            .exec();
         await this.clearCache();
         return updated;
     }

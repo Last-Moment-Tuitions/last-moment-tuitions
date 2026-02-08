@@ -32,7 +32,7 @@ export class Page {
 
   @Prop({
     type: String,
-    enum: Object.values(PageStatus), // Uses the enum values
+    enum: Object.values(PageStatus),
     default: PageStatus.DRAFT
   })
   status: string;

@@ -1,13 +1,8 @@
-// Ensure this matches your frontend .env variable name
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3005';
 const baseUrl = `${BACKEND_URL}/api`;
 
-/**
- * Helper to get the auth token from local storage or cookies
- * (Adjust this based on how you store your Supabase/JWT token)
- */
 const getAuthHeaders = () => {
-    const token = localStorage.getItem('token'); // or your specific token key
+    const token = localStorage.getItem('token');
     return {
         'Content-Type': 'application/json',
         ...(token ? { 'Authorization': `Bearer ${token}` } : {}),

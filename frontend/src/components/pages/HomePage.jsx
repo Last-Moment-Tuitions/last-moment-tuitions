@@ -28,18 +28,29 @@ import { FadeIn, StaggerContainer, StaggerItem, ScaleIn } from '@/components/Ani
 import { HeroBackground } from '@/components/HeroAnimation';
 import { HeroMerged } from '@/components/HeroMerged';
 import { FaqSection } from '@/components/FaqSection';
-import TestimonialSection from '@/components/TestimonialSection';
+// import TestimonialSection from '@/components/TestimonialSection';
 import { testimonialService } from '@/services/testimonialService';
+import AnimatedTestimonials from '@/components/AnimatedTestimonials';
 import { StickyScroll } from '@/components/StickyScrollLayout';
+
 
 export default function HomePage() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [testimonials, setTestimonials] = useState([]);
 
+    const [loading, setLoading] = useState(true);
+
     useEffect(() => {
         const fetchTestimonials = async () => {
-            const data = await testimonialService.getByPage('Homepage');
-            setTestimonials(data);
+            try {
+                // This call hits NestJS -> Redis (Fast) -> MongoDB (Fallback)
+                const data = await testimonialService.getByPage('Homepage');
+                setTestimonials(data);
+            } catch (error) {
+                console.error("Failed to fetch testimonials:", error);
+            } finally {
+                setLoading(false);
+            }
         };
         fetchTestimonials();
     }, []);
@@ -340,56 +351,31 @@ export default function HomePage() {
                 </div>
             </section>
 
-            {/* Testimonials */}
-            {/* <section className="py-12 bg-gray-50">
+            {/* Testimonials Section */}
+            <section className="py-12 bg-gray-50">
                 <div className="container mx-auto px-4">
                     <div className="text-center mb-10">
                         <FadeIn>
                             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">Loved by our students</h2>
                             <p className="text-gray-600 text-lg">Hear what our successful students have to say</p>
                         </FadeIn>
-                    </div> */}
+                    </div>
 
-            <TestimonialSection testimonials={testimonials} />
-
-
-            {/* <AnimatedTestimonials
-                        autoplay={true}
-                        testimonials={[
-                            {
-                                quote: "The structured content and expert instructors helped me crack GATE with a top rank. The practice tests were very close to the actual exam pattern.",
-                                name: "Riya Sharma",
-                                designation: "AIR 45, GATE CS 2024",
-                                src: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=3387&auto=format&fit=crop"
-                            },
-                            {
-                                quote: "I switched careers from non-tech to Full Stack Development thanks to the bootcamp course. The hands-on projects gave me the confidence to ace my interviews.",
-                                name: "Arjun Mehta",
-                                designation: "Software Engineer at Google",
-                                src: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=3560&auto=format&fit=crop"
-                            },
-                            {
-                                quote: "The UPSC pre-recorded lectures were a lifesaver. I could study at my own pace and the doubt clearing sessions were extremely helpful.",
-                                name: "Priya Patel",
-                                designation: "UPSC Aspirant",
-                                src: "https://images.unsplash.com/photo-1580489944761-15a19d654956?q=80&w=3461&auto=format&fit=crop"
-                            },
-                            {
-                                quote: "Excellent content for banking exams. The math tricks and reasoning shortcuts taught by the instructors saved me so much time in the actual exam.",
-                                name: "Vikram Singh",
-                                designation: "PO at SBI",
-                                src: "https://images.unsplash.com/photo-1628157588553-5eeea00af15c?q=80&w=3560&auto=format&fit=crop"
-                            },
-                            {
-                                quote: "The best investment I made for my career. The instructors are clearly industry veterans and the community support is unmatched.",
-                                name: "Ananya Das",
-                                designation: "Product Designer",
-                                src: "https://images.unsplash.com/photo-1633332755192-727a05c4013d?q=80&w=3560&auto=format&fit=crop"
-                            },
-                        ]}
-                    /> */}
-            {/* </div>
-            </section> */}
+                    {/* Only render if we have data to prevent errors */}
+                    {!loading && testimonials.length > 0 ? (
+                        <AnimatedTestimonials
+                            testimonials={testimonials.map(t => ({
+                                src: t.image,
+                                name: t.name,
+                                designation: `Verified Student of Last Moment Tuitions`,
+                                quote: t.message,
+                                rating: t.rating
+                            }))}
+                            autoplay={true}
+                        />
+                    ) : null}
+                </div>
+            </section>
 
             {/* Become an Instructor */}
             <section className="py-20">
