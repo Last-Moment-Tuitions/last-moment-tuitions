@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { adminService } from '@/services/adminService';
 import Link from 'next/link';
 import { Button } from '@/components/ui';
-import { Plus, Edit, Trash, ExternalLink, Search, Check, Folder, ChevronRight, Home, FolderPlus } from 'lucide-react';
+import { Plus, Edit, Trash, ExternalLink, Search, Check, Folder, ChevronRight, Home, FolderPlus, Eye, EyeOff } from 'lucide-react';
 
 export default function ContentManager({ view = 'page' }) {
     // Navigation State
@@ -144,6 +144,20 @@ export default function ContentManager({ view = 'page' }) {
         }
     };
 
+    const togglePublish = async (e, page) => {
+        e.stopPropagation(); // Prevent card click
+        try {
+            const newStatus = page.status === 'published' ? 'draft' : 'published';
+            await adminService.updatePage(page._id, { status: newStatus });
+            
+            // Optimistic update
+            setPages(pages.map(p => p._id === page._id ? { ...p, status: newStatus } : p));
+        } catch (error) {
+            console.error('Failed to update status', error);
+            alert('Failed to update status');
+        }
+    };
+
     const copyToClipboard = (id) => {
         navigator.clipboard.writeText(id);
         setCopiedId(id);
@@ -269,6 +283,19 @@ export default function ContentManager({ view = 'page' }) {
                     >
                         {/* Top Action Bar (Overlay) */}
                         <div className="absolute top-3 right-3 flex gap-1 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+                            {view === 'page' && (
+                                <button
+                                    onClick={(e) => togglePublish(e, item)}
+                                    title={item.status === 'published' ? 'Unpublish' : 'Publish'}
+                                    className={`p-1.5 backdrop-blur rounded-md shadow-sm border border-gray-100 transition-colors ${
+                                        item.status === 'published' 
+                                            ? 'bg-green-50/90 text-green-600 hover:bg-green-100 hover:text-green-700' 
+                                            : 'bg-white/90 text-gray-400 hover:text-gray-900'
+                                    }`}
+                                >
+                                    {item.status === 'published' ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+                                </button>
+                            )}
                             <Link href={`/editor/${item._id}`}>
                                 <button className="p-1.5 bg-white/90 backdrop-blur text-gray-600 hover:text-blue-600 rounded-md shadow-sm border border-gray-100">
                                     <Edit className="w-3.5 h-3.5" />

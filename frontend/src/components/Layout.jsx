@@ -1,18 +1,41 @@
 'use client';
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Home, BookOpen, Stethoscope, Cog, BriefcaseBusiness, GraduationCap } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import contentService from '@/services/contentService';
+import menuService from '@/services/menuService';
 
 import { ChevronDown, Search } from 'lucide-react';
 
 export function Header() {
     const pathname = usePathname();
     const { user, logout } = useAuth();
+    const [navItems, setNavItems] = useState([]);
+
+    useEffect(() => {
+        const fetchNav = async () => {
+            try {
+                // Try fetching dynamic menu first
+                const dynamicMenu = await menuService.getActive().catch(() => null);
+                
+                if (dynamicMenu && dynamicMenu.items && dynamicMenu.items.length > 0) {
+                    setNavItems(dynamicMenu.items);
+                } else {
+                    // Fallback to old folder-based nav
+                    const res = await contentService.getNav();
+                    setNavItems(res.data || []);
+                }
+            } catch (error) {
+                console.error('Failed to fetch nav', error);
+            }
+        };
+        fetchNav();
+    }, []);
 
     const isActive = (path) => pathname === path;
-    const isGroupActive = (paths) => paths.some(path => pathname?.startsWith(path));
+    const isGroupActive = (items) => items.some(item => pathname === item.href);
 
     return (
         <header className="sticky top-0 z-50 bg-white border-b border-gray-100 shadow-sm font-sans">
@@ -51,32 +74,24 @@ export function Header() {
                         Home
                     </NavLink>
 
-                    <NavDropdown
-                        label="Government"
-                        active={isGroupActive(['/government'])}
-                        items={[
-                            { label: 'SEBI Grade A IT Officer', href: '/government/sebi-grade-a-it' },
-                            { label: 'IBPS SO', href: '/government/ibps-so' }
-                        ]}
-                    />
-
-
-                    <NavDropdown
-                        label="Engineering"
-                        active={isGroupActive(['/exams/jee', '/exams/gate'])}
-                        items={[
-                            { label: 'JEE Mains', href: '/exams/jee' },
-                            { label: 'JEE Advanced', href: '/exams/jee' },
-                            { label: 'GATE', href: '/exams/gate' },
-                            { label: 'BITSAT', href: '/exams/jee' }
-                        ]}
-                    />
+                    {navItems.map((item, idx) => (
+                        item.type === 'link' ? (
+                            <NavLink key={idx} href={item.href} active={isActive(item.href)}>
+                                {item.label}
+                            </NavLink>
+                        ) : (
+                            <NavDropdown
+                                key={idx}
+                                label={item.label}
+                                active={isGroupActive(item.items)}
+                                items={item.items}
+                            />
+                        )
+                    ))}
 
                     <NavLink href="/courses" active={isActive('/courses')}>
                         Courses
                     </NavLink>
-
-
                 </ul>
 
                 {/* Right Section: Auth Buttons */}

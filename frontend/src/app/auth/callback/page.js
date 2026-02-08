@@ -19,17 +19,13 @@ export default function AuthCallbackPage() {
             processed.current = true;
 
             try {
-                // 1. Get the session from Supabase (this parses the hash fragment)
                 const { data: { session }, error } = await supabase.auth.getSession();
 
                 if (error) throw error;
                 if (!session) {
-                    // Sometimes the session is not immediately available, or we might need to handle the hash manually
-                    // But in most cases, supabase-js handles the hash parsing automatically
                     throw new Error('No session found');
                 }
 
-                // 2. Send the access token to our backend
                 const res = await fetch(`${API_BASE_URL}/auth/google`, {
                     method: 'POST',
                     headers: {
@@ -47,8 +43,6 @@ export default function AuthCallbackPage() {
 
                 const data = await res.json();
 
-                // 3. Login the user in our app context
-                // Store opaque session ID in cookie (secure, path=/)
                 document.cookie = `sessionId=${data.accessToken}; path=/; max-age=${data.expiresIn}; SameSite=Lax; Secure`;
 
                 login(data.user);
@@ -59,7 +53,6 @@ export default function AuthCallbackPage() {
             } catch (error) {
                 console.error('Login Callback Error:', error);
                 setStatus(`Login failed: ${error.message}`);
-                // Optional: Redirect back to login after a delay
                 setTimeout(() => router.push('/signin'), 3000);
             }
         };

@@ -25,6 +25,10 @@ export class UpdatePageDto {
     @IsOptional()
     gjsStyles?: any[];
 
+    @IsArray()
+    @IsOptional()
+    gjsAssets?: any[];
+
     @IsString()
     @IsOptional()
     gjsHtml?: string;

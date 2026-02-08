@@ -18,7 +18,9 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
         const responseBody = {
             success: false,
-            message: exception instanceof HttpException ? (exception.getResponse() as any).message || exception.message : 'Internal Server Error',
+            message: exception instanceof HttpException
+                ? (typeof exception.getResponse() === 'object' ? (exception.getResponse() as any).message || exception.message : (exception.getResponse() as string))
+                : 'Internal Server Error',
             details: exception instanceof HttpException ? (exception.getResponse() as any).error || null : null,
         };
 

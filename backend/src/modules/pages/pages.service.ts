@@ -4,10 +4,14 @@ import { Model } from 'mongoose';
 import { CreatePageDto } from './dto/create-page.dto';
 import { UpdatePageDto } from './dto/update-page.dto';
 import { Page, PageDocument } from './entities/page.entity';
+import { Folder, FolderDocument } from '../folders/entities/folder.entity';
 
 @Injectable()
 export class PagesService {
-  constructor(@InjectModel(Page.name) private pageModel: Model<PageDocument>) {}
+  constructor(
+    @InjectModel(Page.name) private pageModel: Model<PageDocument>,
+    @InjectModel(Folder.name) private folderModel: Model<FolderDocument>
+  ) { }
 
   async create(createPageDto: CreatePageDto) {
     const pageData: any = { ...createPageDto };
@@ -44,12 +48,18 @@ export class PagesService {
   }
 
   async findAll(query: any) {
-    const { folder, type } = query;
+    const { folder, type, status } = query;
     const filter: any = {};
     if (folder !== undefined) {
       filter.folder = (folder === 'null' || !folder) ? null : folder;
     }
     if (type) filter.type = type;
+  
+    if (status && status !== 'all') {
+        filter.status = status;
+    } else if (!status) {
+         filter.status = 'published';
+    }
 
     return this.pageModel.find(filter)
       .select('title slug updatedAt folder type status viewCount')
@@ -58,11 +68,11 @@ export class PagesService {
   }
 
   async findOne(id: string) {
-    return this.pageModel.findById(id).exec();
+    return this.pageModel.findOne({ _id: id, status: 'published' }).exec();
   }
 
   async findBySlug(slug: string) {
-    return this.pageModel.findOne({ slug }).exec();
+    return this.pageModel.findOne({ slug, status: 'published' }).exec();
   }
 
   async update(id: string, updatePageDto: UpdatePageDto) {
@@ -75,6 +85,47 @@ export class PagesService {
 
   async incrementView(id: string) {
     return this.pageModel.findByIdAndUpdate(id, { $inc: { viewCount: 1 } }, { new: true }).exec();
+  }
+
+  async getNavHierarchy() {
+    // 1. Fetch all folders
+    const folders = await this.folderModel.find({ type: 'page' }).sort({ name: 1 }).exec();
+
+    // 2. Fetch all published pages
+    const pages = await this.pageModel.find({
+      type: 'page',
+      status: 'published'
+    }).select('title slug folder').sort({ title: 1 }).exec();
+
+    // 3. Build hierarchy
+    const hierarchy = [];
+
+    // Root Pages (no folder)
+    const rootPages = pages.filter(p => !p.folder);
+    rootPages.forEach(p => {
+      hierarchy.push({
+        type: 'link',
+        label: p.title,
+        href: `/${p.slug}`
+      });
+    });
+
+    // Folders with their pages
+    folders.forEach(folder => {
+      const folderPages = pages.filter(p => p.folder?.toString() === folder._id.toString());
+      if (folderPages.length > 0) {
+        hierarchy.push({
+          type: 'dropdown',
+          label: folder.name,
+          items: folderPages.map(p => ({
+            label: p.title,
+            href: `/${p.slug}`
+          }))
+        });
+      }
+    });
+
+    return hierarchy;
   }
 
   // Helper

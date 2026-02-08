@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation';
 import { Button } from '@/components/ui';
+import ViewTracker from '@/components/ViewTracker';
 
 import API_BASE_URL from '@/lib/config';
 
@@ -133,7 +134,6 @@ export default async function DynamicPage({ params }) {
 
     return (
         <main>
-            <Header />
             <ViewTracker pageId={page._id} />
             {finalHtml ? (
                 <>
@@ -144,10 +144,8 @@ export default async function DynamicPage({ params }) {
                 <div className="py-20 text-center">
                     <h1 className="text-4xl font-bold">{page.title}</h1>
                     <p className="mt-4 text-gray-600">This page is built with the legacy system or is empty.</p>
-                    {/* Legacy Block Rendering Fallback could go here */}
                 </div>
             )}
-            <Footer />
         </main>
     );
 }

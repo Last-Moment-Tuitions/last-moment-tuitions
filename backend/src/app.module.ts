@@ -11,6 +11,7 @@ import { AdminModule } from './admin/admin.module';
 import { PagesModule as PublicPagesModule } from './modules/pages/pages.module';
 import { FoldersModule as PublicFoldersModule } from './modules/folders/folders.module';
 import { CoursesModule } from './modules/courses/courses.module';
+import { MenusModule } from './modules/menus/menus.module';
 import { AppLoggerMiddleware } from './common/middleware/logger.middleware';
 import { EmailModule } from './email/email.module';
 
@@ -34,6 +35,7 @@ import { EmailModule } from './email/email.module';
     PublicPagesModule,
     PublicFoldersModule,
     CoursesModule,
+    MenusModule,
   ],
 })
 export class AppModule implements NestModule {
