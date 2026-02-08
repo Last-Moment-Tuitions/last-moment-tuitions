@@ -6,14 +6,16 @@ import API_BASE_URL from '@/lib/config';
 
 const AuthContext = createContext();
 
-export function AuthProvider({ children }) {
-    const [user, setUser] = useState(null);
-    const [loading, setLoading] = useState(true);
+export function AuthProvider({ children, initialUser = null }) {
+    const [user, setUser] = useState(initialUser);
+    const [loading, setLoading] = useState(!initialUser);
     const router = useRouter();
 
     useEffect(() => {
-        checkUser();
-    }, []);
+        if (!initialUser) {
+            checkUser();
+        }
+    }, [initialUser]);
 
     const getSessionId = () => {
         return document.cookie.split('; ').find(row => row.startsWith('sessionId='))?.split('=')[1];

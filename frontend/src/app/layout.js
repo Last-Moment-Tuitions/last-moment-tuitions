@@ -10,11 +10,43 @@ export const metadata = {
   },
 };
 
-export default function RootLayout({ children }) {
+import SessionMonitor from '@/components/SessionMonitor';
+
+import { cookies } from 'next/headers';
+import API_BASE_URL from '@/lib/config';
+
+async function getUserOnServer() {
+    const cookieStore = await cookies();
+    const sessionId = cookieStore.get('sessionId')?.value;
+
+    if (!sessionId) return null;
+
+    try {
+        const res = await fetch(`${API_BASE_URL}/auth/me`, {
+            headers: {
+                'x-session-id': sessionId,
+                'Cookie': `sessionId=${sessionId}`
+            },
+            cache: 'no-store' // Ensure fresh data
+        });
+
+        if (res.ok) {
+            return await res.json();
+        }
+    } catch (error) {
+        console.error('SSR Auth Check Failed', error);
+    }
+    return null;
+}
+
+export default async function RootLayout({ children }) {
+  const initialUser = await getUserOnServer();
+
   return (
     <html lang="en">
       <body suppressHydrationWarning>
-        <AuthProvider>
+        <AuthProvider initialUser={initialUser}>
+          <SessionMonitor />
           {children}
         </AuthProvider>
       </body>

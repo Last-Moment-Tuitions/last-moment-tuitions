@@ -23,9 +23,7 @@ export function Header() {
                 if (dynamicMenu && dynamicMenu.items && dynamicMenu.items.length > 0) {
                     setNavItems(dynamicMenu.items);
                 } else {
-                    // Fallback to old folder-based nav
-                    const res = await contentService.getNav();
-                    setNavItems(res.data || []);
+                    setNavItems([]);
                 }
             } catch (error) {
                 console.error('Failed to fetch nav', error);
@@ -209,7 +207,7 @@ export function Footer() {
                     <div className="space-y-6">
                         <Link href="/" className="flex items-center gap-2">
                             <div className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center overflow-hidden border border-gray-700">
-                                <img src="https://play-lh.googleusercontent.com/APeEZa4FLR80Q2huR4dQmpElLaBz_jw7kkkpFF38Kjm6Y_ehZjg3XIqH_8Vvo0WZBg" alt="LMT Logo" className="w-full h-full object-cover" />
+                                <GraduationCap className="w-5 h-5 text-white" />
                             </div>
                             <span className="text-xl font-bold text-white">Last Moment Tuitions</span>
                         </Link>
