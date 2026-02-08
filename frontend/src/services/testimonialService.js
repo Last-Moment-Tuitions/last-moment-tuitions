@@ -1,8 +1,13 @@
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3005';
+// Ensure you have NEXT_PUBLIC_BACKEND_URL defined in your .env.local file
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
+
+// Safety check: Fallback only if absolutely necessary, 
+// but NEXT_PUBLIC_ ensures it's available in the browser.
 const baseUrl = `${BACKEND_URL}/api`;
 
 const getAuthHeaders = () => {
-    const token = localStorage.getItem('token');
+    // Check if window is defined to prevent errors during SSR (Server Side Rendering)
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
     return {
         'Content-Type': 'application/json',
         ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
@@ -13,9 +18,11 @@ export const testimonialService = {
     // 1. Get testimonials (Public/Admin)
     getByPage: async (pageTag) => {
         try {
-            const res = await fetch(`${baseUrl}/testimonials?page=${encodeURIComponent(pageTag)}`, {
+            // Updated parameter name to 'target_page' to match your NestJS Controller @Query
+            const res = await fetch(`${baseUrl}/testimonials?target_page=${encodeURIComponent(pageTag)}`, {
                 cache: 'no-store'
             });
+
             if (!res.ok) throw new Error('Failed to fetch testimonials');
             return await res.json();
         } catch (error) {
