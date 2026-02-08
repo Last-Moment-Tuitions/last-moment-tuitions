@@ -1,4 +1,4 @@
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3005';
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3005';
 const baseUrl = `${BACKEND_URL}/api`;
 
 const getAuthHeaders = () => {
