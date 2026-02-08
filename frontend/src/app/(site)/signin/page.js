@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import API_BASE_URL from '@/lib/config';
 import { supabase } from '@/lib/supabase';
-import { toast } from 'sonner';
+import { useToast } from '@/context/ToastContext';
 
 export default function SignInPage() {
     const [formData, setFormData] = useState({
@@ -21,6 +21,7 @@ export default function SignInPage() {
 
     const router = useRouter();
     const { login } = useAuth();
+    const { toast } = useToast();
 
     useEffect(() => {
         setMounted(true);
@@ -33,7 +34,6 @@ export default function SignInPage() {
     };
 
     const handleGoogleLogin = async () => {
-        const toastId = toast.loading('Initiating Google Sign In...');
         try {
             const { error } = await supabase.auth.signInWithOAuth({
                 provider: 'google',
@@ -44,14 +44,13 @@ export default function SignInPage() {
             if (error) throw error;
         } catch (error) {
             console.error('Google Sign In Error:', error);
-            toast.error('Failed to initiate Google Sign In', { id: toastId });
+            toast.error('Failed to initiate Google Sign In');
         }
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
-        const toastId = toast.loading('Verifying credentials...');
         try {
             const res = await fetch(`${API_BASE_URL}/auth/login`, {
                 method: 'POST',
@@ -62,15 +61,15 @@ export default function SignInPage() {
             if (res.ok) {
                 const data = await res.json();
                 document.cookie = `sessionId=${data.accessToken}; path=/; max-age=${data.expiresIn}; SameSite=Lax; Secure`;
-                toast.success('Login successful! Welcome back.', { id: toastId });
+                toast.success('Login successful! Welcome back.');
                 login(data.user);
             } else {
                 const errorData = await res.json();
-                toast.error(errorData.message || 'Login failed', { id: toastId });
+                toast.error(errorData.message || 'Invalid email or password');
             }
         } catch (error) {
             console.error('Login error:', error);
-            toast.error('Connection error. Please try again.', { id: toastId });
+            toast.error('Connection error. Please try again.');
         } finally {
             setLoading(false);
         }
@@ -79,30 +78,28 @@ export default function SignInPage() {
     return (
         <div className="min-h-screen flex bg-white font-sans text-gray-900 overflow-hidden">
             {/* Left Side: Illustration */}
-            <div className="hidden lg:flex lg:w-1/2 bg-[#F8F9FF] items-center justify-center p-12 relative">
-                <div className="max-w-lg w-full z-10">
-                    <img
-                        src="/assets/signin_illustration.png"
-                        alt="Join us"
-                        className="w-full h-auto drop-shadow-2xl animate-fade-in"
-                    />
-                </div>
+            <div className="hidden lg:flex lg:w-[42%] relative overflow-hidden">
+                <img
+                    src="/assets/signin_illustration.png"
+                    alt="Join us"
+                    className="absolute inset-0 w-full h-full object-cover z-10 animate-fade-in"
+                />
                 {/* Decorative background elements */}
-                <div className="absolute top-20 left-20 w-32 h-32 bg-white/30 rounded-full blur-3xl"></div>
-                <div className="absolute bottom-20 right-20 w-64 h-64 bg-primary-100/50 rounded-full blur-3xl"></div>
+                <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-white/40 rounded-full blur-[100px]"></div>
+                <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-primary-100/40 rounded-full blur-[100px]"></div>
             </div>
 
             {/* Right Side: Form */}
-            <div className="w-full lg:w-1/2 flex flex-col items-center justify-center p-6 md:p-12 lg:p-20 overflow-y-auto">
+            <div className="w-full lg:w-[58%] flex flex-col items-start justify-center p-6 md:p-12 lg:p-20 lg:pl-[12%] overflow-y-auto bg-white">
                 <div className="max-w-md w-full py-8">
-                    <div className="mb-10">
-                        <h2 className="text-3xl font-extrabold text-primary-900 mb-2 tracking-tight">Sign In</h2>
-                        <p className="text-gray-500 font-medium tracking-tight">Enter your email and password to access your account.</p>
+                    <div className="mb-10 text-left">
+                        <h2 className="text-4xl font-extrabold text-primary-900 mb-3 tracking-tight">Sign In</h2>
+                        <p className="text-gray-500 font-medium text-lg">Enter your email and password to access your account.</p>
                     </div>
 
                     <form className="space-y-6" onSubmit={handleSubmit}>
-                        <div className="space-y-1.5">
-                            <Label htmlFor="email" className="text-xs font-bold uppercase tracking-wider text-gray-400">Email Address</Label>
+                        <div className="space-y-2">
+                            <Label htmlFor="email" className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Email Address</Label>
                             <Input
                                 id="email"
                                 type="email"
@@ -114,9 +111,9 @@ export default function SignInPage() {
                             />
                         </div>
 
-                        <div className="space-y-1.5">
+                        <div className="space-y-2">
                             <div className="flex items-center justify-between">
-                                <Label htmlFor="password" className="text-xs font-bold uppercase tracking-wider text-gray-400">Password</Label>
+                                <Label htmlFor="password" className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Password</Label>
                                 <Link href="/forgot-password" size="sm" className="text-xs font-bold text-accent-600 hover:underline">
                                     Forgot Password?
                                 </Link>
@@ -141,14 +138,14 @@ export default function SignInPage() {
                             </div>
                         </div>
 
-                        <Button
-                            variant="primary"
-                            className="w-full py-4 text-sm rounded-xl font-bold flex items-center justify-center gap-2 group transition-all"
+                        <button
+                            type="submit"
+                            className="w-full py-4 bg-[#0A1D47] text-white text-sm rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-[#061330] transition-all disabled:opacity-50 mt-2"
                             disabled={loading}
                         >
                             {loading ? 'Signing In...' : 'Sign In'}
-                            {!loading && <span className="transform group-hover:translate-x-1 transition-transform">→</span>}
-                        </Button>
+                            {!loading && <span className="text-lg">→</span>}
+                        </button>
                     </form>
 
                     <p className="mt-8 text-center text-sm text-gray-500 font-medium">
@@ -161,7 +158,7 @@ export default function SignInPage() {
                         <div className="absolute inset-0 flex items-center">
                             <div className="w-full border-t border-gray-100"></div>
                         </div>
-                        <div className="relative flex justify-center text-[10px] uppercase font-bold tracking-widest">
+                        <div className="relative flex justify-center text-[10px] uppercase font-bold tracking-[0.2em]">
                             <span className="bg-white px-4 text-gray-400">Or continue with</span>
                         </div>
                     </div>

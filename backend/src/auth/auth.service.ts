@@ -268,7 +268,7 @@ export class AuthService {
         await this.emailService.sendOtpEmail(email, otp);
         console.log(`[DEBUG] OTP sent to ${email}: ${otp}`);
 
-        return { message: 'OTP sent to email' };
+        return { message: 'OTP sent successfully to your email. Valid for 60 seconds.' };
     }
 
     async verifyOtp(email: string, otp: string, ip: string, userAgent: string) {

@@ -1,6 +1,7 @@
 import './globals.css';
 import { AuthProvider } from '@/context/AuthContext';
-import { Toaster } from 'sonner';
+import { ToastProvider } from '@/context/ToastContext';
+
 
 export const metadata = {
   title: 'Prepfocus By Last Moment Tuitions',
@@ -17,27 +18,27 @@ import { cookies } from 'next/headers';
 import API_BASE_URL from '@/lib/config';
 
 async function getUserOnServer() {
-    const cookieStore = await cookies();
-    const sessionId = cookieStore.get('sessionId')?.value;
+  const cookieStore = await cookies();
+  const sessionId = cookieStore.get('sessionId')?.value;
 
-    if (!sessionId) return null;
+  if (!sessionId) return null;
 
-    try {
-        const res = await fetch(`${API_BASE_URL}/auth/me`, {
-            headers: {
-                'x-session-id': sessionId,
-                'Cookie': `sessionId=${sessionId}`
-            },
-            cache: 'no-store' // Ensure fresh data
-        });
+  try {
+    const res = await fetch(`${API_BASE_URL}/auth/me`, {
+      headers: {
+        'x-session-id': sessionId,
+        'Cookie': `sessionId=${sessionId}`
+      },
+      cache: 'no-store' // Ensure fresh data
+    });
 
-        if (res.ok) {
-            return await res.json();
-        }
-    } catch (error) {
-        console.error('SSR Auth Check Failed', error);
+    if (res.ok) {
+      return await res.json();
     }
-    return null;
+  } catch (error) {
+    console.error('SSR Auth Check Failed', error);
+  }
+  return null;
 }
 
 export default async function RootLayout({ children }) {
@@ -47,10 +48,11 @@ export default async function RootLayout({ children }) {
     <html lang="en" suppressHydrationWarning>
       <body suppressHydrationWarning>
         <AuthProvider initialUser={initialUser}>
-          <SessionMonitor />
-          {children}
+          <ToastProvider>
+            <SessionMonitor />
+            {children}
+          </ToastProvider>
         </AuthProvider>
-        <Toaster position="top-center" richColors />
       </body>
     </html>
   );
