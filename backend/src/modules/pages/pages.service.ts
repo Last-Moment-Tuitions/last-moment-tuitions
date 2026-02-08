@@ -49,16 +49,17 @@ export class PagesService {
   }
 
   async findAll(query: any) {
-    const { folder, type } = query;
+    const { folder, type, status } = query;
     const filter: any = {};
     if (folder !== undefined) {
       filter.folder = (folder === 'null' || !folder) ? null : folder;
     }
     if (type) filter.type = type;
 
-    // Resolved hardcoded status
-    if (filter.status === undefined) {
-      filter.status = PageStatus.PUBLISHED;
+    if (status && status !== 'all') {
+      filter.status = status;
+    } else if (!status) {
+      filter.status = 'published';
     }
 
     return this.pageModel.find(filter)

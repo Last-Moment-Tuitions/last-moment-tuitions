@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { Home, BookOpen, Stethoscope, Cog, BriefcaseBusiness, GraduationCap } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import contentService from '@/services/contentService';
+import menuService from '@/services/menuService';
 
 import { ChevronDown, Search } from 'lucide-react';
 
@@ -16,8 +17,16 @@ export function Header() {
     useEffect(() => {
         const fetchNav = async () => {
             try {
-                const res = await contentService.getNav();
-                setNavItems(res.data || []);
+                // Try fetching dynamic menu first
+                const dynamicMenu = await menuService.getActive().catch(() => null);
+                
+                if (dynamicMenu && dynamicMenu.items && dynamicMenu.items.length > 0) {
+                    setNavItems(dynamicMenu.items);
+                } else {
+                    // Fallback to old folder-based nav
+                    const res = await contentService.getNav();
+                    setNavItems(res.data || []);
+                }
             } catch (error) {
                 console.error('Failed to fetch nav', error);
             }
