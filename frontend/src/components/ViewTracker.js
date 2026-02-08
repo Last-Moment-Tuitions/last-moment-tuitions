@@ -16,7 +16,7 @@ export default function ViewTracker({ pageId }) {
                 // Use a session storage flag to prevent double-counting on strict-mode/dev re-renders if desired,
                 // but for simple MVP, just calling it is fine.
                 // We'll add a simple check to avoid counting the same session repeatedly if needed later.
-                await axios.post(`${API_BASE_URL}i/pages/${pageId}/view`);
+                await axios.patch(`${API_BASE_URL}/pages/${pageId}/view`);
             } catch (error) {
                 console.error('Failed to track view:', error);
             }

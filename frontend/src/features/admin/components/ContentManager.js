@@ -72,10 +72,14 @@ export default function ContentManager({ view = 'page' }) {
             // but use the service.
 
             const folders = await adminService.getFolders({ parent: parentParam, type: view });
-            const pages = await adminService.getPages({ folder: parentParam, type: view });
+            const pages = await adminService.getPages({ folder: parentParam, type: view, status: 'all' });
 
-            setFolders(folders || []);
-            setPages(pages || []);
+            // Robustly handle both { data: [...] } and [...] response formats
+            const foldersData = folders?.data || folders;
+            const pagesData = pages?.data || pages;
+
+            setFolders(Array.isArray(foldersData) ? foldersData : []);
+            setPages(Array.isArray(pagesData) ? pagesData : []);
 
         } catch (error) {
             console.error('Failed to fetch content', error);

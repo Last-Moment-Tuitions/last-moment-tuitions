@@ -16,6 +16,12 @@ export class UsersService {
         return this.userModel.findById(id).select('+passwordHash').exec();
     }
 
+    async findByIdPublic(id: string): Promise<UserDocument | null> {
+        return this.userModel.findById(id)
+            .select('-activeSessions -__v -signupMethod -authProviders -supabaseId -passwordHash')
+            .exec();
+    }
+
     async findBySupabaseId(supabaseId: string): Promise<UserDocument | null> {
         return this.userModel.findOne({ supabaseId }).exec();
     }
