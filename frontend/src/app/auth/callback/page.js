@@ -32,9 +32,12 @@ export default function AuthCallbackPage() {
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
-                        token: session.token,
+                        token: session.access_token,
                     }),
                 });
+
+
+                console.log(res);
 
                 if (!res.ok) {
                     const errorData = await res.json();
@@ -42,9 +45,10 @@ export default function AuthCallbackPage() {
                 }
 
                 const data = await res.json();
-
+                console.log(data);
                 document.cookie = `sessionId=${data.token}; path=/; max-age=${data.expiresIn}; SameSite=Lax; Secure`;
-
+                console.log(data.user);
+                console.log(document.cookie);
                 login(data.user);
 
                 setStatus('Success! Redirecting...');
