@@ -14,6 +14,7 @@ import { CoursesModule } from './modules/courses/courses.module';
 import { MenusModule } from './modules/menus/menus.module';
 import { AppLoggerMiddleware } from './common/middleware/logger.middleware';
 import { TestimonialsModule } from './modules/testimonials/testimonials.module';
+import { EmailModule } from './email/email.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { TestimonialsModule } from './modules/testimonials/testimonials.module';
     }]),
     DatabaseModule,
     RedisModule,
+    EmailModule,
     UsersModule,
     AuthModule,
     SupabaseModule,

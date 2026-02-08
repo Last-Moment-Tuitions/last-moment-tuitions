@@ -2,6 +2,7 @@
 import { Injectable, UnauthorizedException, ConflictException, Inject, BadRequestException } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { SupabaseService } from '../supabase/supabase.service';
+import { EmailService } from '../email/email.service';
 import { SignupDto } from './dto/signup.dto';
 import { LoginDto } from './dto/login.dto';
 import { GoogleLoginDto } from './dto/google-login.dto';
@@ -15,10 +16,15 @@ export class AuthService {
     constructor(
         private usersService: UsersService,
         private supabaseService: SupabaseService,
+        private emailService: EmailService,
         @Inject('REDIS_CLIENT') private redis: Redis,
     ) { }
 
     async signup(signupDto: SignupDto) {
+        if (signupDto.password !== signupDto.confirmPassword) {
+            throw new BadRequestException('Passwords do not match');
+        }
+
         const existingUser = await this.usersService.findByEmail(signupDto.email);
         if (existingUser) {
             throw new ConflictException('Email already exists');
@@ -26,8 +32,12 @@ export class AuthService {
 
         const hashedPassword = await argon2.hash(signupDto.password);
 
+        // Remove confirmPassword before passing to usersService
+        const { confirmPassword, phone, ...rest } = signupDto;
+
         return this.usersService.create({
-            ...signupDto,
+            ...rest,
+            phone: Number(phone),
             passwordHash: hashedPassword,
             authProviders: ['local'],
             signupMethod: 'local',
@@ -242,6 +252,86 @@ export class AuthService {
         return session;
     }
 
+    async forgotPassword(email: string) {
+        const user = await this.usersService.findByEmail(email);
+        if (!user) {
+            throw new BadRequestException('User with this email does not exist');
+        }
+
+        // Generate 6 digit OTP
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+        // Store in Redis with 1 min TTL
+        await this.redis.set(`otp:${email}`, otp, 'EX', 60);
+
+        // Send OTP via email
+        await this.emailService.sendOtpEmail(email, otp);
+        console.log(`[DEBUG] OTP sent to ${email}: ${otp}`);
+
+        return { message: 'OTP sent to email' };
+    }
+
+    async verifyOtp(email: string, otp: string, ip: string, userAgent: string) {
+        const storedOtp = await this.redis.get(`otp:${email}`);
+
+        if (!storedOtp || storedOtp !== otp) {
+            throw new UnauthorizedException('Invalid or expired OTP');
+        }
+
+        // Clear OTP after successful verification
+        await this.redis.del(`otp:${email}`);
+
+        const user = await this.usersService.findByEmail(email);
+        if (!user) {
+            throw new BadRequestException('User not found');
+        }
+
+        // Direct login after OTP verification
+        return this.createSession(user, 'otp', ip, userAgent);
+    }
+
+    // Step 2 Backend: Verify OTP and provide a temporary Reset Token
+    async verifyOtpForReset(email: string, otp: string) {
+        const storedOtp = await this.redis.get(`otp:${email}`);
+
+        if (!storedOtp || storedOtp !== otp) {
+            throw new UnauthorizedException('Invalid or expired OTP');
+        }
+
+        // Generate temporary Reset Token (valid for 10 mins)
+        const resetToken = uuidv4();
+        await this.redis.set(`reset_token:${resetToken}`, email, 'EX', 600);
+
+        // Delete OTP so it's only used once
+        await this.redis.del(`otp:${email}`);
+
+        return { resetToken };
+    }
+
+    // Step 3 Backend: Use the token to change the password
+    async resetPassword(resetToken: string, newPassword: string) {
+        const email = await this.redis.get(`reset_token:${resetToken}`);
+
+        if (!email) {
+            throw new UnauthorizedException('Invalid or expired reset token. Please start again.');
+        }
+
+        const user = await this.usersService.findByEmail(email);
+        if (!user) {
+            throw new BadRequestException('User not found');
+        }
+
+        const hashedPassword = await argon2.hash(newPassword);
+        await this.usersService.updateById(user._id.toString(), {
+            passwordHash: hashedPassword
+        });
+
+        // Clean up the reset token
+        await this.redis.del(`reset_token:${resetToken}`);
+
+        return { message: 'Password reset successfully' };
+
+    }
     async getProfile(userId: string) {
         return this.usersService.findByIdPublic(userId);
     }

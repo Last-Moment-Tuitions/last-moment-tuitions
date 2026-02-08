@@ -45,4 +45,40 @@ export class AuthController {
     async getProfile(@Req() req) {
         return this.authService.getProfile(req.user.userId);
     }
+
+    @Post('forgot-password')
+    @HttpCode(HttpStatus.OK)
+    async forgotPassword(@Body('email') email: string) {
+        return this.authService.forgotPassword(email);
+    }
+
+    @Post('verify-otp')
+    @HttpCode(HttpStatus.OK)
+    async verifyOtp(
+        @Body('email') email: string,
+        @Body('otp') otp: string,
+        @Req() req
+    ) {
+        const ip = req.ip || req.connection.remoteAddress;
+        const userAgent = req.headers['user-agent'] || 'unknown';
+        return this.authService.verifyOtp(email, otp, ip, userAgent);
+    }
+
+    @Post('verify-otp-for-reset')
+    @HttpCode(HttpStatus.OK)
+    async verifyOtpForReset(
+        @Body('email') email: string,
+        @Body('otp') otp: string
+    ) {
+        return this.authService.verifyOtpForReset(email, otp);
+    }
+
+    @Post('reset-password')
+    @HttpCode(HttpStatus.OK)
+    async resetPassword(
+        @Body('resetToken') resetToken: string,
+        @Body('newPassword') newPassword: string
+    ) {
+        return this.authService.resetPassword(resetToken, newPassword);
+    }
 }
