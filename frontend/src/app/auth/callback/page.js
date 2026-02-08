@@ -32,7 +32,7 @@ export default function AuthCallbackPage() {
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
-                        token: session.access_token,
+                        token: session.token,
                     }),
                 });
 
