@@ -22,7 +22,7 @@
                 },
                 {
                     "key": "Access-Control-Allow-Origin",
-                    "value": "https://last-moment-tuitions-frontend.vercel.app"
+                    "value": "https://prepfocus.lastmomenttuitions.com"
                 },
                 {
                     "key": "Access-Control-Allow-Methods",
