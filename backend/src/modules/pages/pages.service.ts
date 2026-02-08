@@ -5,6 +5,7 @@ import { CreatePageDto } from './dto/create-page.dto';
 import { UpdatePageDto } from './dto/update-page.dto';
 import { Page, PageDocument } from './entities/page.entity';
 import { Folder, FolderDocument } from '../folders/entities/folder.entity';
+import { PageStatus } from './enums/page-status.enum';
 
 @Injectable()
 export class PagesService {
@@ -15,7 +16,7 @@ export class PagesService {
 
   async create(createPageDto: CreatePageDto) {
     const pageData: any = { ...createPageDto };
-    
+
     // Logic for Standard Pages: Inject Global Templates
     if (pageData.type === 'page' || !pageData.type) {
       const headerId = await this._getOrCreateTemplate(
@@ -54,11 +55,11 @@ export class PagesService {
       filter.folder = (folder === 'null' || !folder) ? null : folder;
     }
     if (type) filter.type = type;
-  
+
     if (status && status !== 'all') {
-        filter.status = status;
+      filter.status = status;
     } else if (!status) {
-         filter.status = 'published';
+      filter.status = 'published';
     }
 
     return this.pageModel.find(filter)
@@ -68,11 +69,13 @@ export class PagesService {
   }
 
   async findOne(id: string) {
-    return this.pageModel.findOne({ _id: id, status: 'published' }).exec();
+    // Resolved hardcoded status
+    return this.pageModel.findOne({ _id: id, status: PageStatus.PUBLISHED }).exec();
   }
 
   async findBySlug(slug: string) {
-    return this.pageModel.findOne({ slug, status: 'published' }).exec();
+    // Resolved hardcoded status
+    return this.pageModel.findOne({ slug, status: PageStatus.PUBLISHED }).exec();
   }
 
   async update(id: string, updatePageDto: UpdatePageDto) {
@@ -91,10 +94,10 @@ export class PagesService {
     // 1. Fetch all folders
     const folders = await this.folderModel.find({ type: 'page' }).sort({ name: 1 }).exec();
 
-    // 2. Fetch all published pages
+    // 2. Fetch all published pages - Resolved hardcoded status
     const pages = await this.pageModel.find({
       type: 'page',
-      status: 'published'
+      status: PageStatus.PUBLISHED
     }).select('title slug folder').sort({ title: 1 }).exec();
 
     // 3. Build hierarchy
@@ -138,7 +141,8 @@ export class PagesService {
         type: 'template',
         gjsHtml: html,
         gjsCss: '',
-        gjsComponents: components
+        gjsComponents: components,
+        status: PageStatus.PUBLISHED // Templates should default to published to be usable
       }).save();
     }
     return template._id;

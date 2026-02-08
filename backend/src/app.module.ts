@@ -13,6 +13,8 @@ import { FoldersModule as PublicFoldersModule } from './modules/folders/folders.
 import { CoursesModule } from './modules/courses/courses.module';
 import { MenusModule } from './modules/menus/menus.module';
 import { AppLoggerMiddleware } from './common/middleware/logger.middleware';
+import { TestimonialsModule } from './modules/testimonials/testimonials.module';
+import { EmailModule } from './email/email.module';
 
 @Module({
   imports: [
@@ -26,6 +28,7 @@ import { AppLoggerMiddleware } from './common/middleware/logger.middleware';
     }]),
     DatabaseModule,
     RedisModule,
+    EmailModule,
     UsersModule,
     AuthModule,
     SupabaseModule,
@@ -33,6 +36,7 @@ import { AppLoggerMiddleware } from './common/middleware/logger.middleware';
     PublicPagesModule,
     PublicFoldersModule,
     CoursesModule,
+    TestimonialsModule,
     MenusModule,
   ],
 })

@@ -4,11 +4,14 @@ node_modules
 .pnp.js
 dist
 backend/dist
+backend/node_modules
+frontend/node_modules
+frontend/.next  
 
 # Testing
 coverage
 
-# Next.js
+# Next.j
 .next/
 out/
 
@@ -38,3 +41,7 @@ yarn-error.log*
 
 # Legacy Backup
 _legacy_backup/
+
+frontend/error.txt
+
+frontend/error_utf8.txt
