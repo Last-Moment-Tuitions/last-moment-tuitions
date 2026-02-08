@@ -163,7 +163,7 @@ export class AuthService {
         const userId = user._id.toString();
         const userSessionsKey = `user:sessions:${userId}`;
         const MAX_SESSIONS = 3;
-        const SESSION_TTL = 24 * 60 * 60; // 24 hours
+        const SESSION_TTL = 60 * 60; // 60 minutes
 
         // Generate Device Hash (SHA256 of UserAgent + IP)
         const deviceHash = createHash('sha256').update(`${userAgent}${ip}`).digest('hex');
@@ -244,6 +244,11 @@ export class AuthService {
     async validateSession(sessionId: string) {
         const session = await this.redis.hgetall(`session:${sessionId}`);
         if (!session || !session.userId) return null;
+
+        // Sliding Expiration: Refresh TTL
+        const SESSION_TTL = 60 * 60; // 60 minutes
+        await this.redis.expire(`session:${sessionId}`, SESSION_TTL);
+
         return session;
     }
 
@@ -325,5 +330,9 @@ export class AuthService {
         await this.redis.del(`reset_token:${resetToken}`);
 
         return { message: 'Password reset successfully' };
+
+    }
+    async getProfile(userId: string) {
+        return this.usersService.findByIdPublic(userId);
     }
 }

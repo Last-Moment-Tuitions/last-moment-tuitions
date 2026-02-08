@@ -31,7 +31,9 @@ export default function MenusAdminPage() {
     const fetchPages = async () => {
         try {
             const res = await adminService.getPages({ limit: 100, status: 'all' });
-            setPages(res.data || []);
+            // Robustly handle both { data: [...] } and [...] response formats
+            const pagesData = res?.data || res;
+            setPages(Array.isArray(pagesData) ? pagesData : []);
         } catch (error) {
             console.error("Failed to fetch pages", error);
         }

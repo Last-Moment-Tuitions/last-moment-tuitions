@@ -30,7 +30,7 @@ export const adminService = {
     // Pages
     getPages: async (params = {}) => {
         const response = await api.get('/pages', { params });
-        return response.data;
+        return response.data.data;
     },
 
     getPage: async (id) => {
