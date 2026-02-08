@@ -1,13 +1,14 @@
 "use client";
 
 import Link from 'next/link';
-import { Mail, Lock, Check } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { Button, Input, Label, GoogleButton } from '@/components/ui';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import API_BASE_URL from '@/lib/config';
 import { supabase } from '@/lib/supabase';
+import { toast } from 'sonner';
 
 export default function SignInPage() {
     const [formData, setFormData] = useState({
@@ -15,10 +16,24 @@ export default function SignInPage() {
         password: ''
     });
     const [loading, setLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
+    const [mounted, setMounted] = useState(false);
+
     const router = useRouter();
     const { login } = useAuth();
 
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    if (!mounted) return null;
+
+    const handleChange = (e) => {
+        setFormData({ ...formData, [e.target.id]: e.target.value });
+    };
+
     const handleGoogleLogin = async () => {
+        const toastId = toast.loading('Initiating Google Sign In...');
         try {
             const { error } = await supabase.auth.signInWithOAuth({
                 provider: 'google',
@@ -28,18 +43,15 @@ export default function SignInPage() {
             });
             if (error) throw error;
         } catch (error) {
-            console.error('Google Login Error:', error);
-            alert('Failed to initiate Google Login');
+            console.error('Google Sign In Error:', error);
+            toast.error('Failed to initiate Google Sign In', { id: toastId });
         }
-    };
-
-    const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.id]: e.target.value });
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
+        const toastId = toast.loading('Verifying credentials...');
         try {
             const res = await fetch(`${API_BASE_URL}/auth/login`, {
                 method: 'POST',
@@ -49,146 +61,115 @@ export default function SignInPage() {
 
             if (res.ok) {
                 const data = await res.json();
-                // Store opaque session ID in cookie (secure, path=/)
                 document.cookie = `sessionId=${data.accessToken}; path=/; max-age=${data.expiresIn}; SameSite=Lax; Secure`;
-
-                // Update global auth state and redirect
+                toast.success('Login successful! Welcome back.', { id: toastId });
                 login(data.user);
             } else {
                 const errorData = await res.json();
-                alert(`Login failed: ${errorData.message}`);
+                toast.error(errorData.message || 'Login failed', { id: toastId });
             }
         } catch (error) {
             console.error('Login error:', error);
-            alert('An error occurred during login.');
+            toast.error('Connection error. Please try again.', { id: toastId });
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <div className="min-h-screen flex bg-white">
-            {/* Left Side - Image & Quote */}
-            <div className="hidden lg:flex w-1/2 relative bg-gray-900 justify-center items-center overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-primary-900/90 to-black/80 z-10" />
-                <img
-                    src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?q=80&w=2070&auto=format&fit=crop"
-                    alt="Study environment"
-                    className="absolute inset-0 w-full h-full object-cover"
-                />
-
-                <div className="relative z-20 max-w-lg px-12 text-center text-white">
-                    <h1 className="text-5xl font-bold mb-6 leading-tight">
-                        Master Your <br />
-                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-400 to-accent-400">
-                            Future
-                        </span>
-                    </h1>
-                    <p className="text-lg text-gray-300 leading-relaxed italic">
-                        "Education is the passport to the future, for tomorrow belongs to those who prepare for it today."
-                    </p>
-                    <div className="mt-8 font-semibold text-primary-300 tracking-wide uppercase text-sm">
-                        Last Moment Tuitions
-                    </div>
+        <div className="min-h-screen flex bg-white font-sans text-gray-900 overflow-hidden">
+            {/* Left Side: Illustration */}
+            <div className="hidden lg:flex lg:w-1/2 bg-[#F8F9FF] items-center justify-center p-12 relative">
+                <div className="max-w-lg w-full z-10">
+                    <img
+                        src="/assets/signin_illustration.png"
+                        alt="Join us"
+                        className="w-full h-auto drop-shadow-2xl animate-fade-in"
+                    />
                 </div>
+                {/* Decorative background elements */}
+                <div className="absolute top-20 left-20 w-32 h-32 bg-white/30 rounded-full blur-3xl"></div>
+                <div className="absolute bottom-20 right-20 w-64 h-64 bg-primary-100/50 rounded-full blur-3xl"></div>
             </div>
 
-            {/* Right Side - Login Form */}
-            <div className="w-full lg:w-1/2 flex items-center justify-center p-8 lg:p-24">
-                <div className="max-w-md w-full">
-                    <div className="text-center mb-10">
-                        <Link href="/" className="inline-flex items-center gap-2 mb-8 group">
-                            <div className="h-10 w-10 bg-gradient-to-br from-primary-600 to-accent-600 rounded-lg flex items-center justify-center text-white font-bold text-xl shadow-lg group-hover:shadow-primary-500/30 transition-shadow">
-                                L
-                            </div>
-                            <span className="text-xl font-bold text-gray-900">Last Moment Tuitions</span>
-                        </Link>
-
-                        <h2 className="text-3xl font-bold text-gray-900 mb-2">Welcome back</h2>
-                        <p className="text-gray-500">
-                            Please enter your details to sign in
-                        </p>
+            {/* Right Side: Form */}
+            <div className="w-full lg:w-1/2 flex flex-col items-center justify-center p-6 md:p-12 lg:p-20 overflow-y-auto">
+                <div className="max-w-md w-full py-8">
+                    <div className="mb-10">
+                        <h2 className="text-3xl font-extrabold text-primary-900 mb-2 tracking-tight">Sign In</h2>
+                        <p className="text-gray-500 font-medium tracking-tight">Enter your email and password to access your account.</p>
                     </div>
 
                     <form className="space-y-6" onSubmit={handleSubmit}>
-                        <div className="space-y-2">
-                            <Label htmlFor="email">Email address</Label>
+                        <div className="space-y-1.5">
+                            <Label htmlFor="email" className="text-xs font-bold uppercase tracking-wider text-gray-400">Email Address</Label>
                             <Input
                                 id="email"
                                 type="email"
-                                placeholder="name@example.com"
-                                icon={<Mail className="h-5 w-5" />}
+                                placeholder="email@example.com"
                                 required
                                 value={formData.email}
                                 onChange={handleChange}
+                                className="rounded-xl border-gray-100 bg-gray-50/50 h-12 focus-visible:ring-primary-500"
                             />
                         </div>
 
-                        <div className="space-y-2">
-                            <Label htmlFor="password">Password</Label>
-                            <Input
-                                id="password"
-                                type="password"
-                                placeholder="••••••••"
-                                icon={<Lock className="h-5 w-5" />}
-                                required
-                                value={formData.password}
-                                onChange={handleChange}
-                            />
-                        </div>
-
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-2">
-                                <div className="relative flex h-5 w-5 items-center justify-center">
-                                    <input
-                                        id="remember"
-                                        type="checkbox"
-                                        className="peer h-5 w-5 appearance-none rounded-md border border-gray-300 bg-white checked:bg-primary-600 checked:border-transparent focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 transition-all cursor-pointer"
-                                    />
-                                    <Check className="absolute h-3.5 w-3.5 text-white opacity-0 peer-checked:opacity-100 pointer-events-none" />
-                                </div>
-                                <label
-                                    htmlFor="remember"
-                                    className="text-sm font-medium leading-none text-gray-600 cursor-pointer select-none"
-                                >
-                                    Remember me
-                                </label>
+                        <div className="space-y-1.5">
+                            <div className="flex items-center justify-between">
+                                <Label htmlFor="password" className="text-xs font-bold uppercase tracking-wider text-gray-400">Password</Label>
+                                <Link href="/forgot-password" size="sm" className="text-xs font-bold text-accent-600 hover:underline">
+                                    Forgot Password?
+                                </Link>
                             </div>
-                            <Link
-                                href="/forgot-password"
-                                className="text-sm font-semibold text-primary-600 hover:text-primary-700 hover:underline"
-                            >
-                                Forgot password?
-                            </Link>
+                            <div className="relative">
+                                <Input
+                                    id="password"
+                                    type={showPassword ? "text" : "password"}
+                                    placeholder="Enter password"
+                                    required
+                                    value={formData.password}
+                                    onChange={handleChange}
+                                    className="rounded-xl border-gray-100 bg-gray-50/50 h-12 focus-visible:ring-primary-500 pr-12"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                                >
+                                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                                </button>
+                            </div>
                         </div>
 
                         <Button
-                            className="w-full py-6 text-lg shadow-xl shadow-primary-600/20"
+                            variant="primary"
+                            className="w-full py-4 text-sm rounded-xl font-bold flex items-center justify-center gap-2 group transition-all"
                             disabled={loading}
                         >
                             {loading ? 'Signing In...' : 'Sign In'}
+                            {!loading && <span className="transform group-hover:translate-x-1 transition-transform">→</span>}
                         </Button>
                     </form>
 
+                    <p className="mt-8 text-center text-sm text-gray-500 font-medium">
+                        Don&apos;t have an account?{' '}
+                        <Link href="/signup" className="text-accent-600 font-bold hover:underline">Create Account</Link>
+                    </p>
+
+                    {/* Divider */}
                     <div className="relative my-8">
                         <div className="absolute inset-0 flex items-center">
-                            <div className="w-full border-t border-gray-200"></div>
+                            <div className="w-full border-t border-gray-100"></div>
                         </div>
-                        <div className="relative flex justify-center text-sm">
-                            <span className="bg-white px-4 text-gray-500 font-medium">Or continue with</span>
+                        <div className="relative flex justify-center text-[10px] uppercase font-bold tracking-widest">
+                            <span className="bg-white px-4 text-gray-400">Or continue with</span>
                         </div>
                     </div>
 
                     <GoogleButton onClick={handleGoogleLogin} />
-
-                    <p className="mt-8 text-center text-sm text-gray-600">
-                        Don't have an account?{' '}
-                        <Link href="/signup" className="font-bold text-primary-600 hover:text-primary-700 hover:underline transition-all">
-                            Sign up
-                        </Link>
-                    </p>
                 </div>
             </div>
         </div>
     );
 }
+
