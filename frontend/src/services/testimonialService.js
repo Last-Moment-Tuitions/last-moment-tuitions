@@ -2,7 +2,12 @@ const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 const baseUrl = `${BACKEND_URL}/api`;
 
 const getAuthHeaders = () => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    if (typeof window === 'undefined') return {};
+
+
+    const token = localStorage.getItem('token') || localStorage.getItem('accessToken');
+
+    console.log("Auth Debug - Token found:", !!token);
 
     return {
         'Content-Type': 'application/json',
