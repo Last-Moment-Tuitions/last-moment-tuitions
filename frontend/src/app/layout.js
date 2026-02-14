@@ -17,27 +17,29 @@ import { cookies } from 'next/headers';
 import API_BASE_URL from '@/lib/config';
 
 async function getUserOnServer() {
-    const cookieStore = await cookies();
-    const sessionId = cookieStore.get('sessionId')?.value;
+  const cookieStore = await cookies();
+  const sessionId = cookieStore.get('sessionId')?.value;
 
-    if (!sessionId) return null;
+  if (!sessionId) return null;
 
-    try {
-        const res = await fetch(`${API_BASE_URL}/auth/me`, {
-            headers: {
-                'x-session-id': sessionId,
-                'Cookie': `sessionId=${sessionId}`
-            },
-            cache: 'no-store' // Ensure fresh data
-        });
+  try {
+    const res = await fetch(`${API_BASE_URL}/auth/me`, {
+      headers: {
+        'x-session-id': sessionId,
+        'Cookie': `sessionId=${sessionId}`
+      },
+      cache: 'no-store' // Ensure fresh data
+    });
 
-        if (res.ok) {
-            return await res.json();
-        }
-    } catch (error) {
-        console.error('SSR Auth Check Failed', error);
+    if (res.ok) {
+      const responseData = await res.json();
+      // Handle nested details structure like login endpoint
+      return responseData.details || responseData;
     }
-    return null;
+  } catch (error) {
+    console.error('SSR Auth Check Failed', error);
+  }
+  return null;
 }
 
 export default async function RootLayout({ children }) {

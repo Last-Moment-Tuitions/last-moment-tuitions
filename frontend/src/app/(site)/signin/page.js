@@ -61,9 +61,17 @@ export default function SignInPage() {
 
             if (res.ok) {
                 const data = await res.json();
-                document.cookie = `sessionId=${data.accessToken}; path=/; max-age=${data.expiresIn}; SameSite=Lax; Secure`;
+
+                // API returns nested structure: { success, message, details: { accessToken, expiresIn, user } }
+                const { accessToken, expiresIn, user } = data.details || {};
+
+                if (!accessToken || !user) {
+                    throw new Error('Invalid response from server');
+                }
+
+                document.cookie = `sessionId=${accessToken}; path=/; max-age=${expiresIn}; SameSite=Lax; Secure`;
                 toast.success('Login successful! Welcome back.', { id: toastId });
-                login(data.user);
+                login(user);
             } else {
                 const errorData = await res.json();
                 toast.error(errorData.message || 'Login failed', { id: toastId });
