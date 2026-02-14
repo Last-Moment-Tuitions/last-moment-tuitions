@@ -38,8 +38,10 @@ async function bootstrap() {
                 return callback(null, true);
             }
 
+            const frontendUrls = configService.get<string>('FRONTEND_URL') || '';
+
             // Production: use env variable
-            const allowedOrigins = [configService.get<string>('FRONTEND_URL')].filter(Boolean);
+            const allowedOrigins = frontendUrls.split(',').map(url => url.trim()).filter(Boolean);
             console.log(allowedOrigins, 'origins');
             if (allowedOrigins.includes(origin)) {
                 return callback(null, true);
