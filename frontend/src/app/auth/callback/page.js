@@ -36,20 +36,23 @@ export default function AuthCallbackPage() {
                     }),
                 });
 
-
-                console.log(res);
-
                 if (!res.ok) {
                     const errorData = await res.json();
                     throw new Error(errorData.message || 'Backend verification failed');
                 }
 
                 const data = await res.json();
-                console.log(data);
-                document.cookie = `sessionId=${data.token}; path=/; max-age=${data.expiresIn}; SameSite=Lax; Secure`;
-                console.log(data.user);
-                console.log(document.cookie);
-                login(data.user);
+
+                // API returns nested structure: { success, message, details: { accessToken, expiresIn, user } }
+                const { accessToken, expiresIn, user } = data.details || {};
+
+                if (!accessToken || !user) {
+                    throw new Error('Invalid response from server');
+                }
+
+                document.cookie = `sessionId=${accessToken}; path=/; max-age=${expiresIn}; SameSite=Lax; Secure`;
+
+                login(user);
 
                 setStatus('Success! Redirecting...');
                 router.push('/');
