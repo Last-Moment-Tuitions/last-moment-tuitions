@@ -9,12 +9,14 @@ export class MenusController {
 
   @Post()
   async create(@Body() createMenuDto: CreateMenuDto) {
-    return this.menusService.create(createMenuDto);
+    const menu = await this.menusService.create(createMenuDto);
+    return { success: true, data: menu };
   }
 
   @Get()
   async findAll() {
-    return this.menusService.findAll();
+    const menus = await this.menusService.findAll();
+    return { success: true, data: menus };
   }
 
   @Get('name/:name')
@@ -23,31 +25,36 @@ export class MenusController {
     if (!menu) {
         throw new NotFoundException(`Menu '${name}' not found`);
     }
-    return menu;
+    return { success: true, data: menu };
   }
 
   @Get(':id')
   async findOne(@Param('id') id: string) {
-    return this.menusService.findOne(id);
+    const menu = await this.menusService.findOne(id);
+    return { success: true, data: menu };
   }
 
   @Patch(':id')
   async update(@Param('id') id: string, @Body() updateMenuDto: UpdateMenuDto) {
-    return this.menusService.update(id, updateMenuDto);
+    const menu = await this.menusService.update(id, updateMenuDto);
+    return { success: true, data: menu };
   }
 
   @Delete(':id')
   async remove(@Param('id') id: string) {
-    return this.menusService.remove(id);
+    await this.menusService.remove(id);
+    return { success: true, data: {} };
   }
 
   @Patch(':id/activate')
   async activate(@Param('id') id: string) {
-    return this.menusService.activate(id);
+    const menu = await this.menusService.activate(id);
+    return { success: true, data: menu };
   }
 
   @Get('status/active')
   async findActive() {
-    return this.menusService.findActive();
+    const menu = await this.menusService.findActive();
+    return { success: true, data: menu };
   }
 }
