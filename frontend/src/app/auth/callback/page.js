@@ -36,15 +36,19 @@ export default function AuthCallbackPage() {
                     }),
                 });
 
+
+                console.log(res);
+
                 if (!res.ok) {
                     const errorData = await res.json();
                     throw new Error(errorData.message || 'Backend verification failed');
                 }
 
                 const data = await res.json();
-
-                document.cookie = `sessionId=${data.accessToken}; path=/; max-age=${data.expiresIn}; SameSite=Lax; Secure`;
-
+                console.log(data);
+                document.cookie = `sessionId=${data.token}; path=/; max-age=${data.expiresIn}; SameSite=Lax; Secure`;
+                console.log(data.user);
+                console.log(document.cookie);
                 login(data.user);
 
                 setStatus('Success! Redirecting...');
