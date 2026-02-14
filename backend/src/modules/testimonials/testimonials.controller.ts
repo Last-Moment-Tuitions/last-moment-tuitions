@@ -1,53 +1,45 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { Testimonial } from './schemas/testimonial.schema';
+import {
+    Controller,
+    Get,
+    Post,
+    Patch,
+    Delete,
+    Body,
+    Query,
+    Param,
+    UseGuards
+} from '@nestjs/common';
+import { TestimonialsService } from './testimonials.service';
 import { CreateTestimonialDto } from './dto/create-testimonial.dto';
+import { AuthGuard } from '../../auth/guards/auth.guard';
 
-@Injectable()
-export class TestimonialsService {
-    constructor(
-        @InjectModel(Testimonial.name)
-        private testimonialModel: Model<Testimonial>
-    ) { }
+@Controller('testimonials')
+export class TestimonialsController {
+    constructor(private readonly testimonialsService: TestimonialsService) { }
 
-    async create(data: CreateTestimonialDto): Promise<Testimonial> {
-        const created = new this.testimonialModel(data);
-        const saved = await created.save();
-        // Added this to ensure new testimonials appear instantly
-        await this.clearCache();
-        return saved;
+    @Get()
+    async findAll(@Query('target_page') target_page?: string) {
+        return this.testimonialsService.findAll(target_page);
     }
 
-    async findAll(target_page?: string): Promise<Testimonial[]> {
-        // If target_page is provided, filter the results; otherwise return all
-        const filter = target_page ? { target_pages: target_page } : {};
-        return this.testimonialModel.find(filter).sort({ createdAt: -1 }).exec();
+    @UseGuards(AuthGuard)
+    @Post()
+    async create(@Body() data: CreateTestimonialDto) {
+        return this.testimonialsService.create(data);
     }
 
-    async update(id: string, data: Partial<CreateTestimonialDto>): Promise<Testimonial> {
-        const updated = await this.testimonialModel
-            .findByIdAndUpdate(id, data, { new: true })
-            .exec();
-
-        if (!updated) {
-            throw new NotFoundException(`Testimonial with ID ${id} not found`);
-        }
-
-        await this.clearCache();
-        return updated;
+    @UseGuards(AuthGuard)
+    @Patch(':id')
+    async update(
+        @Param('id') id: string,
+        @Body() data: Partial<CreateTestimonialDto>,
+    ) {
+        return this.testimonialsService.update(id, data);
     }
 
-    async delete(id: string): Promise<any> {
-        const deleted = await this.testimonialModel.findByIdAndDelete(id).exec();
-        if (!deleted) {
-            throw new NotFoundException(`Testimonial with ID ${id} not found`);
-        }
-        await this.clearCache();
-        return { deleted: true };
-    }
-
-    private async clearCache() {
-        console.log('Cache cleared after data change');
+    @UseGuards(AuthGuard)
+    @Delete(':id')
+    async delete(@Param('id') id: string) {
+        return this.testimonialsService.delete(id);
     }
 }

@@ -2,6 +2,23 @@
 import { useState, useEffect } from 'react';
 import { testimonialService } from '@/services/testimonialService';
 import { Plus, Edit, Trash2, Star, Save, X } from 'lucide-react';
+// src/app/admin/testimonials/page.js
+import { toast } from 'sonner';
+
+const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+        await testimonialService.create(formData);
+        toast.success("Testimonial added!");
+    } catch (error) {
+        // This will now catch "No token provided"
+        toast.error(error.message);
+        if (error.message.includes('token')) {
+            // Optional: redirect to login if token is missing
+            // router.push('/signin');
+        }
+    }
+};
 
 export default function TestimonialAdmin() {
     const [testimonials, setTestimonials] = useState([]);
@@ -64,7 +81,7 @@ export default function TestimonialAdmin() {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
-                        {testimonials.map((t) => (
+                        {(Array.isArray(testimonials) ? testimonials : []).map((t) => (
                             <tr key={t._id} className="hover:bg-slate-50 transition-colors">
                                 <td className="px-6 py-4 flex items-center gap-3">
                                     <img src={t.image || '/default-avatar.png'} className="w-10 h-10 rounded-full bg-slate-200 border border-slate-300" />
