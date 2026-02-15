@@ -7,12 +7,13 @@ import { useAuth } from '@/context/AuthContext';
 import contentService from '@/services/contentService';
 import menuService from '@/services/menuService';
 
-import { ChevronDown, Search } from 'lucide-react';
+import { ChevronDown, Search, Menu, X } from 'lucide-react';
 
 export function Header() {
     const pathname = usePathname();
     const { user, logout } = useAuth();
     const [navItems, setNavItems] = useState([]);
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     useEffect(() => {
         const fetchNav = async () => {
@@ -114,7 +115,101 @@ export function Header() {
                         </>
                     )}
                 </div>
+
+                {/* Mobile Menu Button */}
+                <button
+                    className="lg:hidden p-2 text-gray-600 hover:text-primary-600 transition-colors"
+                    onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                    aria-label="Toggle menu"
+                >
+                    {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+                </button>
             </div>
+
+            {/* Mobile Menu Overlay */}
+            {isMobileMenuOpen && (
+                <div className="lg:hidden absolute top-20 left-0 w-full bg-white border-b border-gray-100 shadow-lg py-4 px-6 flex flex-col gap-4 max-h-[calc(100vh-80px)] overflow-y-auto">
+                    {/* Search Bar Mobile */}
+                    <div className="relative w-full">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        <input
+                            type="text"
+                            placeholder="Search..."
+                            className="w-full pl-10 pr-4 py-2 rounded-full border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:border-primary-500"
+                        />
+                    </div>
+
+                    <nav className="flex flex-col gap-2">
+                        <Link
+                            href="/"
+                            onClick={() => setIsMobileMenuOpen(false)}
+                            className={`px-4 py-3 rounded-lg text-sm font-medium transition-colors ${isActive('/') ? 'bg-primary-50 text-primary-600' : 'text-gray-700 hover:bg-gray-50'}`}
+                        >
+                            Home
+                        </Link>
+                        
+                        {navItems.map((item, idx) => (
+                            <div key={idx} className="flex flex-col">
+                                {item.type === 'link' ? (
+                                    <Link
+                                        href={item.href}
+                                        onClick={() => setIsMobileMenuOpen(false)}
+                                        className={`px-4 py-3 rounded-lg text-sm font-medium transition-colors ${isActive(item.href) ? 'bg-primary-50 text-primary-600' : 'text-gray-700 hover:bg-gray-50'}`}
+                                    >
+                                        {item.label}
+                                    </Link>
+                                ) : (
+                                    <div className="px-4 py-3">
+                                        <span className="text-sm font-semibold text-gray-900 block mb-2">{item.label}</span>
+                                        <div className="pl-4 flex flex-col gap-2 border-l-2 border-gray-100">
+                                            {item.items.map((subItem, subIdx) => (
+                                                <Link
+                                                    key={subIdx}
+                                                    href={subItem.href}
+                                                    onClick={() => setIsMobileMenuOpen(false)}
+                                                    className="text-sm text-gray-600 hover:text-primary-600 py-1"
+                                                >
+                                                    {subItem.label}
+                                                </Link>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        ))}
+
+                        <Link
+                            href="/courses"
+                            onClick={() => setIsMobileMenuOpen(false)}
+                            className={`px-4 py-3 rounded-lg text-sm font-medium transition-colors ${isActive('/courses') ? 'bg-primary-50 text-primary-600' : 'text-gray-700 hover:bg-gray-50'}`}
+                        >
+                            Courses
+                        </Link>
+                    </nav>
+
+                    <div className="border-t border-gray-100 pt-4 flex flex-col gap-3">
+                        {user ? (
+                            <>
+                                <div className="px-4 py-2 text-sm text-gray-600">
+                                    Signed in as <span className="font-semibold text-gray-900">{user.firstName}</span>
+                                </div>
+                                <Button onClick={() => { logout(); setIsMobileMenuOpen(false); }} variant="outline" className="w-full justify-center">
+                                    Logout
+                                </Button>
+                            </>
+                        ) : (
+                            <>
+                                <Link href="/signin" onClick={() => setIsMobileMenuOpen(false)} className="w-full text-center py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 rounded-lg">
+                                    Sign in
+                                </Link>
+                                <Button href="/signup" onClick={() => setIsMobileMenuOpen(false)} variant="primary" className="w-full justify-center">
+                                    Create Account
+                                </Button>
+                            </>
+                        )}
+                    </div>
+                </div>
+            )}
         </header>
     );
 }
