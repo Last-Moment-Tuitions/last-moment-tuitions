@@ -1,7 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
+import { useEffect, useState } from 'react';
 import {
     LayoutDashboard, PlusCircle, Layers, CreditCard,
     MessageCircle, Settings, LogOut, GraduationCap,
@@ -11,6 +13,20 @@ import {
 
 export default function AdminLayout({ children }) {
     const pathname = usePathname();
+    const router = useRouter();
+    const { user, loading } = useAuth();
+    const [isAuthorized, setIsAuthorized] = useState(false);
+
+    useEffect(() => {
+        if (!loading) {
+            if (!user || !user.roles || !user.roles.includes('admin')) {
+                router.push('/'); // Or /signin
+            } else {
+                setIsAuthorized(true);
+            }
+        }
+    }, [user, loading, router]);
+
 
     const navItems = [
         { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
@@ -23,6 +39,12 @@ export default function AdminLayout({ children }) {
         { name: 'Testimonials', href: '/admin/testimonials', icon: Star },
         { name: 'Settings', href: '/admin/settings', icon: Settings },
     ];
+
+    if (loading || !isAuthorized) {
+        return <div className="min-h-screen flex items-center justify-center bg-[#F5F7FA]">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+        </div>;
+    }
 
     return (
         <div className="flex min-h-screen bg-[#F5F7FA] font-sans text-gray-900">
