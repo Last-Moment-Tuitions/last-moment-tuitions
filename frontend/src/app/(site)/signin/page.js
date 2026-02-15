@@ -69,7 +69,7 @@ export default function SignInPage() {
                 }
 
                 document.cookie = `sessionId=${accessToken}; path=/; max-age=${expiresIn}; SameSite=Lax; Secure`;
-                toast.success('Login successful! Welcome back.', { id: toastId });
+                toast.success('Login successful! Welcome back.');
                 login(user);
             } else {
                 const errorData = await res.json();
