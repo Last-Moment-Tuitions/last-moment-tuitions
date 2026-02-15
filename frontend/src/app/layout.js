@@ -1,6 +1,7 @@
 import './globals.css';
 import { AuthProvider } from '@/context/AuthContext';
-import { Toaster } from 'sonner';
+import { ToastProvider } from '@/context/ToastContext';
+
 
 export const metadata = {
   title: 'Prepfocus By Last Moment Tuitions',
@@ -49,10 +50,11 @@ export default async function RootLayout({ children }) {
     <html lang="en" suppressHydrationWarning>
       <body suppressHydrationWarning>
         <AuthProvider initialUser={initialUser}>
-          <SessionMonitor />
-          {children}
+          <ToastProvider>
+            <SessionMonitor />
+            {children}
+          </ToastProvider>
         </AuthProvider>
-        <Toaster position="top-center" richColors />
       </body>
     </html>
   );

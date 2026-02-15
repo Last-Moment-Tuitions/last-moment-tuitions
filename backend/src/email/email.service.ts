@@ -48,7 +48,7 @@ export class EmailService {
                                 <td style="padding: 40px 30px;">
                                     <h2 style="color: #1f2937; margin-top: 0; font-size: 20px;">Password Reset Request</h2>
                                     <p style="color: #4b5563; font-size: 16px; line-height: 1.6;">Hello,</p>
-                                    <p style="color: #4b5563; font-size: 16px; line-height: 1.6;">We received a request to reset your password. Please use the following One-Time Password (OTP) to proceed. This code is valid for <strong>50 seconds</strong>.</p>
+                                    <p style="color: #4b5563; font-size: 16px; line-height: 1.6;">We received a request to reset your password. Please use the following One-Time Password (OTP) to proceed. This code is valid for <strong>60 seconds</strong>.</p>
                                     
                                     <!-- OTP Box -->
                                     <div style="background-color: #f3f4f6; border-radius: 8px; padding: 20px; text-align: center; margin: 30px 0; border: 1px solid #e5e7eb;">
