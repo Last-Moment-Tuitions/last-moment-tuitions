@@ -35,13 +35,25 @@ export class AuthService {
         // Remove confirmPassword before passing to usersService
         const { confirmPassword, phone, ...rest } = signupDto;
 
-        return this.usersService.create({
+        const newUser = await this.usersService.create({
             ...rest,
             phone: Number(phone),
             passwordHash: hashedPassword,
             authProviders: ['local'],
             signupMethod: 'local',
         });
+
+        // Return only essential user data
+        const userObj = newUser.toObject ? newUser.toObject() : newUser;
+        return {
+            user: {
+                roles: userObj.roles,
+                firstName: userObj.firstName,
+                lastName: userObj.lastName,
+                email: userObj.email
+            },
+            message: 'User created successfully'
+        };
     }
 
     async login(loginDto: LoginDto, ip: string, userAgent: string) {
@@ -181,12 +193,17 @@ export class AuthService {
                 const sessionData = await this.redis.hgetall(`session:${sid}`);
                 if (sessionData.deviceHash === deviceHash) {
                     console.log(`[DEBUG] Reusing session (${sid}) for device (${deviceHash})`);
-                    // Remove sensitive data
-                    const { passwordHash, ...safeUser } = user.toObject ? user.toObject() : user;
+                    // Return only essential user data
+                    const userObj = user.toObject ? user.toObject() : user;
                     return {
                         accessToken: sid,
                         expiresIn: SESSION_TTL, // This is static, ideally we'd get TTL from Redis
-                        user: safeUser
+                        user: {
+                            roles: userObj.roles,
+                            firstName: userObj.firstName,
+                            lastName: userObj.lastName,
+                            email: userObj.email
+                        }
                     };
                 }
             }
@@ -231,13 +248,18 @@ export class AuthService {
         }
         await user.save();
 
-        // Remove sensitive data before returning
-        const { passwordHash, ...safeUser } = user.toObject ? user.toObject() : user;
+        // Return only essential user data
+        const userObj = user.toObject ? user.toObject() : user;
 
         return {
             accessToken: sessionId,
             expiresIn: SESSION_TTL,
-            user: safeUser
+            user: {
+                roles: userObj.roles,
+                firstName: userObj.firstName,
+                lastName: userObj.lastName,
+                email: userObj.email
+            }
         };
     }
 

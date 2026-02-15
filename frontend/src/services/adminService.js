@@ -25,12 +25,56 @@ api.interceptors.request.use((config) => {
     return Promise.reject(error);
 });
 
+// Add response interceptor to handle errors and unwrap API response
+api.interceptors.response.use(
+    (response) => {
+        // Unwrap the { success, message, details } wrapper
+        if (response.data && response.data.success && response.data.details !== undefined) {
+            response.data = response.data.details;
+        }
+        return response;
+    },
+    (error) => {
+        // Extract error message from backend response
+        let errorMessage = 'An unexpected error occurred. Please try again.';
+
+        if (error.response) {
+            // The request was made and the server responded with a status code
+            // that falls out of the range of 2xx
+            const { data, status } = error.response;
+
+            // NestJS error format: { statusCode, message, error }
+            if (data?.message) {
+                errorMessage = Array.isArray(data.message)
+                    ? data.message.join(', ')
+                    : data.message;
+            } else if (data?.error) {
+                errorMessage = data.error;
+            }
+
+        } else if (error.request) {
+            // The request was made but no response was received
+            errorMessage = 'No response from server. Please check your connection.';
+        } else {
+            // Something happened in setting up the request
+            errorMessage = error.message || errorMessage;
+        }
+
+        // Create a new error with the extracted message
+        const enhancedError = new Error(errorMessage);
+        enhancedError.originalError = error;
+        enhancedError.statusCode = error.response?.status;
+
+        return Promise.reject(enhancedError);
+    }
+);
+
 // Admin Service Object
 export const adminService = {
     // Pages
     getPages: async (params = {}) => {
         const response = await api.get('/pages', { params });
-        return response.data.data;
+        return response.data;
     },
 
     getPage: async (id) => {

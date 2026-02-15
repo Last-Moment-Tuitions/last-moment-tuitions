@@ -71,7 +71,12 @@ export function AuthProvider({ children, initialUser = null }) {
         router.push('/');
     };
 
-    const logout = async () => {
+    const logout = async (onLogout) => {
+        // Call the optional callback before logout (for toast notifications)
+        if (onLogout && typeof onLogout === 'function') {
+            onLogout();
+        }
+
         try {
             const sessionId = getSessionId();
             const headers = sessionId ? { 'x-session-id': sessionId } : {};
@@ -86,7 +91,11 @@ export function AuthProvider({ children, initialUser = null }) {
         localStorage.removeItem('user');
         // Clear cookie if not HttpOnly (backend clears it usually, but we can try)
         document.cookie = 'sessionId=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
-        router.push('/signin');
+
+        // Small delay to allow toast to be visible before redirect
+        setTimeout(() => {
+            router.push('/signin');
+        }, 500);
     };
 
     return (
