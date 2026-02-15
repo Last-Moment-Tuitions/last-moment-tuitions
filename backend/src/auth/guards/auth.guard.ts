@@ -1,10 +1,13 @@
-
-import { Injectable, CanActivate, ExecutionContext, UnauthorizedException } from '@nestjs/common';
+import { Injectable, CanActivate, ExecutionContext, UnauthorizedException, ForbiddenException } from '@nestjs/common';
 import { AuthService } from '../auth.service';
+import { UsersService } from '../../users/users.service';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
-    constructor(private authService: AuthService) { }
+    constructor(
+        private authService: AuthService,
+        private usersService: UsersService
+    ) { }
 
     async canActivate(context: ExecutionContext): Promise<boolean> {
         const request = context.switchToHttp().getRequest();
@@ -19,11 +22,27 @@ export class AuthGuard implements CanActivate {
             throw new UnauthorizedException('Invalid or expired session');
         }
 
+        // Retrieve full user for role check
+        const user = await this.usersService.findByIdPublic(session.userId);
+        if (!user) {
+            throw new UnauthorizedException('User not found');
+        }
+        
+        if (request.url.includes('/admin')) {
+            console.log(`[AuthGuard] Checking Admin Access: URL=${request.url}, Roles=${user.roles}`);
+            if (!user.roles || !user.roles.includes('admin')) {
+                console.warn(`[AuthGuard] Access Denied for ${user.email} to ${request.url}`);
+                throw new ForbiddenException('Admin access required');
+            }
+        }
+
+
         // Attach user/session to request
         request['user'] = {
             userId: session.userId,
             sessionId: token,
-            provider: session.authProvider
+            provider: session.authProvider,
+            roles: user.roles
         };
 
         return true;

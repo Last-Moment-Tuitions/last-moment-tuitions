@@ -1,4 +1,5 @@
 import { IsString, IsNotEmpty, IsOptional, IsArray, IsEnum, IsMongoId } from 'class-validator';
+import { PageStatus } from '../enums/page-status.enum';
 
 export class CreatePageDto {
     @IsString()
@@ -38,10 +39,9 @@ export class CreatePageDto {
     @IsEnum(['page', 'template'])
     type?: string;
 
-    @IsString()
+    @IsEnum(PageStatus)
     @IsOptional()
-    @IsEnum(['draft', 'published', 'archived'])
-    status?: string;
+    status?: PageStatus;
 
     @IsMongoId()
     @IsOptional()

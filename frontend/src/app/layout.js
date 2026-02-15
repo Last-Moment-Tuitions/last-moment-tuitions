@@ -33,7 +33,9 @@ async function getUserOnServer() {
     });
 
     if (res.ok) {
-      return await res.json();
+      const responseData = await res.json();
+      // Handle nested details structure like login endpoint
+      return responseData.details || responseData;
     }
   } catch (error) {
     console.error('SSR Auth Check Failed', error);

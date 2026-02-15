@@ -43,9 +43,16 @@ export default function AuthCallbackPage() {
 
                 const data = await res.json();
 
-                document.cookie = `sessionId=${data.accessToken}; path=/; max-age=${data.expiresIn}; SameSite=Lax; Secure`;
+                // API returns nested structure: { success, message, details: { accessToken, expiresIn, user } }
+                const { accessToken, expiresIn, user } = data.details || {};
 
-                login(data.user);
+                if (!accessToken || !user) {
+                    throw new Error('Invalid response from server');
+                }
+
+                document.cookie = `sessionId=${accessToken}; path=/; max-age=${expiresIn}; SameSite=Lax; Secure`;
+
+                login(user);
 
                 setStatus('Success! Redirecting...');
                 router.push('/');
