@@ -257,14 +257,21 @@ export function InfoBox({ title, children, variant = 'info', icon, className }) 
     };
 
     return (
-        <div className={cn("rounded-xl border-2 p-5", variants[variant], className)}>
-            {title && (
-                <div className="flex items-center gap-2 mb-3">
-                    {icon && <span className="text-xl">{icon}</span>}
-                    <h4 className="font-bold text-base">{title}</h4>
+        <div className={cn("rounded-xl border-2 p-4", variants[variant], className)}>
+            {title ? (
+                <div>
+                    <div className="flex items-center gap-2 mb-2">
+                        {icon && <span className="text-xl">{icon}</span>}
+                        <h4 className="font-bold text-base">{title}</h4>
+                    </div>
+                    <div className="text-sm leading-relaxed opacity-90">{children}</div>
+                </div>
+            ) : (
+                <div className="flex items-start gap-3">
+                    {icon && <span className="text-xl mt-0.5">{icon}</span>}
+                    <div className="text-sm font-medium leading-relaxed">{children}</div>
                 </div>
             )}
-            <div className="text-sm leading-relaxed">{children}</div>
         </div>
     );
 }

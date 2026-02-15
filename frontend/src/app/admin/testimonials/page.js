@@ -2,10 +2,10 @@
 import { useState, useEffect } from 'react';
 import { testimonialService } from '@/services/testimonialService';
 import { Plus, Edit, Trash2, Star, Save, X, Loader2 } from 'lucide-react';
-import { toast } from 'sonner';
+import { useToast } from '@/context/ToastContext';
 
 export default function TestimonialAdmin() {
-
+    const { toast } = useToast();
     const [testimonials, setTestimonials] = useState([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingId, setEditingId] = useState(null);
@@ -47,20 +47,20 @@ export default function TestimonialAdmin() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        const toastId = toast.loading(editingId ? "Updating..." : "Adding...");
+        toast.loading(editingId ? "Updating..." : "Adding...");
 
         try {
             if (editingId) {
                 await testimonialService.update(editingId, formData);
-                toast.success("Updated successfully!", { id: toastId });
+                toast.success("Updated successfully!");
             } else {
                 await testimonialService.create(formData);
-                toast.success("Added successfully!", { id: toastId });
+                toast.success("Added successfully!");
             }
             closeModal();
             loadData();
         } catch (error) {
-            toast.error(error.message || "Operation failed", { id: toastId });
+            toast.error(error.message || "Operation failed");
         }
     };
 
@@ -68,13 +68,13 @@ export default function TestimonialAdmin() {
     const handleDelete = async (id) => {
         if (!confirm("Are you sure you want to delete this testimonial?")) return;
 
-        const toastId = toast.loading("Deleting...");
+        toast.loading("Deleting...");
         try {
             await testimonialService.delete(id);
-            toast.success("Deleted", { id: toastId });
+            toast.success("Deleted");
             loadData();
         } catch (error) {
-            toast.error(error.message, { id: toastId });
+            toast.error(error.message);
         }
     };
 

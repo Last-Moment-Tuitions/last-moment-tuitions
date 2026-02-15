@@ -6,7 +6,7 @@ import { Button, Input, Label } from '@/components/ui';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import API_BASE_URL from '@/lib/config';
-import { toast } from 'sonner';
+import { useToast } from '@/context/ToastContext';
 
 export default function ForgotPasswordPage() {
     const [step, setStep] = useState(1); // 1: Email, 2: OTP, 3: New Password
@@ -17,10 +17,11 @@ export default function ForgotPasswordPage() {
     const [confirmPassword, setConfirmPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
-    const [mounted, setMounted] = useState(false);
+    const [mount, setMounted] = useState(false);
     const [resendTimer, setResendTimer] = useState(0);
 
     const router = useRouter();
+    const { toast } = useToast();
 
     useEffect(() => {
         setMounted(true);
@@ -36,12 +37,11 @@ export default function ForgotPasswordPage() {
         return () => clearInterval(interval);
     }, [resendTimer]);
 
-    if (!mounted) return null;
+    if (!mount) return null;
 
     const handleEmailSubmit = async (e) => {
         e?.preventDefault();
         setLoading(true);
-        const toastId = toast.loading('Sending OTP...');
 
         try {
             const res = await fetch(`${API_BASE_URL}/auth/forgot-password`, {
@@ -55,12 +55,12 @@ export default function ForgotPasswordPage() {
             if (res.ok) {
                 setStep(2);
                 setResendTimer(60);
-                toast.success('OTP sent successfully!', { id: toastId });
+                toast.success(data.message || 'OTP sent successfully. Valid for 60 seconds.');
             } else {
-                toast.error(data.message || 'Failed to send OTP', { id: toastId });
+                toast.error(data.message || 'Failed to send OTP. Please check your email.');
             }
         } catch (err) {
-            toast.error('Connection error. Please try again.', { id: toastId });
+            toast.error('Connection error. Please try again.');
         } finally {
             setLoading(false);
         }
@@ -68,13 +68,13 @@ export default function ForgotPasswordPage() {
 
     const handleOtpVerify = async (e) => {
         e.preventDefault();
+
         if (otp.length !== 6) {
             toast.error('Please enter a 6-digit OTP');
             return;
         }
 
         setLoading(true);
-        const toastId = toast.loading('Verifying OTP...');
         try {
             const res = await fetch(`${API_BASE_URL}/auth/verify-otp-for-reset`, {
                 method: 'POST',
@@ -87,12 +87,12 @@ export default function ForgotPasswordPage() {
             if (res.ok) {
                 setResetToken(data.resetToken);
                 setStep(3);
-                toast.success('OTP Verified successfully!', { id: toastId });
+                toast.success('OTP Verified successfully!');
             } else {
-                toast.error(data.message || 'Invalid OTP', { id: toastId });
+                toast.error(data.message || 'The OTP you entered is incorrect');
             }
         } catch (err) {
-            toast.error('Verification failed. Try again.', { id: toastId });
+            toast.error('Verification failed. Try again.');
         } finally {
             setLoading(false);
         }
@@ -100,6 +100,7 @@ export default function ForgotPasswordPage() {
 
     const handleResetPassword = async (e) => {
         e.preventDefault();
+
         if (newPassword !== confirmPassword) {
             toast.error('Passwords do not match');
             return;
@@ -110,7 +111,6 @@ export default function ForgotPasswordPage() {
         }
 
         setLoading(true);
-        const toastId = toast.loading('Updating password...');
         try {
             const res = await fetch(`${API_BASE_URL}/auth/reset-password`, {
                 method: 'POST',
@@ -121,15 +121,15 @@ export default function ForgotPasswordPage() {
             const data = await res.json();
 
             if (res.ok) {
-                toast.success('Password reset successfully! Redirecting...', { id: toastId });
+                toast.success('Password reset successfully! Redirecting...');
                 setTimeout(() => {
                     router.push('/signin');
                 }, 2000);
             } else {
-                toast.error(data.message || 'Failed to reset password', { id: toastId });
+                toast.error(data.message || 'Failed to reset password');
             }
         } catch (err) {
-            toast.error('Failed to update password. Try again.', { id: toastId });
+            toast.error('Failed to update password. Try again.');
         } finally {
             setLoading(false);
         }
@@ -138,27 +138,25 @@ export default function ForgotPasswordPage() {
     return (
         <div className="min-h-screen flex bg-white font-sans text-gray-900 overflow-hidden">
             {/* Left Side: Illustration */}
-            <div className="hidden lg:flex lg:w-1/2 bg-[#F8F9FF] items-center justify-center p-12 relative">
-                <div className="max-w-lg w-full z-10">
-                    <img
-                        src="/assets/forgot_password_illustration.png"
-                        alt="Security Illustration"
-                        className="w-full h-auto drop-shadow-2xl animate-fade-in"
-                    />
-                </div>
+            <div className="hidden lg:flex lg:w-[42%] relative overflow-hidden">
+                <img
+                    src="/assets/forgot_password_illustration.png"
+                    alt="Security Illustration"
+                    className="absolute inset-0 w-full h-full object-cover z-10 animate-fade-in"
+                />
                 {/* Decorative background elements */}
-                <div className="absolute top-20 left-20 w-32 h-32 bg-white/30 rounded-full blur-3xl"></div>
-                <div className="absolute bottom-20 right-20 w-64 h-64 bg-primary-100/50 rounded-full blur-3xl"></div>
+                <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-white/40 rounded-full blur-[100px]"></div>
+                <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-primary-100/40 rounded-full blur-[100px]"></div>
             </div>
 
             {/* Right Side: Form */}
-            <div className="w-full lg:w-1/2 flex flex-col items-center justify-center p-6 md:p-12 lg:p-20 overflow-y-auto text-gray-900">
+            <div className="w-full lg:w-[58%] flex flex-col items-start justify-center p-6 md:p-12 lg:p-20 lg:pl-[12%] overflow-y-auto bg-white text-gray-900">
                 <div className="max-w-md w-full py-8">
-                    <div className="mb-10 text-center lg:text-left">
-                        <h2 className="text-3xl font-extrabold text-primary-900 mb-2 tracking-tight">
+                    <div className="mb-10 text-left">
+                        <h2 className="text-4xl font-extrabold text-primary-900 mb-3 tracking-tight">
                             {step === 1 ? 'Forgot Password?' : step === 2 ? 'Verify OTP' : 'Set New Password'}
                         </h2>
-                        <p className="text-gray-500 font-medium tracking-tight">
+                        <p className="text-gray-500 font-medium text-lg leading-relaxed">
                             {step === 1 && "No worries! Enter your email and we'll send you an OTP code."}
                             {step === 2 && `We've sent a 6-digit code to ${email}`}
                             {step === 3 && "Protect your account with a strong new password."}
@@ -167,8 +165,8 @@ export default function ForgotPasswordPage() {
 
                     {step === 1 && (
                         <form onSubmit={handleEmailSubmit} className="space-y-6">
-                            <div className="space-y-1.5">
-                                <Label htmlFor="email" className="text-xs font-bold uppercase tracking-wider text-gray-400">Email Address</Label>
+                            <div className="space-y-2">
+                                <Label htmlFor="email" className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Email Address</Label>
                                 <Input
                                     id="email"
                                     type="email"
@@ -179,14 +177,14 @@ export default function ForgotPasswordPage() {
                                     className="rounded-xl border-gray-100 bg-gray-50/50 h-12 focus-visible:ring-primary-500"
                                 />
                             </div>
-                            <Button
-                                variant="primary"
-                                className="w-full py-4 text-sm rounded-xl font-bold flex items-center justify-center gap-2 group transition-all"
+                            <button
+                                type="submit"
+                                className="w-full py-4 bg-[#0A1D47] text-white text-sm rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-[#061330] transition-all disabled:opacity-50 mt-2"
                                 disabled={loading}
                             >
                                 {loading ? 'Sending OTP...' : 'Send OTP'}
-                                {!loading && <span className="transform group-hover:translate-x-1 transition-transform">→</span>}
-                            </Button>
+                                {!loading && <span className="text-lg">→</span>}
+                            </button>
                             <div className="text-center">
                                 <Link href="/signin" className="text-sm font-bold text-accent-600 hover:underline">
                                     Back to Login
@@ -198,7 +196,7 @@ export default function ForgotPasswordPage() {
                     {step === 2 && (
                         <form onSubmit={handleOtpVerify} className="space-y-6">
                             <div className="space-y-4">
-                                <Label className="text-[10px] font-bold text-gray-400 block text-center uppercase tracking-[0.2em]">Enter 6-digit Code</Label>
+                                <Label className="text-[10px] font-bold text-gray-400 block text-center uppercase tracking-widest">Enter 6-digit Code</Label>
                                 <div className="flex justify-between gap-2 max-w-[300px] mx-auto">
                                     {[0, 1, 2, 3, 4, 5].map((index) => (
                                         <input
@@ -236,13 +234,13 @@ export default function ForgotPasswordPage() {
                                     ))}
                                 </div>
                             </div>
-                            <Button
-                                variant="primary"
-                                className="w-full py-4 text-sm rounded-xl font-bold"
+                            <button
+                                type="submit"
+                                className="w-full py-4 bg-[#0A1D47] text-white text-sm rounded-xl font-bold hover:bg-[#061330] transition-all disabled:opacity-50"
                                 disabled={loading || otp.length !== 6}
                             >
                                 {loading ? 'Verifying...' : 'Verify OTP'}
-                            </Button>
+                            </button>
                             <div className="text-center pt-2">
                                 {resendTimer > 0 ? (
                                     <p className="text-xs text-gray-400 font-medium">Resend code in <span className="text-primary-900 font-bold">{resendTimer}s</span></p>
@@ -256,8 +254,8 @@ export default function ForgotPasswordPage() {
                     {step === 3 && (
                         <form onSubmit={handleResetPassword} className="space-y-6">
                             <div className="space-y-4">
-                                <div className="space-y-1.5">
-                                    <Label htmlFor="newPassword" className="text-xs font-bold uppercase tracking-wider text-gray-400">New Password</Label>
+                                <div className="space-y-2">
+                                    <Label htmlFor="newPassword" className="text-[10px] font-bold uppercase tracking-widest text-gray-400">New Password</Label>
                                     <div className="relative">
                                         <Input
                                             id="newPassword"
@@ -273,8 +271,8 @@ export default function ForgotPasswordPage() {
                                         </button>
                                     </div>
                                 </div>
-                                <div className="space-y-1.5">
-                                    <Label htmlFor="confirmPassword" className="text-xs font-bold uppercase tracking-wider text-gray-400">Confirm Password</Label>
+                                <div className="space-y-2">
+                                    <Label htmlFor="confirmPassword" className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Confirm Password</Label>
                                     <Input
                                         id="confirmPassword"
                                         type={showPassword ? "text" : "password"}
@@ -286,13 +284,13 @@ export default function ForgotPasswordPage() {
                                     />
                                 </div>
                             </div>
-                            <Button
-                                variant="primary"
-                                className="w-full py-4 text-sm rounded-xl font-bold"
+                            <button
+                                type="submit"
+                                className="w-full py-4 bg-[#0A1D47] text-white text-sm rounded-xl font-bold hover:bg-[#061330] transition-all disabled:opacity-50"
                                 disabled={loading}
                             >
                                 {loading ? 'Resetting...' : 'Reset Password'}
-                            </Button>
+                            </button>
                         </form>
                     )}
                 </div>
