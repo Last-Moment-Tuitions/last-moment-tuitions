@@ -90,7 +90,7 @@ export default function SignInPage() {
                 <img
                     src="/assets/signin_illustration.png"
                     alt="Join us"
-                    className="absolute inset-0 w-full h-full object-cover z-10 animate-fade-in"
+                    className="absolute inset-0 w-full h-full object-fill r z-10 animate-fade-in"
                 />
                 {/* Decorative background elements */}
                 <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-white/40 rounded-full blur-[100px]"></div>
@@ -98,7 +98,7 @@ export default function SignInPage() {
             </div>
 
             {/* Right Side: Form */}
-            <div className="w-full lg:w-[58%] flex flex-col items-start justify-center p-6 md:p-12 lg:p-20 lg:pl-[12%] overflow-y-auto bg-white">
+            <div className="w-full lg:w-[58%] flex flex-col items-start justify-center p-6 md:p-10 lg:p-10 lg:pl-[10%] overflow-y-auto bg-white">
                 <div className="max-w-md w-full py-8">
                     <div className="mb-10 text-left">
                         <h2 className="text-4xl font-extrabold text-primary-900 mb-3 tracking-tight">Sign In</h2>
@@ -107,7 +107,7 @@ export default function SignInPage() {
 
                     <form className="space-y-6" onSubmit={handleSubmit}>
                         <div className="space-y-2">
-                            <Label htmlFor="email" className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Email Address</Label>
+                            <Label htmlFor="email" className="text-[10px] font-bold uppercase tracking-widest text-gray-900">Email</Label>
                             <Input
                                 id="email"
                                 type="email"
@@ -121,7 +121,7 @@ export default function SignInPage() {
 
                         <div className="space-y-2">
                             <div className="flex items-center justify-between">
-                                <Label htmlFor="password" className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Password</Label>
+                                <Label htmlFor="password" className="text-[10px] font-bold uppercase tracking-widest text-gray-700">Password</Label>
                             </div>
                             <div className="relative">
                                 <Input

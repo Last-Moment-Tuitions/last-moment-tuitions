@@ -2,8 +2,9 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, BookOpen, Stethoscope, Cog, BriefcaseBusiness, GraduationCap } from 'lucide-react';
+import { Home, BookOpen, Stethoscope, Cog, BriefcaseBusiness, GraduationCap, Loader2 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { useToast } from '@/context/ToastContext';
 import contentService from '@/services/contentService';
 import menuService from '@/services/menuService';
 
@@ -12,14 +13,16 @@ import { ChevronDown, Search } from 'lucide-react';
 export function Header() {
     const pathname = usePathname();
     const { user, logout } = useAuth();
+    const { toast } = useToast();
     const [navItems, setNavItems] = useState([]);
+    const [loggingOut, setLoggingOut] = useState(false);
 
     useEffect(() => {
         const fetchNav = async () => {
             try {
                 // Try fetching dynamic menu first
                 const dynamicMenu = await menuService.getActive().catch(() => null);
-                
+
                 if (dynamicMenu && dynamicMenu.items && dynamicMenu.items.length > 0) {
                     setNavItems(dynamicMenu.items);
                 } else {
@@ -100,11 +103,22 @@ export function Header() {
                                 Hello, {user.firstName || 'User'}
                             </span>
                             <Button
-                                onClick={logout}
+                                onClick={() => {
+                                    setLoggingOut(true);
+                                    logout(() => toast.success('Logged out successfully'));
+                                }}
+                                disabled={loggingOut}
                                 variant="outline"
-                                className="rounded-full px-5 py-2 text-sm font-bold shadow-sm whitespace-nowrap"
+                                className="rounded-full px-5 py-2 text-sm font-bold shadow-sm whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                Logout
+                                {loggingOut ? (
+                                    <>
+                                        <Loader2 className="w-4 h-4 animate-spin inline mr-2" />
+                                        Logging out...
+                                    </>
+                                ) : (
+                                    'Logout'
+                                )}
                             </Button>
                         </div>
                     ) : (
@@ -265,7 +279,7 @@ export function Footer() {
                 </div>
 
                 <div className="border-t border-gray-800 mt-16 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-gray-500">
-                    <p>© 2024 E-tutor. All rights reserved.</p>
+                    <p>© 2024 LMT. All rights reserved.</p>
                     <div className="flex gap-6">
                         <Link href="#" className="hover:text-white transition-colors">English</Link>
                         <Link href="#" className="hover:text-white transition-colors">USD</Link>

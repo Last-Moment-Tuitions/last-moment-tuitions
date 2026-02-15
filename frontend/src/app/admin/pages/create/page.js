@@ -2,6 +2,7 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import { adminService } from '@/services/adminService';
+import { useToast } from '@/context/ToastContext';
 import { Button } from '@/components/ui';
 import { Save, ArrowRight } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -9,6 +10,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 function CreatePageContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
+    const { toast } = useToast();
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState({
         title: '',
@@ -61,22 +63,18 @@ function CreatePageContent() {
             const data = await adminService.createPage(payload);
             if (data && data._id) {
                 const newPageId = data._id;
-                router.push(`/editor/${newPageId}`);
-            } else if (data && data.data && data.data._id) {
-                // Handle case where service returns full response structure
-                // But adminService returns response.data directly.
-                // My backend returns the created object directly for create(), 
-                // but let's check PageController create().
-                // It returns return this.pagesService.create(createPageDto); which returns the document.
-                // So data._id should exist.
-                router.push(`/editor/${data._id}`);
+                toast.success('Page created successfully!');
+                // Keep loading state active during redirect
+                setTimeout(() => {
+                    router.push(`/editor/${newPageId}`);
+                }, 300);
             }
         } catch (error) {
             console.error(error);
-            alert('Failed to create page: ' + (error.response?.data?.error || error.message));
-        } finally {
+            toast.error(error.message || 'Failed to create page');
             setLoading(false);
         }
+        // Don't set loading to false here - keep it active until redirect
     };
 
     const isTemplate = formData.type === 'template';
