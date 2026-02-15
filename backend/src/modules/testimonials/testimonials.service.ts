@@ -18,8 +18,14 @@ export class TestimonialsService {
     }
 
     async findAll(target_page?: string): Promise<Testimonial[]> {
-        const filter = target_page ? { target_pages: target_page } : {};
-        return this.testimonialModel.find(filter).sort({ createdAt: -1 }).exec();
+        const filter = (target_page && target_page !== 'all')
+            ? { target_pages: target_page }
+            : {};
+
+        return this.testimonialModel
+            .find(filter)
+            .sort({ createdAt: -1 })
+            .exec();
     }
 
     async update(id: string, data: Partial<CreateTestimonialDto>): Promise<Testimonial> {

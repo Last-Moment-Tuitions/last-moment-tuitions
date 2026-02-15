@@ -4,32 +4,54 @@ const baseUrl = `${BACKEND_URL}/api`;
 const getAuthHeaders = () => {
     if (typeof window === 'undefined') return {};
 
-
-    const token = localStorage.getItem('token') || localStorage.getItem('accessToken');
-
-    console.log("Auth Debug - Token found:", !!token);
+    const sessionId = document.cookie
+        .split('; ')
+        .find(row => row.startsWith('sessionId='))
+        ?.split('=')[1];
 
     return {
         'Content-Type': 'application/json',
-        ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+        ...(sessionId ? { 'x-session-id': sessionId } : {}),
     };
 };
 
 export const testimonialService = {
     // 1. Get testimonials (Public/Admin)
     getByPage: async (pageTag) => {
+        if (!BACKEND_URL) {
+            console.error("NEXT_PUBLIC_BACKEND_URL is not defined");
+            throw new Error("Configuration Error: Backend URL not set");
+        }
+
         try {
-            const res = await fetch(`${baseUrl}/testimonials?target_page=${encodeURIComponent(pageTag)}`, {
+            // Construct URL - ensure no double slashes
+            const url = `${baseUrl}/testimonials?target_page=${encodeURIComponent(pageTag)}`;
+
+            const res = await fetch(url, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json',
+                },
                 cache: 'no-store'
             });
 
-            if (!res.ok) throw new Error('Failed to fetch testimonials');
-            return await res.json();
+            if (!res.ok) {
+                const errText = await res.text();
+                throw new Error(`Server Error: ${res.status} - ${errText}`);
+            }
+
+            const data = await res.json();
+
+            // Check if data is wrapped in a success object (e.g. from TransformInterceptor)
+            if (data && data.details && Array.isArray(data.details)) {
+                return data.details;
+            }
+
+            // Fallback for direct array response
+            return Array.isArray(data) ? data : [];
         } catch (error) {
-
-
-            console.error("Testimonial Fetch Error:", error);
-            return [];
+            console.error("Critical Fetch Error:", error);
+            throw error; // Propagate error to UI
         }
     },
 
