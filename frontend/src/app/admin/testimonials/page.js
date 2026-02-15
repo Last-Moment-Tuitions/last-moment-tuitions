@@ -66,7 +66,7 @@ export default function TestimonialAdmin() {
 
     // --- Delete Functionality ---
     const handleDelete = async (id) => {
-        if (!confirm("Are you sure you want to delete this testimonial?")) return;
+        if (!toast.confirm("Are you sure you want to delete this testimonial?")) return;
 
         toast.loading("Deleting...");
         try {

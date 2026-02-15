@@ -79,7 +79,7 @@ export default function MenusAdminPage() {
 
     const handleDeleteMenu = async () => {
         if (!selectedMenu) return;
-        if (!confirm(`Are you sure you want to delete menu "${selectedMenu.name}"? This cannot be undone.`)) return;
+        if (!toast.confirm(`Are you sure you want to delete menu "${selectedMenu.name}"? This cannot be undone.`)) return;
 
         try {
             await menuService.delete(selectedMenu._id);
@@ -117,7 +117,7 @@ export default function MenusAdminPage() {
     };
 
     const handleActivateMenu = async (menu) => {
-        if (!confirm(`Are you sure you want to set "${menu.name}" as the ACTIVE public menu?`)) return;
+        if (!toast.confirm(`Are you sure you want to set "${menu.name}" as the ACTIVE public menu?`)) return;
         try {
             setActivating(true);
             await menuService.activate(menu._id);
@@ -131,7 +131,7 @@ export default function MenusAdminPage() {
     };
 
     const handleDeactivateMenu = async (menu) => {
-        if (!confirm(`Are you sure you want to DEACTIVATE "${menu.name}"? The site will revert to default navigation.`)) return;
+        if (!toast.confirm(`Are you sure you want to DEACTIVATE "${menu.name}"? The site will revert to default navigation.`)) return;
         try {
             await menuService.update(menu._id, { isActive: false });
             await fetchMenus();
