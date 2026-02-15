@@ -122,9 +122,6 @@ export default function SignInPage() {
                         <div className="space-y-2">
                             <div className="flex items-center justify-between">
                                 <Label htmlFor="password" className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Password</Label>
-                                <Link href="/forgot-password" size="sm" className="text-xs font-bold text-accent-600 hover:underline">
-                                    Forgot Password?
-                                </Link>
                             </div>
                             <div className="relative">
                                 <Input
@@ -143,6 +140,11 @@ export default function SignInPage() {
                                 >
                                     {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                                 </button>
+                            </div>
+                            <div className="text-right">
+                                <Link href="/forgot-password" size="sm" className="text-xs font-bold text-accent-600 hover:underline inline-block">
+                                    Forgot Password?
+                                </Link>
                             </div>
                         </div>
 
