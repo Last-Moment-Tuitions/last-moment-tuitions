@@ -32,8 +32,7 @@ export function Editor({ pageId }) {
         // Fetch Page Data
         const fetchPage = async () => {
             try {
-                const res = await adminService.getPage(pageId);
-                const page = res.data || res; // adminService returns response.data
+                const page = await adminService.getPage(pageId);
 
                 if (page.gjsComponents && page.gjsComponents.length > 0) {
                     editor.loadProjectData({
@@ -44,6 +43,7 @@ export function Editor({ pageId }) {
                 }
             } catch (err) {
                 console.error("Failed to load page", err);
+                showToast(err.message || 'Failed to load page', 'error');
             } finally {
                 setLoading(false);
             }
@@ -80,7 +80,7 @@ export function Editor({ pageId }) {
             showToast('Page saved successfully!', 'success');
         } catch (error) {
             console.error(error);
-            showToast('Failed to save page.', 'error');
+            showToast(error.message || 'Failed to save page', 'error');
         } finally {
             setSaving(false);
         }

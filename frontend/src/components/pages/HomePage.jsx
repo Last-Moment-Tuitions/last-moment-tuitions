@@ -385,7 +385,7 @@ export default function HomePage() {
                             <div className="md:w-1/2 bg-gradient-to-br from-primary-500 to-accent-500 p-12 text-white flex flex-col justify-center">
                                 <h2 className="text-4xl font-bold mb-6">Become an instructor</h2>
                                 <p className="text-white/90 text-lg mb-8 leading-relaxed">
-                                    Instructors from around the world teach millions of students on E-tutor. We provide the tools and skills to teach what you love.
+                                    Instructors from around the world teach millions of students on LMT. We provide the tools and skills to teach what you love.
                                 </p>
                                 <Button className="bg-white text-primary-600 hover:bg-gray-50 w-fit rounded-full px-8 py-3 font-bold shadow-lg">
                                     Start Teaching Today
