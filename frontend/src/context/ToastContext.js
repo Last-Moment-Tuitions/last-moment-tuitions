@@ -15,6 +15,7 @@ export const useToast = () => {
 
 export const ToastProvider = ({ children }) => {
     const [toasts, setToasts] = useState([]);
+    const [confirmDialog, setConfirmDialog] = useState(null);
 
     const addToast = useCallback((message, type = 'default', duration = 4000) => {
         const id = Date.now().toString();
@@ -31,6 +32,22 @@ export const ToastProvider = ({ children }) => {
         setToasts((prev) => prev.filter((toast) => toast.id !== id));
     }, []);
 
+    const confirm = useCallback((message) => {
+        return new Promise((resolve) => {
+            setConfirmDialog({
+                message,
+                onConfirm: () => {
+                    setConfirmDialog(null);
+                    resolve(true);
+                },
+                onCancel: () => {
+                    setConfirmDialog(null);
+                    resolve(false);
+                }
+            });
+        });
+    }, []);
+
     const value = {
         toast: {
             success: (msg) => addToast(msg, 'success'),
@@ -39,12 +56,15 @@ export const ToastProvider = ({ children }) => {
             loading: (msg) => addToast(msg, 'loading'),
             default: (msg) => addToast(msg, 'default'),
             dismiss: (id) => removeToast(id),
+            confirm: confirm,
         }
     };
 
     return (
         <ToastContext.Provider value={value}>
             {children}
+
+            {/* Regular Toasts */}
             <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[9999] flex flex-col gap-2 items-center pointer-events-none w-full max-w-sm px-4">
                 {toasts.map((t) => (
                     <div
@@ -74,6 +94,37 @@ export const ToastProvider = ({ children }) => {
                     </div>
                 ))}
             </div>
+
+            {/* Confirmation Dialog */}
+            {confirmDialog && (
+                <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="bg-white rounded-xl shadow-2xl p-6 max-w-md w-full mx-4 animate-in zoom-in-95 duration-200">
+                        <div className="flex items-start gap-3 mb-6">
+                            <AlertCircle className="w-6 h-6 text-amber-500 fill-amber-50 shrink-0 mt-0.5" />
+                            <div className="flex-1">
+                                <h3 className="text-lg font-semibold text-gray-900 mb-1">Confirm Action</h3>
+                                <p className="text-sm text-gray-600 leading-relaxed">
+                                    {confirmDialog.message}
+                                </p>
+                            </div>
+                        </div>
+                        <div className="flex gap-3 justify-end">
+                            <button
+                                onClick={confirmDialog.onCancel}
+                                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                            >
+                                No
+                            </button>
+                            <button
+                                onClick={confirmDialog.onConfirm}
+                                className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors"
+                            >
+                                Yes
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </ToastContext.Provider>
     );
 };

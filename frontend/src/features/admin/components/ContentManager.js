@@ -2,11 +2,13 @@
 
 import { useEffect, useState } from 'react';
 import { adminService } from '@/services/adminService';
+import { useToast } from '@/context/ToastContext';
 import Link from 'next/link';
 import { Button } from '@/components/ui';
-import { Plus, Edit, Trash, ExternalLink, Search, Check, Folder, ChevronRight, Home, FolderPlus, Eye, EyeOff } from 'lucide-react';
+import { Plus, Edit, Trash, ExternalLink, Search, Check, Folder, ChevronRight, Home, FolderPlus, Eye, EyeOff, Loader2 } from 'lucide-react';
 
 export default function ContentManager({ view = 'page' }) {
+    const { toast } = useToast();
     // Navigation State
     const [currentFolder, setCurrentFolder] = useState(null); // null = root
     const [breadcrumbs, setBreadcrumbs] = useState([{ id: null, name: 'Home' }]);
@@ -15,6 +17,9 @@ export default function ContentManager({ view = 'page' }) {
     const [folders, setFolders] = useState([]);
     const [pages, setPages] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [creatingFolder, setCreatingFolder] = useState(false);
+    const [deletingId, setDeletingId] = useState(null);
+    const [togglingId, setTogglingId] = useState(null);
     const [search, setSearch] = useState('');
     const [copiedId, setCopiedId] = useState(null);
 
@@ -75,7 +80,7 @@ export default function ContentManager({ view = 'page' }) {
             const pages = await adminService.getPages({ folder: parentParam, type: view, status: 'all' });
 
             // Robustly handle both { data: [...] } and [...] response formats
-            const foldersData = folders?.data || folders;
+            const foldersData = folders?.details || folders;
             const pagesData = pages?.data || pages;
 
             setFolders(Array.isArray(foldersData) ? foldersData : []);
@@ -83,6 +88,7 @@ export default function ContentManager({ view = 'page' }) {
 
         } catch (error) {
             console.error('Failed to fetch content', error);
+            toast.error(error.message || 'Failed to fetch content');
         } finally {
             setLoading(false);
         }
@@ -115,50 +121,66 @@ export default function ContentManager({ view = 'page' }) {
         e.preventDefault();
         if (!newFolderName.trim()) return;
 
+        setCreatingFolder(true);
         try {
             await adminService.createFolder({
                 name: newFolderName,
-                parent: currentFolder, // If null, service sends null/undefined. Re-check if we need 'null' string.
+                parent: currentFolder,
                 type: view
             });
             fetchContent();
             setIsCreateFolderOpen(false);
         } catch (error) {
-            alert('Failed to create folder');
+            toast.error(error.message || 'Failed to create folder');
+        } finally {
+            setCreatingFolder(false);
         }
     };
 
     const deleteFolder = async (id) => {
-        if (!confirm('Are you sure? This will delete the folder.')) return;
+        const confirmed = await toast.confirm('Are you sure? This will delete the folder.');
+        if (!confirmed) return;
+
+        setDeletingId(id);
         try {
             await adminService.deleteFolder(id);
             fetchContent();
         } catch (error) {
-            alert('Failed to delete folder');
+            toast.error(error.message || 'Failed to delete folder');
+        } finally {
+            setDeletingId(null);
         }
     };
 
     const deletePage = async (id) => {
-        if (!confirm('Are you sure you want to delete this item?')) return;
+        const confirmed = await toast.confirm('Are you sure you want to delete this item?');
+        if (!confirmed) return;
+
+        setDeletingId(id);
         try {
             await adminService.deletePage(id);
             fetchContent();
         } catch (error) {
-            alert('Failed to delete page');
+            toast.error(error.message || 'Failed to delete page');
+        } finally {
+            setDeletingId(null);
         }
     };
 
     const togglePublish = async (e, page) => {
         e.stopPropagation(); // Prevent card click
+        setTogglingId(page._id);
         try {
             const newStatus = page.status === 'published' ? 'draft' : 'published';
             await adminService.updatePage(page._id, { status: newStatus });
-            
+
             // Optimistic update
             setPages(pages.map(p => p._id === page._id ? { ...p, status: newStatus } : p));
         } catch (error) {
             console.error('Failed to update status', error);
-            alert('Failed to update status');
+            toast.error(error.message || 'Failed to update status');
+        } finally {
+            setTogglingId(null);
         }
     };
 
@@ -266,9 +288,14 @@ export default function ContentManager({ view = 'page' }) {
                             <div className="opacity-0 group-hover:opacity-100 transition-opacity">
                                 <button
                                     onClick={(e) => { e.stopPropagation(); deleteFolder(folder._id); }}
-                                    className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-md"
+                                    disabled={deletingId === folder._id}
+                                    className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                    <Trash className="w-4 h-4" />
+                                    {deletingId === folder._id ? (
+                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                    ) : (
+                                        <Trash className="w-4 h-4" />
+                                    )}
                                 </button>
                             </div>
                         </div>
@@ -291,13 +318,17 @@ export default function ContentManager({ view = 'page' }) {
                                 <button
                                     onClick={(e) => togglePublish(e, item)}
                                     title={item.status === 'published' ? 'Unpublish' : 'Publish'}
-                                    className={`p-1.5 backdrop-blur rounded-md shadow-sm border border-gray-100 transition-colors ${
-                                        item.status === 'published' 
-                                            ? 'bg-green-50/90 text-green-600 hover:bg-green-100 hover:text-green-700' 
-                                            : 'bg-white/90 text-gray-400 hover:text-gray-900'
-                                    }`}
+                                    disabled={togglingId === item._id}
+                                    className={`p-1.5 backdrop-blur rounded-md shadow-sm border border-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${item.status === 'published'
+                                        ? 'bg-green-50/90 text-green-600 hover:bg-green-100 hover:text-green-700'
+                                        : 'bg-white/90 text-gray-400 hover:text-gray-900'
+                                        }`}
                                 >
-                                    {item.status === 'published' ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+                                    {togglingId === item._id ? (
+                                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                    ) : (
+                                        item.status === 'published' ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />
+                                    )}
                                 </button>
                             )}
                             <Link href={`/editor/${item._id}`}>
@@ -307,9 +338,14 @@ export default function ContentManager({ view = 'page' }) {
                             </Link>
                             <button
                                 onClick={() => deletePage(item._id)}
-                                className="p-1.5 bg-white/90 backdrop-blur text-gray-600 hover:text-red-600 rounded-md shadow-sm border border-gray-100"
+                                disabled={deletingId === item._id}
+                                className="p-1.5 bg-white/90 backdrop-blur text-gray-600 hover:text-red-600 rounded-md shadow-sm border border-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                <Trash className="w-3.5 h-3.5" />
+                                {deletingId === item._id ? (
+                                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                ) : (
+                                    <Trash className="w-3.5 h-3.5" />
+                                )}
                             </button>
                         </div>
 
@@ -393,10 +429,10 @@ export default function ContentManager({ view = 'page' }) {
                                     </button>
                                     <button
                                         type="submit"
-                                        disabled={!newFolderName.trim()}
+                                        disabled={!newFolderName.trim() || creatingFolder}
                                         className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
-                                        Create Folder
+                                        {creatingFolder ? 'Creating...' : 'Create Folder'}
                                     </button>
                                 </div>
                             </form>

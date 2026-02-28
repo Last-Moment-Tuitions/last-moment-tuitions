@@ -3,9 +3,11 @@ import React, { useState, useEffect } from 'react';
 import { Button, Card, Input, Label, Badge } from '@/components/ui';
 import menuService from '@/services/menuService';
 import adminService from '@/services/adminService';
+import { useToast } from '@/context/ToastContext';
 import { Plus, Trash2, Edit2, Save, MoveUp, MoveDown, ChevronRight, ChevronDown, CheckCircle, Circle } from 'lucide-react';
 
 export default function MenusAdminPage() {
+    const { toast } = useToast();
     const [menus, setMenus] = useState([]);
     const [selectedMenu, setSelectedMenu] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -44,15 +46,15 @@ export default function MenusAdminPage() {
             setLoading(true);
             const data = await menuService.getAll();
             setMenus(data);
-            
+
             // Refresh selected menu logic
             if (selectedMenu) {
                 const refreshed = data.find(m => m._id === selectedMenu._id);
                 if (refreshed) setSelectedMenu(refreshed);
                 else setSelectedMenu(null); // Menu might have been deleted
             } else if (data.length > 0) {
-                 const active = data.find(m => m.isActive);
-                 setSelectedMenu(active || data[0]);
+                const active = data.find(m => m.isActive);
+                setSelectedMenu(active || data[0]);
             } else {
                 setSelectedMenu(null);
             }
@@ -71,21 +73,21 @@ export default function MenusAdminPage() {
             setMenus([...menus, newMenu]);
             setSelectedMenu(newMenu);
         } catch (error) {
-            alert('Failed to create menu: ' + error.message);
+            toast.error(error.message || 'Failed to create menu');
         }
     };
 
     const handleDeleteMenu = async () => {
         if (!selectedMenu) return;
         if (!confirm(`Are you sure you want to delete menu "${selectedMenu.name}"? This cannot be undone.`)) return;
-        
+
         try {
             await menuService.delete(selectedMenu._id);
-            alert('Menu deleted.');
+            toast.success('Menu deleted successfully');
             setSelectedMenu(null); // Clear selection first
             await fetchMenus(); // Then refresh
         } catch (error) {
-            alert('Failed to delete menu: ' + error.message);
+            toast.error(error.message || 'Failed to delete menu');
         }
     };
 
@@ -96,7 +98,7 @@ export default function MenusAdminPage() {
             setRenaming(false);
             await fetchMenus();
         } catch (error) {
-            alert('Failed to rename menu: ' + error.message);
+            toast.error(error.message || 'Failed to rename menu');
         }
     };
 
@@ -105,10 +107,10 @@ export default function MenusAdminPage() {
         try {
             setSaving(true);
             await menuService.update(selectedMenu._id, { items: selectedMenu.items });
-            alert('Menu saved successfully!');
-            await fetchMenus(); 
+            toast.success('Menu saved successfully!');
+            await fetchMenus();
         } catch (error) {
-            alert('Failed to save menu: ' + error.message);
+            toast.error(error.message || 'Failed to save menu');
         } finally {
             setSaving(false);
         }
@@ -117,26 +119,26 @@ export default function MenusAdminPage() {
     const handleActivateMenu = async (menu) => {
         if (!confirm(`Are you sure you want to set "${menu.name}" as the ACTIVE public menu?`)) return;
         try {
-             setActivating(true);
-             await menuService.activate(menu._id);
-             await fetchMenus(); 
-             alert(`Menu "${menu.name}" is now active.`);
+            setActivating(true);
+            await menuService.activate(menu._id);
+            await fetchMenus();
+            toast.success(`Menu "${menu.name}" is now active`);
         } catch (error) {
-            alert('Failed to activate menu: ' + error.message);
+            toast.error(error.message || 'Failed to activate menu');
         } finally {
             setActivating(false);
         }
     };
 
     const handleDeactivateMenu = async (menu) => {
-         if (!confirm(`Are you sure you want to DEACTIVATE "${menu.name}"? The site will revert to default navigation.`)) return;
-         try {
-             await menuService.update(menu._id, { isActive: false });
-             await fetchMenus();
-             alert(`Menu "${menu.name}" deactivated.`);
-         } catch (error) {
-             alert('Failed to deactivate: ' + error.message);
-         }
+        if (!confirm(`Are you sure you want to DEACTIVATE "${menu.name}"? The site will revert to default navigation.`)) return;
+        try {
+            await menuService.update(menu._id, { isActive: false });
+            await fetchMenus();
+            toast.success(`Menu "${menu.name}" deactivated`);
+        } catch (error) {
+            toast.error(error.message || 'Failed to deactivate menu');
+        }
     };
 
     const startRename = () => {
@@ -160,7 +162,7 @@ export default function MenusAdminPage() {
             }
         }
     };
-    
+
     // ... item handlers (startEdit, cancelEdit, saveEdit, updateItemInPath, addItem...) stay mostly same
     const startEdit = (item, path) => {
         setEditingPath(path);
@@ -180,54 +182,57 @@ export default function MenusAdminPage() {
     };
 
     const updateItemInPath = (items, path, changes) => {
-         const [currentIndex, ...rest] = path;
-         if (rest.length === 0) {
-             items[currentIndex] = { ...items[currentIndex], ...changes };
-         } else if (items[currentIndex] && items[currentIndex].items) {
-             updateItemInPath(items[currentIndex].items, rest, changes);
-         }
+        const [currentIndex, ...rest] = path;
+        if (rest.length === 0) {
+            items[currentIndex] = { ...items[currentIndex], ...changes };
+        } else if (items[currentIndex] && items[currentIndex].items) {
+            updateItemInPath(items[currentIndex].items, rest, changes);
+        }
     };
 
     const addItem = () => {
-        if (!newItem.label) return alert("Label is required");
+        if (!newItem.label) {
+            toast.error("Label is required");
+            return;
+        }
         const itemToAdd = { ...newItem, type: newItem.type };
         const updatedMenu = { ...selectedMenu };
         if (!activeParentPath) {
             updatedMenu.items.push(itemToAdd);
         } else {
-           addItemToPath(updatedMenu.items, activeParentPath, itemToAdd);
+            addItemToPath(updatedMenu.items, activeParentPath, itemToAdd);
         }
         setSelectedMenu(updatedMenu);
         setNewItem({ label: '', href: '', type: 'link', items: [] });
         setActiveParentPath(null);
     };
-    
+
     // Helper to add item to nested structure
     const addItemToPath = (items, path, item) => {
         const [currentIndex, ...rest] = path;
         if (items[currentIndex]) {
             if (!items[currentIndex].items) items[currentIndex].items = [];
             if (rest.length === 0) {
-                 items[currentIndex].items.push(item);
+                items[currentIndex].items.push(item);
             } else {
-                 addItemToPath(items[currentIndex].items, rest, item);
+                addItemToPath(items[currentIndex].items, rest, item);
             }
         }
     };
 
     const deleteItem = (path) => {
-         const updatedMenu = { ...selectedMenu };
-         deleteItemFromPath(updatedMenu.items, path);
-         setSelectedMenu(updatedMenu);
+        const updatedMenu = { ...selectedMenu };
+        deleteItemFromPath(updatedMenu.items, path);
+        setSelectedMenu(updatedMenu);
     };
 
     const deleteItemFromPath = (items, path) => {
-         const [currentIndex, ...rest] = path;
-         if (rest.length === 0) {
-             items.splice(currentIndex, 1);
-         } else if (items[currentIndex] && items[currentIndex].items) {
-             deleteItemFromPath(items[currentIndex].items, rest);
-         }
+        const [currentIndex, ...rest] = path;
+        if (rest.length === 0) {
+            items.splice(currentIndex, 1);
+        } else if (items[currentIndex] && items[currentIndex].items) {
+            deleteItemFromPath(items[currentIndex].items, rest);
+        }
     };
 
     const moveItem = (path, direction) => {
@@ -237,17 +242,17 @@ export default function MenusAdminPage() {
     };
 
     const moveItemInPath = (items, path, direction) => {
-         const [currentIndex, ...rest] = path;
-         if (rest.length === 0) {
-             const newIndex = currentIndex + direction;
-             if (newIndex >= 0 && newIndex < items.length) {
-                 const temp = items[currentIndex];
-                 items[currentIndex] = items[newIndex];
-                 items[newIndex] = temp;
-             }
-         } else if (items[currentIndex] && items[currentIndex].items) {
-             moveItemInPath(items[currentIndex].items, rest, direction);
-         }
+        const [currentIndex, ...rest] = path;
+        if (rest.length === 0) {
+            const newIndex = currentIndex + direction;
+            if (newIndex >= 0 && newIndex < items.length) {
+                const temp = items[currentIndex];
+                items[currentIndex] = items[newIndex];
+                items[newIndex] = temp;
+            }
+        } else if (items[currentIndex] && items[currentIndex].items) {
+            moveItemInPath(items[currentIndex].items, rest, direction);
+        }
     };
 
     // Recursive Renderer
@@ -261,54 +266,54 @@ export default function MenusAdminPage() {
 
                     if (isEditing) {
                         return (
-                             <div key={idx} className="bg-primary-50/50 border border-primary-200 rounded-xl p-4 space-y-4 shadow-sm relative">
+                            <div key={idx} className="bg-primary-50/50 border border-primary-200 rounded-xl p-4 space-y-4 shadow-sm relative">
                                 <div className="absolute top-0 right-0 p-2 opacity-10 bg-primary-500 rounded-bl-2xl">
                                     <Edit2 size={32} />
                                 </div>
                                 <h4 className="font-bold text-primary-800 text-sm uppercase tracking-wide">Editing Item</h4>
-                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                     <div className="col-span-2">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="col-span-2">
                                         <Label>Quick Fill</Label>
-                                         <select 
+                                        <select
                                             className="w-full rounded-xl border border-gray-200 px-4 py-2 text-sm bg-white focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all"
                                             onChange={(e) => handlePageSelection(e, true)}
                                             defaultValue=""
                                         >
                                             <option value="">
-                                                 {pages.length === 0 ? '-- No pages found --' : '-- Select a Page to Auto-fill --'}
+                                                {pages.length === 0 ? '-- No pages found --' : '-- Select a Page to Auto-fill --'}
                                             </option>
                                             {pages.map(p => <option key={p._id} value={p._id}>{p.title} (/{p.slug})</option>)}
                                         </select>
-                                     </div>
-                                     <div>
+                                    </div>
+                                    <div>
                                         <Label>Label</Label>
-                                        <Input value={editForm.label} onChange={e => setEditForm({...editForm, label: e.target.value})} className="h-10" />
-                                     </div>
-                                     <div>
+                                        <Input value={editForm.label} onChange={e => setEditForm({ ...editForm, label: e.target.value })} className="h-10" />
+                                    </div>
+                                    <div>
                                         <Label>Href</Label>
-                                        <Input value={editForm.href} onChange={e => setEditForm({...editForm, href: e.target.value})} className="h-10" />
-                                     </div>
-                                     <div className="col-span-2 flex justify-end gap-3 pt-2">
-                                          <Button size="sm" variant="ghost" onClick={cancelEdit}>Cancel</Button>
-                                          <Button size="sm" onClick={() => saveEdit(currentPath)}>Update Item</Button>
-                                     </div>
-                                 </div>
-                             </div>
+                                        <Input value={editForm.href} onChange={e => setEditForm({ ...editForm, href: e.target.value })} className="h-10" />
+                                    </div>
+                                    <div className="col-span-2 flex justify-end gap-3 pt-2">
+                                        <Button size="sm" variant="ghost" onClick={cancelEdit}>Cancel</Button>
+                                        <Button size="sm" onClick={() => saveEdit(currentPath)}>Update Item</Button>
+                                    </div>
+                                </div>
+                            </div>
                         );
                     }
-                    
+
                     return (
                         <div key={idx} className="group bg-white border border-gray-100 rounded-xl p-3 hover:shadow-md hover:border-primary-100 transition-all duration-200">
                             <div className="flex items-center justify-between gap-4">
                                 <div className="flex items-center gap-3 overflow-hidden">
                                     <Badge variant={isDropdown ? 'accent' : 'neutral'} size="sm" className={isDropdown ? "px-2" : "px-2 bg-gray-50 text-gray-500 border-gray-200 font-normal"}>
-                                        {isDropdown ? <ChevronDown size={14} className="mr-1"/> : <span className="mr-1 text-xs">🔗</span>}
+                                        {isDropdown ? <ChevronDown size={14} className="mr-1" /> : <span className="mr-1 text-xs">🔗</span>}
                                         {item.type}
                                     </Badge>
                                     <span className="font-bold text-gray-800 truncate">{item.label}</span>
                                     {!isDropdown && <span className="text-sm text-gray-400 font-mono truncate hidden sm:inline-block bg-gray-50 px-2 py-0.5 rounded">{item.href}</span>}
                                 </div>
-                                
+
                                 <div className="flex items-center gap-1 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
                                     <div className="flex bg-gray-50 rounded-lg p-1 border border-gray-100">
                                         <button onClick={() => startEdit(item, currentPath)} className="p-1.5 hover:bg-white hover:text-primary-600 rounded-md text-gray-500 transition-all" title="Edit"><Edit2 size={14} /></button>
@@ -317,11 +322,11 @@ export default function MenusAdminPage() {
                                         <button onClick={() => moveItem(currentPath, 1)} className="p-1.5 hover:bg-white hover:text-gray-900 rounded-md text-gray-400 transition-all" title="Move Down"><MoveDown size={14} /></button>
                                     </div>
                                     <button onClick={() => deleteItem(currentPath)} className="ml-2 p-2 hover:bg-red-50 text-red-400 hover:text-red-500 rounded-lg transition-colors border border-transparent hover:border-red-100" title="Delete"><Trash2 size={15} /></button>
-                                    
+
                                     {isDropdown && (
-                                        <Button 
-                                            size="sm" 
-                                            variant="secondary" 
+                                        <Button
+                                            size="sm"
+                                            variant="secondary"
                                             onClick={() => {
                                                 setNewItem({ label: '', href: '', type: 'link', items: [] });
                                                 setActiveParentPath(currentPath);
@@ -334,13 +339,13 @@ export default function MenusAdminPage() {
                                 </div>
                             </div>
 
-                            
+
                             {item.items && item.items.length > 0 && (
                                 <div className="mt-3">
                                     {renderItems(item.items, currentPath)}
                                 </div>
                             )}
-                            
+
                             {activeParentPath && JSON.stringify(activeParentPath) === JSON.stringify(currentPath) && (
                                 <div className="mt-3 ml-4 p-4 bg-gray-50/80 rounded-xl border border-dashed border-primary-300 relative animate-in fade-in zoom-in-95 duration-200">
                                     <div className="text-xs font-bold mb-3 text-primary-600 flex items-center gap-2 uppercase tracking-wider">
@@ -348,9 +353,9 @@ export default function MenusAdminPage() {
                                         Adding Item to: {item.label}
                                     </div>
                                     <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
-                                         <div className="col-span-12 mb-2">
+                                        <div className="col-span-12 mb-2">
                                             <Label>Quick Select</Label>
-                                            <select 
+                                            <select
                                                 className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500/20 outline-none"
                                                 onChange={handlePageSelection}
                                                 defaultValue=""
@@ -360,18 +365,18 @@ export default function MenusAdminPage() {
                                             </select>
                                         </div>
                                         <div className="md:col-span-5">
-                                            <Input 
-                                                placeholder="Label" 
-                                                value={newItem.label} 
-                                                onChange={e => setNewItem({...newItem, label: e.target.value})}
+                                            <Input
+                                                placeholder="Label"
+                                                value={newItem.label}
+                                                onChange={e => setNewItem({ ...newItem, label: e.target.value })}
                                                 className="h-10"
                                             />
                                         </div>
                                         <div className="md:col-span-4">
-                                            <Input 
-                                                placeholder="Link" 
-                                                value={newItem.href} 
-                                                onChange={e => setNewItem({...newItem, href: e.target.value})}
+                                            <Input
+                                                placeholder="Link"
+                                                value={newItem.href}
+                                                onChange={e => setNewItem({ ...newItem, href: e.target.value })}
                                                 className="h-10"
                                             />
                                         </div>
@@ -402,25 +407,25 @@ export default function MenusAdminPage() {
                     {loading ? (
                         <div className="text-center py-10 text-gray-400">Loading menus...</div>
                     ) : menus.map(menu => (
-                        <div 
+                        <div
                             key={menu._id}
                             onClick={() => setSelectedMenu(menu)}
                             className={`
                                 group flex flex-col gap-1 p-4 rounded-xl cursor-pointer border transition-all duration-200
-                                ${selectedMenu?._id === menu._id 
-                                    ? 'bg-primary-50 border-primary-200 shadow-sm ring-1 ring-primary-100' 
+                                ${selectedMenu?._id === menu._id
+                                    ? 'bg-primary-50 border-primary-200 shadow-sm ring-1 ring-primary-100'
                                     : 'bg-white border-gray-100 hover:border-primary-100 hover:shadow-md hover:-translate-y-0.5'
                                 }
                             `}
                         >
-                             <div className="flex justify-between items-center">
+                            <div className="flex justify-between items-center">
                                 <span className={`font-bold ${selectedMenu?._id === menu._id ? 'text-primary-900' : 'text-gray-700'}`}>
                                     {menu.name}
                                 </span>
                                 {menu.isActive && (
                                     <Badge variant="success" size="sm" className="shadow-none">Active</Badge>
                                 )}
-                             </div>
+                            </div>
                             <div className="flex justify-between items-center text-xs text-gray-500">
                                 <span>{menu.items?.length || 0} items</span>
                                 <ChevronRight className={`w-4 h-4 transition-transform ${selectedMenu?._id === menu._id ? 'text-primary-400' : 'text-gray-300 group-hover:text-primary-300'}`} />
@@ -434,86 +439,86 @@ export default function MenusAdminPage() {
                     {selectedMenu ? (
                         <Card>
                             <div className="flex justify-between items-center mb-6 border-b pb-4">
-                            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8 pb-6 border-b border-gray-100">
-                                <div className="space-y-1">
-                                    {renaming ? (
-                                        <div className="flex items-center gap-2">
-                                            <Input 
-                                                value={renameValue} 
-                                                onChange={e => setRenameValue(e.target.value)} 
-                                                className="h-9 w-64 font-bold" 
-                                                autoFocus
-                                            />
-                                            <Button size="sm" onClick={handleRenameMenu}>Save</Button>
-                                            <Button size="sm" variant="ghost" onClick={() => setRenaming(false)}>Cancel</Button>
-                                        </div>
-                                    ) : (
-                                        <div className="flex items-center gap-2 group">
-                                            <h2 className="text-2xl font-bold text-gray-900">{selectedMenu.name}</h2>
-                                            <button 
-                                                onClick={startRename} 
-                                                className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 hover:text-primary-600"
-                                                title="Rename Menu"
-                                            >
-                                                <Edit2 size={14}/>
-                                            </button>
-                                        </div>
-                                    )}
-                                    
-                                    <div className="flex items-center gap-3">
-                                        {selectedMenu.isActive ? (
-                                            <div className="flex items-center gap-2 bg-green-50 text-green-700 px-3 py-1 rounded-full text-xs font-medium border border-green-100">
-                                                <CheckCircle size={12}/> 
-                                                <span>Live on Site</span>
-                                                <button 
-                                                    onClick={() => handleDeactivateMenu(selectedMenu)}
-                                                    className="ml-2 hover:underline text-red-600 font-semibold"
-                                                >
-                                                    Deactivate
-                                                </button>
+                                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8 pb-6 border-b border-gray-100">
+                                    <div className="space-y-1">
+                                        {renaming ? (
+                                            <div className="flex items-center gap-2">
+                                                <Input
+                                                    value={renameValue}
+                                                    onChange={e => setRenameValue(e.target.value)}
+                                                    className="h-9 w-64 font-bold"
+                                                    autoFocus
+                                                />
+                                                <Button size="sm" onClick={handleRenameMenu}>Save</Button>
+                                                <Button size="sm" variant="ghost" onClick={() => setRenaming(false)}>Cancel</Button>
                                             </div>
                                         ) : (
-                                            <Button 
-                                                size="sm" 
-                                                variant="secondary" 
-                                                className="h-7 text-xs bg-gray-100 hover:bg-green-50 hover:text-green-700 hover:border-green-200 border border-transparent"
-                                                onClick={() => handleActivateMenu(selectedMenu)}
-                                            >
-                                                Set as Active
-                                            </Button>
+                                            <div className="flex items-center gap-2 group">
+                                                <h2 className="text-2xl font-bold text-gray-900">{selectedMenu.name}</h2>
+                                                <button
+                                                    onClick={startRename}
+                                                    className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 hover:text-primary-600"
+                                                    title="Rename Menu"
+                                                >
+                                                    <Edit2 size={14} />
+                                                </button>
+                                            </div>
                                         )}
+
+                                        <div className="flex items-center gap-3">
+                                            {selectedMenu.isActive ? (
+                                                <div className="flex items-center gap-2 bg-green-50 text-green-700 px-3 py-1 rounded-full text-xs font-medium border border-green-100">
+                                                    <CheckCircle size={12} />
+                                                    <span>Live on Site</span>
+                                                    <button
+                                                        onClick={() => handleDeactivateMenu(selectedMenu)}
+                                                        className="ml-2 hover:underline text-red-600 font-semibold"
+                                                    >
+                                                        Deactivate
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <Button
+                                                    size="sm"
+                                                    variant="secondary"
+                                                    className="h-7 text-xs bg-gray-100 hover:bg-green-50 hover:text-green-700 hover:border-green-200 border border-transparent"
+                                                    onClick={() => handleActivateMenu(selectedMenu)}
+                                                >
+                                                    Set as Active
+                                                </Button>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                        <Button
+                                            onClick={handleDeleteMenu}
+                                            variant="ghost"
+                                            className="text-red-500 hover:bg-red-50 hover:text-red-600"
+                                            icon={<Trash2 size={16} />}
+                                        >
+                                            Delete
+                                        </Button>
+                                        <Button
+                                            onClick={handleSaveMenu}
+                                            disabled={saving}
+                                            className="shadow-lg shadow-primary-500/20"
+                                            icon={<Save size={18} />}
+                                        >
+                                            {saving ? 'Saving...' : 'Save Changes'}
+                                        </Button>
                                     </div>
                                 </div>
-                                <div className="flex items-center gap-3">
-                                    <Button 
-                                        onClick={handleDeleteMenu} 
-                                        variant="ghost" 
-                                        className="text-red-500 hover:bg-red-50 hover:text-red-600" 
-                                        icon={<Trash2 size={16} />}
-                                    >
-                                        Delete
-                                    </Button>
-                                    <Button 
-                                        onClick={handleSaveMenu} 
-                                        disabled={saving} 
-                                        className="shadow-lg shadow-primary-500/20"
-                                        icon={<Save size={18} />}
-                                    >
-                                        {saving ? 'Saving...' : 'Save Changes'}
-                                    </Button>
-                                </div>
-                            </div>
                             </div>
 
                             {/* Root Add Form (active if no specific parent focused) */}
                             {!activeParentPath && (
                                 <div className="bg-gray-50 p-4 rounded-xl border border-dashed border-gray-300 mb-6">
                                     <h3 className="font-bold text-sm mb-3 text-gray-600">Add Top-Level Item</h3>
-                                    
-                                     {/* Page Selector */}
-                                     <div className="mb-4">
+
+                                    {/* Page Selector */}
+                                    <div className="mb-4">
                                         <Label>Quick Add from Pages:</Label>
-                                         <select 
+                                        <select
                                             className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm"
                                             onChange={handlePageSelection}
                                             defaultValue=""
@@ -521,24 +526,24 @@ export default function MenusAdminPage() {
                                             <option value="">-- Select a Page to Auto-fill --</option>
                                             {pages.map(p => <option key={p._id} value={p._id}>{p.title} (/{p.slug})</option>)}
                                         </select>
-                                     </div>
+                                    </div>
 
                                     <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
                                         <div className="md:col-span-4">
                                             <Label className="text-gray-600">Label</Label>
-                                            <Input 
-                                                value={newItem.label} 
-                                                onChange={e => setNewItem({...newItem, label: e.target.value})} 
+                                            <Input
+                                                value={newItem.label}
+                                                onChange={e => setNewItem({ ...newItem, label: e.target.value })}
                                                 placeholder="e.g. Home"
                                             />
                                         </div>
                                         <div className="md:col-span-3">
                                             <Label className="text-gray-600">Type</Label>
                                             <div className="relative">
-                                                <select 
+                                                <select
                                                     className="appearance-none flex h-12 w-full rounded-xl border border-gray-200 bg-white px-4 py-2 text-base transition-all hover:border-primary-300 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
                                                     value={newItem.type}
-                                                    onChange={e => setNewItem({...newItem, type: e.target.value})}
+                                                    onChange={e => setNewItem({ ...newItem, type: e.target.value })}
                                                 >
                                                     <option value="link">Link</option>
                                                     <option value="dropdown">Dropdown</option>
@@ -548,10 +553,10 @@ export default function MenusAdminPage() {
                                         </div>
                                         <div className="md:col-span-3">
                                             <Label className="text-gray-600">Href</Label>
-                                            <Input 
+                                            <Input
                                                 disabled={newItem.type === 'dropdown'}
-                                                value={newItem.href} 
-                                                onChange={e => setNewItem({...newItem, href: e.target.value})} 
+                                                value={newItem.href}
+                                                onChange={e => setNewItem({ ...newItem, href: e.target.value })}
                                                 placeholder={newItem.type === 'dropdown' ? '-' : '/path'}
                                             />
                                         </div>

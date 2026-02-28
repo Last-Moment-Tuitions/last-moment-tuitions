@@ -7,7 +7,8 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import API_BASE_URL from '@/lib/config';
-import { supabase } from '@/lib/supabase';
+import { auth, googleProvider } from '@/lib/firebase';
+import { signInWithPopup } from 'firebase/auth';
 import { useToast } from '@/context/ToastContext';
 
 export default function SignInPage() {
@@ -35,16 +36,42 @@ export default function SignInPage() {
 
     const handleGoogleLogin = async () => {
         try {
-            const { error } = await supabase.auth.signInWithOAuth({
-                provider: 'google',
-                options: {
-                    redirectTo: `${window.location.origin}/auth/callback`,
+            const result = await signInWithPopup(auth, googleProvider);
+            const userParams = result.user;
+            const token = await userParams.getIdToken();
+
+            if (!token) {
+                throw new Error('No OAuth Token returned from Firebase');
+            }
+
+            // Send to backend to create session
+            const res = await fetch(`${API_BASE_URL}/auth/google`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
                 },
+                body: JSON.stringify({ token }),
             });
-            if (error) throw error;
+
+            if (!res.ok) {
+                const errorData = await res.json();
+                throw new Error(errorData.message || 'Backend verification failed');
+            }
+
+            const data = await res.json();
+            const { accessToken, expiresIn, user } = data.details || {};
+
+            if (!accessToken || !user) {
+                throw new Error('Invalid response from server');
+            }
+
+            document.cookie = `sessionId=${accessToken}; path=/; max-age=${expiresIn}; SameSite=Lax; Secure`;
+            toast.success('Login successful! Welcome back.');
+            login(user);
+            router.push('/');
         } catch (error) {
             console.error('Google Sign In Error:', error);
-            toast.error('Failed to initiate Google Sign In');
+            toast.error('Failed to authenticate with Google');
         }
     };
 
@@ -90,7 +117,7 @@ export default function SignInPage() {
                 <img
                     src="/assets/signin_illustration.png"
                     alt="Join us"
-                    className="absolute inset-0 w-full h-full object-cover z-10 animate-fade-in"
+                    className="absolute inset-0 w-full h-full object-fill r z-10 animate-fade-in"
                 />
                 {/* Decorative background elements */}
                 <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-white/40 rounded-full blur-[100px]"></div>
@@ -98,7 +125,7 @@ export default function SignInPage() {
             </div>
 
             {/* Right Side: Form */}
-            <div className="w-full lg:w-[58%] flex flex-col items-start justify-center p-6 md:p-12 lg:p-20 lg:pl-[12%] overflow-y-auto bg-white">
+            <div className="w-full lg:w-[58%] flex flex-col items-start justify-center p-6 md:p-10 lg:p-10 lg:pl-[10%] overflow-y-auto bg-white">
                 <div className="max-w-md w-full py-8">
                     <div className="mb-10 text-left">
                         <h2 className="text-4xl font-extrabold text-primary-900 mb-3 tracking-tight">Sign In</h2>
@@ -107,7 +134,7 @@ export default function SignInPage() {
 
                     <form className="space-y-6" onSubmit={handleSubmit}>
                         <div className="space-y-2">
-                            <Label htmlFor="email" className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Email Address</Label>
+                            <Label htmlFor="email" className="text-[10px] font-bold uppercase tracking-widest text-gray-900">Email</Label>
                             <Input
                                 id="email"
                                 type="email"
@@ -121,7 +148,7 @@ export default function SignInPage() {
 
                         <div className="space-y-2">
                             <div className="flex items-center justify-between">
-                                <Label htmlFor="password" className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Password</Label>
+                                <Label htmlFor="password" className="text-[10px] font-bold uppercase tracking-widest text-gray-700">Password</Label>
                             </div>
                             <div className="relative">
                                 <Input

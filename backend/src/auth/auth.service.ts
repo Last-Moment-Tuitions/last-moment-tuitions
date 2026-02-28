@@ -1,7 +1,7 @@
 
 import { Injectable, UnauthorizedException, ConflictException, Inject, BadRequestException } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
-import { SupabaseService } from '../supabase/supabase.service';
+import { FirebaseService } from '../firebase/firebase.service';
 import { EmailService } from '../email/email.service';
 import { SignupDto } from './dto/signup.dto';
 import { LoginDto } from './dto/login.dto';
@@ -15,7 +15,7 @@ import { createHash } from 'crypto';
 export class AuthService {
     constructor(
         private usersService: UsersService,
-        private supabaseService: SupabaseService,
+        private firebaseService: FirebaseService,
         private emailService: EmailService,
         @Inject('REDIS_CLIENT') private redis: Redis,
     ) { }
@@ -35,13 +35,25 @@ export class AuthService {
         // Remove confirmPassword before passing to usersService
         const { confirmPassword, phone, ...rest } = signupDto;
 
-        return this.usersService.create({
+        const newUser = await this.usersService.create({
             ...rest,
             phone: Number(phone),
             passwordHash: hashedPassword,
             authProviders: ['local'],
             signupMethod: 'local',
         });
+
+        // Return only essential user data
+        const userObj = newUser.toObject ? newUser.toObject() : newUser;
+        return {
+            user: {
+                roles: userObj.roles,
+                firstName: userObj.firstName,
+                lastName: userObj.lastName,
+                email: userObj.email
+            },
+            message: 'User created successfully'
+        };
     }
 
     async login(loginDto: LoginDto, ip: string, userAgent: string) {
@@ -62,9 +74,9 @@ export class AuthService {
     }
 
     async googleLogin(googleLoginDto: GoogleLoginDto, ip: string, userAgent: string) {
-        const supabaseUser = await this.supabaseService.verifyToken(googleLoginDto.token);
-        const email = supabaseUser.email;
-        const supabaseId = supabaseUser.id;
+        const decodedToken = await this.firebaseService.verifyToken(googleLoginDto.token);
+        const email = decodedToken.email;
+        const firebaseUid = decodedToken.uid;
 
         if (!email) throw new BadRequestException('Google account must have an email');
 
@@ -74,17 +86,17 @@ export class AuthService {
             // Create new user from Google
             user = await this.usersService.create({
                 email,
-                firstName: supabaseUser.user_metadata?.full_name?.split(' ')[0] || 'User',
-                lastName: supabaseUser.user_metadata?.full_name?.split(' ')[1] || '',
-                supabaseId,
+                firstName: decodedToken.name?.split(' ')[0] || 'User',
+                lastName: decodedToken.name?.split(' ')[1] || '',
+                firebaseUid,
                 authProviders: ['google'],
                 signupMethod: 'google',
                 isActive: true,
             });
         } else {
             // Link existing user if needed, or update ID
-            if (!user.supabaseId) {
-                user.supabaseId = supabaseId;
+            if (!user.firebaseUid) {
+                user.firebaseUid = firebaseUid;
                 if (!user.authProviders.includes('google')) {
                     user.authProviders.push('google');
                 }
@@ -181,12 +193,17 @@ export class AuthService {
                 const sessionData = await this.redis.hgetall(`session:${sid}`);
                 if (sessionData.deviceHash === deviceHash) {
                     console.log(`[DEBUG] Reusing session (${sid}) for device (${deviceHash})`);
-                    // Remove sensitive data
-                    const { passwordHash, ...safeUser } = user.toObject ? user.toObject() : user;
+                    // Return only essential user data
+                    const userObj = user.toObject ? user.toObject() : user;
                     return {
                         accessToken: sid,
                         expiresIn: SESSION_TTL, // This is static, ideally we'd get TTL from Redis
-                        user: safeUser
+                        user: {
+                            roles: userObj.roles,
+                            firstName: userObj.firstName,
+                            lastName: userObj.lastName,
+                            email: userObj.email
+                        }
                     };
                 }
             }
@@ -231,13 +248,18 @@ export class AuthService {
         }
         await user.save();
 
-        // Remove sensitive data before returning
-        const { passwordHash, ...safeUser } = user.toObject ? user.toObject() : user;
+        // Return only essential user data
+        const userObj = user.toObject ? user.toObject() : user;
 
         return {
             accessToken: sessionId,
             expiresIn: SESSION_TTL,
-            user: safeUser
+            user: {
+                roles: userObj.roles,
+                firstName: userObj.firstName,
+                lastName: userObj.lastName,
+                email: userObj.email
+            }
         };
     }
 

@@ -6,7 +6,7 @@ import { DatabaseModule } from './database/database.module';
 import { RedisModule } from './redis/redis.module';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
-import { SupabaseModule } from './supabase/supabase.module';
+import { FirebaseModule } from './firebase/firebase.module';
 import { AdminModule } from './admin/admin.module';
 import { PagesModule as PublicPagesModule } from './modules/pages/pages.module';
 import { FoldersModule as PublicFoldersModule } from './modules/folders/folders.module';
@@ -31,7 +31,7 @@ import { EmailModule } from './email/email.module';
     EmailModule,
     UsersModule,
     AuthModule,
-    SupabaseModule,
+    FirebaseModule,
     AdminModule,
     PublicPagesModule,
     PublicFoldersModule,

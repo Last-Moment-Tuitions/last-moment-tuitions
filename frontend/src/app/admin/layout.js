@@ -3,19 +3,23 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import { useToast } from '@/context/ToastContext';
 import { useEffect, useState } from 'react';
 import {
     LayoutDashboard, PlusCircle, Layers, CreditCard,
     MessageCircle, Settings, LogOut, GraduationCap,
     CircleUser,
-    Star
+    Star,
+    Loader2
 } from 'lucide-react';
 
 export default function AdminLayout({ children }) {
     const pathname = usePathname();
     const router = useRouter();
-    const { user, loading } = useAuth();
+    const { user, loading, logout } = useAuth();
+    const { toast } = useToast();
     const [isAuthorized, setIsAuthorized] = useState(false);
+    const [loggingOut, setLoggingOut] = useState(false);
 
     useEffect(() => {
         if (!loading) {
@@ -56,7 +60,7 @@ export default function AdminLayout({ children }) {
                         <div className="p-1.5 bg-primary-600 rounded">
                             <GraduationCap className="w-6 h-6 text-white" />
                         </div>
-                        <span className="text-xl font-semibold tracking-tight">E-tutor</span>
+                        <span className="text-xl font-semibold tracking-tight">LMT Admin</span>
                     </div>
                 </div>
 
@@ -92,17 +96,72 @@ export default function AdminLayout({ children }) {
 
                 {/* Sign Out (Fixed at bottom like Figma) */}
                 <div className="p-6 border-t border-[#363B47]">
-                    <button className="flex items-center gap-3 w-full text-[#8C94A3] hover:text-white transition-colors text-sm font-medium">
-                        <LogOut className="w-5 h-5" />
-                        Sign Out
+                    <button
+                        onClick={async () => {
+                            setLoggingOut(true);
+                            await logout(() => toast.success('Logged out successfully'));
+                        }}
+                        disabled={loggingOut}
+                        className="flex items-center gap-3 w-full text-[#8C94A3] hover:text-white transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        {loggingOut ? (
+                            <>
+                                <Loader2 className="w-5 h-5 animate-spin" />
+                                Logging out...
+                            </>
+                        ) : (
+                            <>
+                                <LogOut className="w-5 h-5" />
+                                Sign Out
+                            </>
+                        )}
                     </button>
                 </div>
             </aside>
 
             {/* Main Content Wrapper - Offset for fixed sidebar */}
             <div className="flex-1 ml-[280px] w-[calc(100%-280px)]">
-                {/* Top Header Placeholder if needed globally, but Dashboard has its own. 
-                     The layout just renders children. */}
+                {/* Top Header with User Info and Logout */}
+                <header className="h-[70px] bg-white border-b border-gray-200 flex items-center justify-end px-8 sticky top-0 z-20 shadow-sm">
+                    <div className="flex items-center gap-4">
+                        {/* User Info */}
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center">
+                                <CircleUser className="w-6 h-6 text-primary-600" />
+                            </div>
+                            <div className="text-sm">
+                                <p className="font-semibold text-gray-900">
+                                    {user?.name || user?.email?.split('@')[0] || 'Admin'}
+                                </p>
+                                <p className="text-xs text-gray-500">Administrator</p>
+                            </div>
+                        </div>
+
+                        {/* Logout Button */}
+                        <button
+                            onClick={async () => {
+                                setLoggingOut(true);
+                                await logout(() => toast.success('Logged out successfully'));
+                            }}
+                            disabled={loggingOut}
+                            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors border border-gray-200 hover:border-red-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {loggingOut ? (
+                                <>
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                    <span>Logging out...</span>
+                                </>
+                            ) : (
+                                <>
+                                    <LogOut className="w-4 h-4" />
+                                    <span>Logout</span>
+                                </>
+                            )}
+                        </button>
+                    </div>
+                </header>
+
+                {/* Main Content */}
                 <main className="min-h-screen">
                     {children}
                 </main>
