@@ -7,7 +7,8 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import API_BASE_URL from '@/lib/config';
-import { supabase } from '@/lib/supabase';
+import { auth, googleProvider } from '@/lib/firebase';
+import { signInWithPopup } from 'firebase/auth';
 import { useToast } from '@/context/ToastContext';
 
 export default function SignInPage() {
@@ -35,16 +36,42 @@ export default function SignInPage() {
 
     const handleGoogleLogin = async () => {
         try {
-            const { error } = await supabase.auth.signInWithOAuth({
-                provider: 'google',
-                options: {
-                    redirectTo: `${window.location.origin}/auth/callback`,
+            const result = await signInWithPopup(auth, googleProvider);
+            const userParams = result.user;
+            const token = await userParams.getIdToken();
+
+            if (!token) {
+                throw new Error('No OAuth Token returned from Firebase');
+            }
+
+            // Send to backend to create session
+            const res = await fetch(`${API_BASE_URL}/auth/google`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
                 },
+                body: JSON.stringify({ token }),
             });
-            if (error) throw error;
+
+            if (!res.ok) {
+                const errorData = await res.json();
+                throw new Error(errorData.message || 'Backend verification failed');
+            }
+
+            const data = await res.json();
+            const { accessToken, expiresIn, user } = data.details || {};
+
+            if (!accessToken || !user) {
+                throw new Error('Invalid response from server');
+            }
+
+            document.cookie = `sessionId=${accessToken}; path=/; max-age=${expiresIn}; SameSite=Lax; Secure`;
+            toast.success('Login successful! Welcome back.');
+            login(user);
+            router.push('/');
         } catch (error) {
             console.error('Google Sign In Error:', error);
-            toast.error('Failed to initiate Google Sign In');
+            toast.error('Failed to authenticate with Google');
         }
     };
 

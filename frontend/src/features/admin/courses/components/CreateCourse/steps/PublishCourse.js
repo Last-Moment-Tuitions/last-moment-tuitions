@@ -198,7 +198,6 @@ export default function PublishCourse({ data, updateData, onNext, onPrev, onSave
                     {saving ? 'Publishing...' : 'Submit For Review'}
                 </button>
             </div>
-
         </div>
     );
 }

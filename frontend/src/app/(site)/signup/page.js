@@ -6,8 +6,10 @@ import { Button, Input, Label, GoogleButton } from '@/components/ui';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import API_BASE_URL from '@/lib/config';
-import { supabase } from '@/lib/supabase';
+import { auth, googleProvider } from '@/lib/firebase';
+import { signInWithPopup } from 'firebase/auth';
 import { useToast } from '@/context/ToastContext';
+import { useAuth } from '@/context/AuthContext';
 
 export default function SignUpPage() {
     const [formData, setFormData] = useState({
@@ -26,6 +28,7 @@ export default function SignUpPage() {
     const [mounted, setMounted] = useState(false);
 
     const { toast } = useToast();
+    const { login } = useAuth();
     const router = useRouter();
 
     useEffect(() => {
@@ -66,16 +69,42 @@ export default function SignUpPage() {
 
     const handleGoogleLogin = async () => {
         try {
-            const { error } = await supabase.auth.signInWithOAuth({
-                provider: 'google',
-                options: {
-                    redirectTo: `${window.location.origin}/auth/callback`,
+            const result = await signInWithPopup(auth, googleProvider);
+            const userParams = result.user;
+            const token = await userParams.getIdToken();
+
+            if (!token) {
+                throw new Error('No OAuth Token returned from Firebase');
+            }
+
+            // Send to backend to create session
+            const res = await fetch(`${API_BASE_URL}/auth/google`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
                 },
+                body: JSON.stringify({ token }),
             });
-            if (error) throw error;
+
+            if (!res.ok) {
+                const errorData = await res.json();
+                throw new Error(errorData.message || 'Backend verification failed');
+            }
+
+            const data = await res.json();
+            const { accessToken, expiresIn, user } = data.details || {};
+
+            if (!accessToken || !user) {
+                throw new Error('Invalid response from server');
+            }
+
+            document.cookie = `sessionId=${accessToken}; path=/; max-age=${expiresIn}; SameSite=Lax; Secure`;
+            toast.success('Account created successfully!');
+            login(user);
+            router.push('/');
         } catch (error) {
             console.error('Google Sign Up Error:', error);
-            toast.error('Failed to initiate Google Sign Up');
+            toast.error('Failed to authenticate with Google');
         }
     };
 

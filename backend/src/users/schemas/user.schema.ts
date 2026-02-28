@@ -12,11 +12,11 @@ export class User {
     @Prop({ required: true, default: 'local' })
     signupMethod: string; // 'local' | 'google'
 
-    @Prop({ required: true }) // Argon2 hash
+    @Prop({ required: false }) // Argon2 hash — optional for OAuth-only users
     passwordHash: string;
 
     @Prop({ unique: true, sparse: true })
-    supabaseId: string; // For Google Auth users
+    firebaseUid: string; // For Google Auth users
 
     @Prop({ required: true })
     firstName: string;
