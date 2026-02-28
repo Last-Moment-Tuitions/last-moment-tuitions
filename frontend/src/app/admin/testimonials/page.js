@@ -47,7 +47,6 @@ export default function TestimonialAdmin() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        toast.loading(editingId ? "Updating..." : "Adding...");
 
         try {
             if (editingId) {
@@ -68,7 +67,6 @@ export default function TestimonialAdmin() {
     const handleDelete = async (id) => {
         if (!toast.confirm("Are you sure you want to delete this testimonial?")) return;
 
-        toast.loading("Deleting...");
         try {
             await testimonialService.delete(id);
             toast.success("Deleted");
