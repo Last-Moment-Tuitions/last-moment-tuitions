@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, ArrowRight } from "lucide-react";
-import Image from "next/image";
+
 
 const isValidUrl = (url) => {
     try {
@@ -81,17 +81,15 @@ const AnimatedTestimonials = ({ testimonials = [], autoplay = false }) => {
                                     }}
                                     className="absolute inset-0 origin-bottom"
                                 >
-                                    <Image
+                                    <img
                                         src={
                                             [testimonial.imageUrl, testimonial.src, testimonial.image]
                                                 .find(img => img && typeof img === 'string' && isValidUrl(img))
                                             || fallbackImage
                                         }
                                         alt={testimonial.name || "Testimonial"}
-                                        fill
                                         draggable={false}
                                         className="h-full w-full rounded-3xl object-cover object-center shadow-xl"
-                                        sizes="(max-width: 768px) 100vw, 50vw"
                                         onError={(e) => {
                                             e.target.src = "https://via.placeholder.com/150";
                                         }}

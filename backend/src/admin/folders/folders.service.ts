@@ -22,7 +22,7 @@ export class FoldersService {
         return createdFolder.save();
     }
 
-    async delete(id: string) {
+    async delete(id: string): Promise<any> {
         // Optional: check if folder is empty or delete recursively
         return this.folderModel.deleteOne({ _id: id }).exec();
     }

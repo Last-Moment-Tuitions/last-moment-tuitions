@@ -82,7 +82,7 @@ export class PagesService {
     return this.pageModel.findByIdAndUpdate(id, updatePageDto, { new: true, runValidators: true }).exec();
   }
 
-  async remove(id: string) {
+  async remove(id: string): Promise<any> {
     return this.pageModel.deleteOne({ _id: id }).exec();
   }
 
