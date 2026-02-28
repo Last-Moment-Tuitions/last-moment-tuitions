@@ -1,4 +1,4 @@
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_API;
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL;
 const baseUrl = `${BACKEND_URL}/api`;
 
 const getAuthHeaders = () => {
@@ -19,7 +19,7 @@ export const testimonialService = {
     // 1. Get testimonials (Public/Admin)
     getByPage: async (pageTag) => {
         if (!BACKEND_URL) {
-            console.error("NEXT_PUBLIC_BACKEND_URL is not defined");
+            console.error("NEXT_PUBLIC_API_URL is not defined");
             throw new Error("Configuration Error: Backend URL not set");
         }
 
