@@ -21,7 +21,7 @@ export class FoldersController {
     }
 
     @Delete(':id')
-    delete(@Param('id') id: string) {
+    delete(@Param('id') id: string): Promise<any> {
         return this.foldersService.delete(id);
     }
 }

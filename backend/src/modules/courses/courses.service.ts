@@ -110,7 +110,7 @@ export class CoursesService {
       .exec();
   }
 
-  async remove(id: string) {
+  async remove(id: string): Promise<any> {
     // Remove course
     const result = await this.courseModel.deleteOne({ _id: id }).exec();
     
