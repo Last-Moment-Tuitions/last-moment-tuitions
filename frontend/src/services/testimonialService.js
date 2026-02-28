@@ -1,5 +1,4 @@
-const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3005';
-const baseUrl = `${BACKEND_URL}/api`;
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3005/api';
 
 const getAuthHeaders = () => {
     const token = localStorage.getItem('token');
@@ -13,7 +12,7 @@ export const testimonialService = {
     // 1. Get testimonials (Public/Admin)
     getByPage: async (pageTag) => {
         try {
-            const res = await fetch(`${baseUrl}/testimonials?page=${encodeURIComponent(pageTag)}`, {
+            const res = await fetch(`${BASE_URL}/testimonials?page=${encodeURIComponent(pageTag)}`, {
                 cache: 'no-store'
             });
             if (!res.ok) throw new Error('Failed to fetch testimonials');
