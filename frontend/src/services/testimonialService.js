@@ -1,5 +1,5 @@
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL;
-const baseUrl = `${BACKEND_URL}/api`;
+const baseUrl = `${BACKEND_URL}`;
 
 const getAuthHeaders = () => {
     if (typeof window === 'undefined') return {};
