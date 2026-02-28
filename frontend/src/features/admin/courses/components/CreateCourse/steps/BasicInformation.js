@@ -95,8 +95,50 @@ export default function BasicInformation({ data, updateData, onNext }) {
                     </div>
                 </div>
 
-                {/* Dropdowns Row (Level, Duration) */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Course Topic */}
+                <div className="space-y-2">
+                    <label className="block text-sm font-semibold text-gray-900">Course Topic</label>
+                    <input
+                        type="text"
+                        className="w-full p-4 border border-gray-200 rounded-xl text-base text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-primary-600 focus:ring-4 focus:ring-primary-50 transition-all shadow-sm"
+                        placeholder="What is primarily taught in your course?"
+                        value={data.topic}
+                        onChange={(e) => handleChange('topic', e.target.value)}
+                    />
+                </div>
+
+                {/* Dropdowns Row (Language, Subtitle Lang, Level, Duration) */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div className="space-y-2">
+                        <label className="block text-sm font-semibold text-gray-900">Course Language</label>
+                        <div className="relative">
+                            <select
+                                className="w-full p-4 pr-10 border border-gray-200 rounded-xl text-base text-gray-900 appearance-none focus:outline-none focus:border-primary-600 focus:ring-4 focus:ring-primary-50 bg-white transition-all shadow-sm cursor-pointer"
+                                value={data.language}
+                                onChange={(e) => handleChange('language', e.target.value)}
+                            >
+                                <option value="">Select...</option>
+                                <option value="english">English</option>
+                            </select>
+                            <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+                        </div>
+                    </div>
+
+                    <div className="space-y-2">
+                        <label className="block text-sm font-semibold text-gray-900">Subtitle Language</label>
+                        <div className="relative">
+                            <select
+                                className="w-full p-4 pr-10 border border-gray-200 rounded-xl text-base text-gray-900 appearance-none focus:outline-none focus:border-primary-600 focus:ring-4 focus:ring-primary-50 bg-white transition-all shadow-sm cursor-pointer"
+                                value={data.subtitleLanguage}
+                                onChange={(e) => handleChange('subtitleLanguage', e.target.value)}
+                            >
+                                <option value="">Select...</option>
+                                <option value="english">English</option>
+                            </select>
+                            <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+                        </div>
+                    </div>
+
                     <div className="space-y-2">
                         <label className="block text-sm font-semibold text-gray-900">Course Level</label>
                         <div className="relative">

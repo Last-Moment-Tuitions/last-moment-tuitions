@@ -18,12 +18,12 @@ export class UsersService {
 
     async findByIdPublic(id: string): Promise<UserDocument | null> {
         return this.userModel.findById(id)
-            .select('-activeSessions -__v -signupMethod -authProviders -supabaseId -passwordHash')
+            .select('-activeSessions -__v -signupMethod -authProviders -firebaseUid -passwordHash')
             .exec();
     }
 
-    async findBySupabaseId(supabaseId: string): Promise<UserDocument | null> {
-        return this.userModel.findOne({ supabaseId }).exec();
+    async findByFirebaseUid(firebaseUid: string): Promise<UserDocument | null> {
+        return this.userModel.findOne({ firebaseUid }).exec();
     }
 
     async create(userData: Partial<User>): Promise<UserDocument> {
