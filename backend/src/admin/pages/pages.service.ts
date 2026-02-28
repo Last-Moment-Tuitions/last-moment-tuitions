@@ -54,7 +54,7 @@ export class PagesService {
         }).exec();
     }
 
-    async delete(id: string) {
+    async delete(id: string): Promise<any> {
         return this.pageModel.deleteOne({ _id: id }).exec();
     }
 

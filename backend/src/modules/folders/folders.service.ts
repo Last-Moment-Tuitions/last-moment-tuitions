@@ -32,7 +32,7 @@ export class FoldersService {
     return this.folderModel.findByIdAndUpdate(id, updateFolderDto, { new: true }).exec();
   }
 
-  async remove(id: string) {
+  async remove(id: string): Promise<any> {
     return this.folderModel.deleteOne({ _id: id }).exec();
   }
 }

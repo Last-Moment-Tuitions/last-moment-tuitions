@@ -1,98 +1,80 @@
-const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL;
-const baseUrl = `${BACKEND_URL}`;
+import axios from 'axios';
+import API_BASE_URL from '@/lib/config';
 
-const getAuthHeaders = () => {
-    if (typeof window === 'undefined') return {};
+const api = axios.create({
+    baseURL: API_BASE_URL,
+    withCredentials: true,
+});
 
-    const sessionId = document.cookie
-        .split('; ')
-        .find(row => row.startsWith('sessionId='))
-        ?.split('=')[1];
-
-    return {
-        'Content-Type': 'application/json',
-        ...(sessionId ? { 'x-session-id': sessionId } : {}),
+api.interceptors.request.use((config) => {
+    const getCookie = (name) => {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop().split(';').shift();
     };
-};
+    
+    // AuthContext manages this, but adding it for robustness
+    const sessionId = getCookie('sessionId');
+    if (sessionId) {
+        config.headers['x-session-id'] = sessionId;
+    }
+    
+    // In case the frontend passes token in localstorage
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+    }
+    
+    return config;
+}, (error) => Promise.reject(error));
+
+api.interceptors.response.use(
+    (response) => {
+        if (response.data && response.data.success && response.data.details !== undefined) {
+            response.data = response.data.details;
+        }
+        return response;
+    },
+    (error) => Promise.reject(error)
+);
 
 export const testimonialService = {
-    // 1. Get testimonials (Public/Admin)
     getByPage: async (pageTag) => {
-        if (!BACKEND_URL) {
-            console.error("NEXT_PUBLIC_API_URL is not defined");
-            throw new Error("Configuration Error: Backend URL not set");
-        }
-
         try {
-            // Construct URL - ensure no double slashes
-            const url = `${baseUrl}/testimonials?target_page=${encodeURIComponent(pageTag)}`;
-
-            const res = await fetch(url, {
-                method: 'GET',
-                headers: {
-                    'Accept': 'application/json',
-                },
-                cache: 'no-store'
+            const response = await api.get('/testimonials', {
+                params: { target_page: pageTag }
             });
-
-            if (!res.ok) {
-                const errText = await res.text();
-                throw new Error(`Server Error: ${res.status} - ${errText}`);
-            }
-
-            const data = await res.json();
-
-            // Check if data is wrapped in a success object (e.g. from TransformInterceptor)
-            if (data && data.details && Array.isArray(data.details)) {
-                return data.details;
-            }
-
-            // Fallback for direct array response
-            return Array.isArray(data) ? data : [];
+            return Array.isArray(response.data) ? response.data : [];
         } catch (error) {
             console.error("Critical Fetch Error:", error);
-            throw error; // Propagate error to UI
+            throw error;
         }
     },
 
-    // 2. Create Testimonial (Admin Protected)
     create: async (data) => {
-        const res = await fetch(`${baseUrl}/testimonials`, {
-            method: 'POST',
-            headers: getAuthHeaders(),
-            body: JSON.stringify(data),
-        });
-        if (!res.ok) {
-            const errorData = await res.json();
-            throw new Error(errorData.message || 'Failed to create testimonial');
+        try {
+            const response = await api.post('/testimonials', data);
+            return response.data;
+        } catch (error) {
+            throw new Error(error.response?.data?.message || 'Failed to create testimonial');
         }
-        return res.json();
     },
 
-    // 3. Update Testimonial (Admin Protected)
     update: async (id, data) => {
-        const res = await fetch(`${baseUrl}/testimonials/${id}`, {
-            method: 'PATCH',
-            headers: getAuthHeaders(),
-            body: JSON.stringify(data),
-        });
-        if (!res.ok) {
-            const errorData = await res.json();
-            throw new Error(errorData.message || 'Failed to update testimonial');
+        try {
+            const response = await api.patch(`/testimonials/${id}`, data);
+            return response.data;
+        } catch (error) {
+            throw new Error(error.response?.data?.message || 'Failed to update testimonial');
         }
-        return res.json();
     },
 
-    // 4. Delete Testimonial (Admin Protected)
     delete: async (id) => {
-        const res = await fetch(`${baseUrl}/testimonials/${id}`, {
-            method: 'DELETE',
-            headers: getAuthHeaders(),
-        });
-        if (!res.ok) {
-            const errorData = await res.json();
-            throw new Error(errorData.message || 'Failed to delete testimonial');
+        try {
+            const response = await api.delete(`/testimonials/${id}`);
+            return response.data;
+        } catch (error) {
+            throw new Error(error.response?.data?.message || 'Failed to delete testimonial');
         }
-        return res.json();
     }
 };
