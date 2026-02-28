@@ -16,7 +16,7 @@ export class User {
     passwordHash: string;
 
     @Prop({ unique: true, sparse: true })
-    supabaseId: string; // For Google Auth users
+    firebaseUid: string; // For Google Auth users
 
     @Prop({ required: true })
     firstName: string;

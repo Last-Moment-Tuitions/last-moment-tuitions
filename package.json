@@ -1,6 +1,14 @@
 {
+  "name": "lmt-root",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "concurrently \"npm run dev --prefix frontend\" \"npm run start:dev --prefix backend\""
+  },
   "dependencies": {
     "mongodb": "^7.0.0",
     "redis": "^5.10.0"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
   }
 }

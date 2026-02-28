@@ -1,7 +1,7 @@
 
 import { Injectable, UnauthorizedException, ConflictException, Inject, BadRequestException } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
-import { SupabaseService } from '../supabase/supabase.service';
+import { FirebaseService } from '../firebase/firebase.service';
 import { EmailService } from '../email/email.service';
 import { SignupDto } from './dto/signup.dto';
 import { LoginDto } from './dto/login.dto';
@@ -15,7 +15,7 @@ import { createHash } from 'crypto';
 export class AuthService {
     constructor(
         private usersService: UsersService,
-        private supabaseService: SupabaseService,
+        private firebaseService: FirebaseService,
         private emailService: EmailService,
         @Inject('REDIS_CLIENT') private redis: Redis,
     ) { }
@@ -74,9 +74,9 @@ export class AuthService {
     }
 
     async googleLogin(googleLoginDto: GoogleLoginDto, ip: string, userAgent: string) {
-        const supabaseUser = await this.supabaseService.verifyToken(googleLoginDto.token);
-        const email = supabaseUser.email;
-        const supabaseId = supabaseUser.id;
+        const decodedToken = await this.firebaseService.verifyToken(googleLoginDto.token);
+        const email = decodedToken.email;
+        const firebaseUid = decodedToken.uid;
 
         if (!email) throw new BadRequestException('Google account must have an email');
 
@@ -86,17 +86,17 @@ export class AuthService {
             // Create new user from Google
             user = await this.usersService.create({
                 email,
-                firstName: supabaseUser.user_metadata?.full_name?.split(' ')[0] || 'User',
-                lastName: supabaseUser.user_metadata?.full_name?.split(' ')[1] || '',
-                supabaseId,
+                firstName: decodedToken.name?.split(' ')[0] || 'User',
+                lastName: decodedToken.name?.split(' ')[1] || '',
+                firebaseUid,
                 authProviders: ['google'],
                 signupMethod: 'google',
                 isActive: true,
             });
         } else {
             // Link existing user if needed, or update ID
-            if (!user.supabaseId) {
-                user.supabaseId = supabaseId;
+            if (!user.firebaseUid) {
+                user.firebaseUid = firebaseUid;
                 if (!user.authProviders.includes('google')) {
                     user.authProviders.push('google');
                 }
