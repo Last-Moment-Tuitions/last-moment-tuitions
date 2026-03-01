@@ -5,8 +5,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '../ui';
 import FileUpload from './FileUpload';
 import { Loader2, CheckCircle, Image as ImageIcon, Video, FileText } from 'lucide-react';
 import { getCookie } from '@/utils/cookie';
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
+import API_BASE_URL from '@/lib/config';
 
 export default function MediaPicker({
     category = 'image',
