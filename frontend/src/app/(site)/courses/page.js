@@ -36,7 +36,7 @@ export default function CoursesPage() {
             const response = await coursesApi.getAllCourses({ status: 'published' });
 
             // Transform backend data to match CourseCard props
-            const transformedCourses = response.data.map(course => ({
+            const transformedCourses = (response?.data || []).map(course => ({
                 id: course._id,
                 title: course.title,
                 category: course.category,

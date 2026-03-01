@@ -23,7 +23,14 @@ api.interceptors.request.use(
 
 // Response interceptor for error handling
 api.interceptors.response.use(
-    (response) => response.data,
+    (response) => {
+        // If the API somehow returns HTML instead of JSON, reject it
+        if (typeof response.data === 'string' && response.data.trim().startsWith('<')) {
+            console.error('API returned HTML instead of JSON');
+            return Promise.reject(new Error('API returned invalid data format'));
+        }
+        return response.data;
+    },
     (error) => {
         console.error('API Error:', error.response?.data || error.message);
         return Promise.reject(error);

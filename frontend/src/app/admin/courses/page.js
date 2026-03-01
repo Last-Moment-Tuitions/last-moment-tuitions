@@ -19,7 +19,7 @@ export default function CoursesPage() {
             setLoading(true);
             // Fetch ALL courses (draft + published) for admin
             const response = await coursesApi.getAllCourses();
-            setCourses(response.data);
+            setCourses(response?.data || []);
         } catch (error) {
             console.error('Failed to fetch courses:', error);
         } finally {
