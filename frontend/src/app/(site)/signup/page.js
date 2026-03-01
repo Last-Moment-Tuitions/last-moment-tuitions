@@ -149,7 +149,7 @@ export default function SignUpPage() {
     };
 
     return (
-        <div className="min-h-screen flex bg-white font-sans text-gray-900 overflow-hidden">
+        <div className="min-h-screen flex flex-col lg:flex-row bg-white font-sans text-gray-900 overflow-x-hidden">
             {/* Left Side: Illustration */}
             <div className="hidden lg:flex lg:w-[42%] relative overflow-hidden bg-[#E8E4F3]">
                 <img
@@ -163,9 +163,9 @@ export default function SignUpPage() {
             </div>
 
             {/* Right Side: Form */}
-            <div className="w-full lg:w-[58%] flex flex-col items-start justify-center p-6 md:p-12 lg:p-16 lg:pl-[10%] overflow-y-auto bg-white">
+            <div className="w-full lg:w-[58%] flex flex-col items-center lg:items-start justify-center p-6 sm:p-12 lg:p-16 overflow-y-auto bg-white min-h-screen lg:min-h-0">
                 <div className="max-w-md w-full py-6">
-                    <div className="mb-8 text-left">
+                    <div className="mb-8 text-center lg:text-left">
                         <h2 className="text-3xl font-bold text-gray-900 mb-2 tracking-tight">Create your account</h2>
                     </div>
 

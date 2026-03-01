@@ -111,13 +111,13 @@ export default function SignInPage() {
     };
 
     return (
-        <div className="min-h-screen flex bg-white font-sans text-gray-900 overflow-hidden">
+        <div className="min-h-screen flex flex-col lg:flex-row bg-white font-sans text-gray-900 overflow-x-hidden">
             {/* Left Side: Illustration */}
             <div className="hidden lg:flex lg:w-[42%] relative overflow-hidden">
                 <img
                     src="/assets/signin_illustration.png"
                     alt="Join us"
-                    className="absolute inset-0 w-full h-full object-fill r z-10 animate-fade-in"
+                    className="absolute inset-0 w-full h-full object-fill z-10 animate-fade-in"
                 />
                 {/* Decorative background elements */}
                 <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-white/40 rounded-full blur-[100px]"></div>
@@ -125,11 +125,11 @@ export default function SignInPage() {
             </div>
 
             {/* Right Side: Form */}
-            <div className="w-full lg:w-[58%] flex flex-col items-start justify-center p-6 md:p-10 lg:p-10 lg:pl-[10%] overflow-y-auto bg-white">
+            <div className="w-full lg:w-[58%] flex flex-col items-center lg:items-start justify-center p-6 sm:p-12 lg:p-20 overflow-y-auto bg-white min-h-screen lg:min-h-0">
                 <div className="max-w-md w-full py-8">
-                    <div className="mb-10 text-left">
-                        <h2 className="text-4xl font-extrabold text-primary-900 mb-3 tracking-tight">Sign In</h2>
-                        <p className="text-gray-500 font-medium text-lg">Enter your email and password to access your account.</p>
+                    <div className="mb-8 text-center lg:text-left">
+                        <h2 className="text-3xl sm:text-4xl font-extrabold text-primary-900 mb-3 tracking-tight">Sign In</h2>
+                        <p className="text-gray-500 font-medium text-base sm:text-lg">Enter your email and password to access your account.</p>
                     </div>
 
                     <form className="space-y-6" onSubmit={handleSubmit}>

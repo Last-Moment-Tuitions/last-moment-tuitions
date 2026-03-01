@@ -4,163 +4,65 @@ import Link from 'next/link';
 
 export default function Error404Page() {
     return (
-        <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            width: '100%',
-            height: '100vh',
-            backgroundColor: '#FFFFFF',
-            overflow: 'hidden',
-            fontFamily: "'Inter', sans-serif"
-        }}>
+        <div
+            className="flex flex-col w-full min-h-screen lg:h-screen bg-white overflow-hidden font-inter text-[#1D2026]"
+            style={{ fontFamily: "'Inter', sans-serif" }}
+        >
             {/* ── Main Content ── */}
-            <main style={{
-                flex: 1,
-                display: 'flex',
-                flexDirection: 'row',
-                justifyContent: 'flex-start', // Start from left to use exact padding
-                alignItems: 'center',
-                width: '100%',
-                padding: '0px 0px 0px 8%',
-                gap: '112px', // EXACT FIGMA GAP
-            }}>
+            <main
+                className="flex-1 flex flex-col lg:flex-row items-center justify-center w-full px-6 lg:px-[8%] py-12 lg:py-0 gap-6 lg:gap-8 xl:gap-12"
+            >
 
                 {/* LEFT: Contents Block */}
-                <div style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'flex-start',
-                    padding: '0px',
-                    gap: '32px', // Gap between text blocks and button
-                    width: '534px',
-                    height: '364px',
-                    flex: 'none',
-                    order: 0,
-                    flexGrow: 0,
-                    zIndex: 2
-                }}>
+                <div
+                    className="flex flex-col items-center lg:items-start p-0 gap-5 lg:gap-6 w-full lg:w-[350px] xl:w-[400px] lg:shrink-0 z-[2] order-2 lg:order-1 text-center lg:text-left"
+                >
 
                     {/* Heading Block */}
-                    <div style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'flex-start',
-                        padding: '0px',
-                        gap: '16px',
-                        width: '534px',
-                        height: '148px',
-                        flex: 'none',
-                        order: 0,
-                        flexGrow: 0
-                    }}>
+                    <div className="flex flex-col items-center lg:items-start p-0 gap-2 lg:gap-3 w-full">
 
                         {/* Error 404 */}
-                        <div style={{
-                            width: '358px',
-                            height: '80px',
-                            fontFamily: "'Inter', sans-serif",
-                            fontStyle: 'normal',
-                            fontWeight: '600',
-                            fontSize: '80px',
-                            lineHeight: '80px',
-                            letterSpacing: '-0.02em',
-                            color: '#E9EAF0',
-                            flex: 'none',
-                            order: 0,
-                            flexGrow: 0
-                        }}>
+                        <div
+                            className="text-[#E9EAF0] font-semibold text-4xl lg:text-5xl xl:text-[64px] leading-none tracking-[-0.02em]"
+                        >
                             Error 404
                         </div>
 
                         {/* Oops! page not found */}
-                        <div style={{
-                            width: '100%',
-                            height: '52px',
-                            fontFamily: "'Inter', sans-serif",
-                            fontStyle: 'normal',
-                            fontWeight: '600',
-                            fontSize: '48px',
-                            lineHeight: '52px',
-                            letterSpacing: '-0.02em',
-                            color: '#1D2026',
-                            flex: 'none',
-                            order: 1,
-                            flexGrow: 0
-                        }}>
+                        <div
+                            className="font-semibold text-lg lg:text-xl xl:text-[32px] leading-tight tracking-[-0.01em] w-full"
+                        >
                             Oops! page not found
                         </div>
                     </div>
 
                     {/* Description Text */}
-                    <div style={{
-                        width: '100%',
-                        height: '96px',
-                        fontFamily: "'Inter', sans-serif",
-                        fontStyle: 'normal',
-                        fontWeight: '400',
-                        fontSize: '20px',
-                        lineHeight: '32px',
-                        color: '#4E5566',
-                        flex: 'none',
-                        order: 1,
-                        flexGrow: 0
-                    }}>
+                    <div
+                        className="text-[#4E5566] font-normal text-sm lg:text-base xl:text-[16px] leading-relaxed lg:leading-[26px] w-full"
+                    >
                         Something went wrong. It&apos;s look that your requested could not be found. It&apos;s look like the link is broken or the page is removed.
                     </div>
 
                     {/* Buttons btn */}
                     <Link
                         href="/"
-                        style={{
-                            display: 'flex',
-                            flexDirection: 'row',
-                            justifyContent: 'center',
-                            alignItems: 'center',
-                            padding: '0px 24px', // Slightly reduced padding to give text more room
-                            gap: '12px',
-                            width: '160px', // Increased width to fit "Go Back"
-                            height: '56px',
-                            background: '#FF6636',
-                            borderRadius: '0px',
-                            textDecoration: 'none',
-                            flex: 'none',
-                            order: 2,
-                            flexGrow: 0,
-                            transition: 'background 0.2s ease'
-                        }}
-                        onMouseOver={(e) => e.currentTarget.style.background = '#E05D31'}
-                        onMouseOut={(e) => e.currentTarget.style.background = '#FF6636'}
+                        className="flex flex-row justify-center items-center px-6 gap-3 w-[140px] h-12 bg-[#FF6636] hover:bg-[#E05D31] transition-colors duration-200 no-underline rounded-sm"
                     >
-                        <span style={{
-                            width: 'auto',
-                            height: 'auto',
-                            fontFamily: "'Inter', sans-serif",
-                            fontStyle: 'normal',
-                            fontWeight: '600',
-                            fontSize: '18px',
-                            lineHeight: '1', // Better centering
-                            letterSpacing: '-0.01em',
-                            textTransform: 'none',
-                            color: '#FFFFFF',
-                            textAlign: 'center',
-                            whiteSpace: 'nowrap' // Prevent text from wrapping/cutting
-                        }}>
+                        <span className="font-semibold text-base leading-none tracking-[-0.01em] text-white text-center whitespace-nowrap">
                             Go Back
                         </span>
                     </Link>
                 </div>
 
-                {/* RIGHT: Illustration Area - Fills remaining space and touches right edge */}
-                <div style={{
-                    flex: 1,
-                    height: '100%',
-                    backgroundImage: 'url(/assets/404_3d.png)',
-                    backgroundSize: 'contain',
-                    backgroundRepeat: 'no-repeat',
-                    backgroundPosition: 'right center',
-                    zIndex: 1
-                }}>
+                {/* RIGHT: Illustration Area */}
+                <div
+                    className="flex-1 w-full h-[400px] sm:h-[500px] lg:h-[95%] xl:h-full z-[1] order-1 lg:order-2 bg-no-repeat bg-contain bg-center lg:bg-right transition-all duration-300"
+                    style={{
+                        backgroundImage: 'url(/assets/404_3d.png)',
+                    }}
+                >
                 </div>
+
             </main>
         </div>
     );
