@@ -1,5 +1,6 @@
 import axios from 'axios';
 import API_BASE_URL from '@/lib/config';
+import { getCookie } from '@/utils/cookie';
 
 const api = axios.create({
     baseURL: API_BASE_URL,
@@ -8,13 +9,6 @@ const api = axios.create({
 
 // Add request interceptor to inject x-session-id
 api.interceptors.request.use((config) => {
-    // Try to get sessionId from cookie as fallback/explicit check
-    const getCookie = (name) => {
-        const value = `; ${document.cookie}`;
-        const parts = value.split(`; ${name}=`);
-        if (parts.length === 2) return parts.pop().split(';').shift();
-    };
-
     // AuthContext usually manages this, but for robustness as requested:
     const sessionId = getCookie('sessionId');
     if (sessionId) {

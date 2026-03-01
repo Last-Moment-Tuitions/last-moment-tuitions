@@ -26,6 +26,12 @@ export default function CoursesPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
+    // Filters state
+    const [searchQuery, setSearchQuery] = useState('');
+    const [selectedCategories, setSelectedCategories] = useState([]);
+    const [selectedRatings, setSelectedRatings] = useState([]);
+    const [sortBy, setSortBy] = useState('Most Popular');
+
     useEffect(() => {
         fetchCourses();
     }, []);
@@ -40,10 +46,12 @@ export default function CoursesPage() {
                 id: course._id,
                 title: course.title,
                 category: course.category,
-                price: course.price / 100, // Convert from paisa to rupees
-                originalPrice: course.original_price / 100,
+                price: course.price,
+                originalPrice: course.original_price,
                 rating: course.average_rating,
                 students: course.enrollment_count.toLocaleString(),
+                enrollmentCount: course.enrollment_count,
+                createdAt: course.createdAt || course.updatedAt || new Date().toISOString(),
                 image: course.thumbnail || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=1000&auto=format&fit=crop',
                 instructor: course.instructor?.name || 'Unknown Instructor'
             }));
@@ -58,6 +66,52 @@ export default function CoursesPage() {
             setLoading(false);
         }
     };
+
+    const filteredCourses = React.useMemo(() => {
+        return courses.filter(course => {
+            // Search filter
+            if (searchQuery) {
+                const query = searchQuery.toLowerCase();
+                if (!course.title?.toLowerCase().includes(query) &&
+                    !course.category?.toLowerCase().includes(query)) {
+                    return false;
+                }
+            }
+
+            // Category filter
+            if (selectedCategories.length > 0) {
+                const isMatch = selectedCategories.some(cat =>
+                    course.category?.toLowerCase() === cat.toLowerCase()
+                );
+                if (!isMatch) {
+                    return false;
+                }
+            }
+
+            // Rating filter
+            if (selectedRatings.length > 0) {
+                const minRating = Math.min(...selectedRatings);
+                if ((course.rating || 0) < minRating) {
+                    return false;
+                }
+            }
+
+            return true;
+        });
+
+        // Apply sorting
+        switch (sortBy) {
+            case 'Newest':
+                return filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            case 'Highest Rated':
+                return filtered.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+            case 'Price: Low to High':
+                return filtered.sort((a, b) => (a.price || 0) - (b.price || 0));
+            case 'Most Popular':
+            default:
+                return filtered.sort((a, b) => (b.enrollmentCount || 0) - (a.enrollmentCount || 0));
+        }
+    }, [courses, searchQuery, selectedCategories, selectedRatings, sortBy]);
 
     if (loading) {
         return (
@@ -125,13 +179,20 @@ export default function CoursesPage() {
                                     type="text"
                                     placeholder="Search for courses..."
                                     className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
                                 />
                             </div>
 
                             <div className="flex items-center gap-3 overflow-x-auto w-full md:w-auto pb-2 md:pb-0 scrollbar-hide">
                                 <span className="text-sm text-gray-500 whitespace-nowrap">Suggestions:</span>
                                 {['SSC CGL', 'JEE Mains', 'Python', 'Banking'].map((tag) => (
-                                    <Badge key={tag} variant="accent" className="cursor-pointer hover:bg-accent-200">
+                                    <Badge
+                                        key={tag}
+                                        variant="accent"
+                                        className="cursor-pointer hover:bg-accent-200"
+                                        onClick={() => setSearchQuery(tag)}
+                                    >
                                         {tag}
                                     </Badge>
                                 ))}
@@ -142,18 +203,22 @@ export default function CoursesPage() {
                     {/* Meta Bar */}
                     <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
                         <p className="text-gray-600 font-medium">
-                            Showing <span className="text-gray-900 font-bold">{courses.length}</span> courses
+                            Showing <span className="text-gray-900 font-bold">{filteredCourses.length}</span> courses
                         </p>
 
                         <div className="flex items-center gap-4">
                             <div className="flex items-center gap-2">
                                 <span className="text-sm text-gray-500">Sort by:</span>
                                 <div className="relative">
-                                    <select className="appearance-none bg-white border border-gray-200 text-gray-700 py-2 pl-4 pr-10 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 cursor-pointer text-sm font-medium">
-                                        <option>Most Popular</option>
-                                        <option>Newest</option>
-                                        <option>Highest Rated</option>
-                                        <option>Price: Low to High</option>
+                                    <select
+                                        className="appearance-none bg-white border border-gray-200 text-gray-700 py-2 pl-4 pr-10 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 cursor-pointer text-sm font-medium"
+                                        value={sortBy}
+                                        onChange={(e) => setSortBy(e.target.value)}
+                                    >
+                                        <option value="Most Popular">Most Popular</option>
+                                        <option value="Newest">Newest</option>
+                                        <option value="Highest Rated">Highest Rated</option>
+                                        <option value="Price: Low to High">Price: Low to High</option>
                                     </select>
                                     <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
                                 </div>
@@ -189,7 +254,15 @@ export default function CoursesPage() {
                                     <h2 className="font-bold text-lg flex items-center gap-2">
                                         <Filter size={20} /> Filters
                                     </h2>
-                                    <button className="text-sm text-primary-600 hover:underline font-medium">Reset</button>
+                                    <button
+                                        onClick={() => {
+                                            setSelectedCategories([]);
+                                            setSelectedRatings([]);
+                                        }}
+                                        className="text-sm text-primary-600 hover:underline font-medium"
+                                    >
+                                        Reset
+                                    </button>
                                 </div>
 
                                 <Accordion type="multiple" defaultValue={['category', 'rating']} className="w-full">
@@ -202,7 +275,18 @@ export default function CoursesPage() {
                                                 {CATEGORIES.map((cat) => (
                                                     <label key={cat.id} className="flex items-center justify-between group cursor-pointer">
                                                         <div className="flex items-center gap-3">
-                                                            <input type="checkbox" className="w-5 h-5 rounded border-gray-300 text-primary-600 focus:ring-primary-500 transition-all" />
+                                                            <input
+                                                                type="checkbox"
+                                                                className="w-5 h-5 rounded border-gray-300 text-primary-600 focus:ring-primary-500 transition-all"
+                                                                checked={selectedCategories.includes(cat.label)}
+                                                                onChange={(e) => {
+                                                                    if (e.target.checked) {
+                                                                        setSelectedCategories(prev => [...prev, cat.label]);
+                                                                    } else {
+                                                                        setSelectedCategories(prev => prev.filter(c => c !== cat.label));
+                                                                    }
+                                                                }}
+                                                            />
                                                             <span className="text-gray-700 group-hover:text-primary-700 transition-colors">{cat.label}</span>
                                                         </div>
                                                         <span className="text-xs text-gray-400 bg-gray-50 px-2 py-1 rounded-full">{cat.count}</span>
@@ -219,7 +303,18 @@ export default function CoursesPage() {
                                             <div className="space-y-3">
                                                 {[5, 4, 3].map((star) => (
                                                     <label key={star} className="flex items-center gap-3 cursor-pointer group">
-                                                        <input type="checkbox" className="w-5 h-5 rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
+                                                        <input
+                                                            type="checkbox"
+                                                            className="w-5 h-5 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                                                            checked={selectedRatings.includes(star)}
+                                                            onChange={(e) => {
+                                                                if (e.target.checked) {
+                                                                    setSelectedRatings(prev => [...prev, star]);
+                                                                } else {
+                                                                    setSelectedRatings(prev => prev.filter(s => s !== star));
+                                                                }
+                                                            }}
+                                                        />
                                                         <div className="flex items-center gap-1">
                                                             {[...Array(5)].map((_, i) => (
                                                                 <Star
@@ -245,7 +340,7 @@ export default function CoursesPage() {
                     {/* Main Content Grid */}
                     <main className="flex-1">
                         <div className={`grid ${viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 xl:grid-cols-3' : 'grid-cols-1'} gap-6`}>
-                            {courses.map((course) => (
+                            {filteredCourses.length > 0 ? filteredCourses.map((course) => (
                                 <CourseCard
                                     key={course.id}
                                     title={course.title}
@@ -259,7 +354,26 @@ export default function CoursesPage() {
                                     id={course.id}
                                     className="h-full"
                                 />
-                            ))}
+                            )) : (
+                                <div className="col-span-full py-12 text-center bg-white rounded-2xl border border-gray-100">
+                                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-50 mb-4">
+                                        <Filter className="w-8 h-8 text-gray-400" />
+                                    </div>
+                                    <h3 className="text-xl font-bold text-gray-900 mb-2">No courses found</h3>
+                                    <p className="text-gray-500">Try adjusting your search criteria</p>
+                                    <Button
+                                        onClick={() => {
+                                            setSearchQuery('');
+                                            setSelectedCategories([]);
+                                            setSelectedRatings([]);
+                                        }}
+                                        variant="outline"
+                                        className="mt-6"
+                                    >
+                                        Clear Filters
+                                    </Button>
+                                </div>
+                            )}
                         </div>
 
                         {/* Pagination (Mock) */}

@@ -1,9 +1,35 @@
 import React, { useState } from 'react';
-import { Search, X } from 'lucide-react';
+import { Search, X, Globe, Lock, Eye, CheckCircle, AlertCircle } from 'lucide-react';
+
+const STATUS_OPTIONS = [
+    {
+        key: 'draft',
+        label: 'Draft',
+        description: 'Only visible to you. Students cannot access this course.',
+        icon: Lock,
+        color: 'gray',
+        bgColor: 'bg-gray-50',
+        borderColor: 'border-gray-300',
+        textColor: 'text-gray-700',
+        activeRing: 'ring-gray-400',
+    },
+    {
+        key: 'published',
+        label: 'Published',
+        description: 'Live and visible to all students. They can enroll and access the course.',
+        icon: Globe,
+        color: 'green',
+        bgColor: 'bg-green-50',
+        borderColor: 'border-green-400',
+        textColor: 'text-green-700',
+        activeRing: 'ring-green-400',
+    },
+];
 
 export default function PublishCourse({ data, updateData, onNext, onPrev, onSave, onPublish, saving }) {
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedInstructors, setSelectedInstructors] = useState(data.instructors || []);
+    const currentStatus = data.status || 'draft';
 
     // Mock instructor search results
     const mockInstructors = [
@@ -34,6 +60,10 @@ export default function PublishCourse({ data, updateData, onNext, onPrev, onSave
         )
         : [];
 
+    const handleStatusChange = (newStatus) => {
+        updateData('status', newStatus);
+    };
+
     return (
         <div className="bg-white rounded-2xl min-h-[600px] relative">
 
@@ -61,6 +91,76 @@ export default function PublishCourse({ data, updateData, onNext, onPrev, onSave
             {/* Content */}
             <div className="px-10 py-8 space-y-8">
 
+                {/* ─── Course Status Section ─── */}
+                <div className="space-y-4">
+                    <h3 className="text-xl font-semibold text-gray-900">Course Status</h3>
+                    <p className="text-sm text-gray-500">Choose the visibility of your course</p>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {STATUS_OPTIONS.map((option) => {
+                            const Icon = option.icon;
+                            const isSelected = currentStatus === option.key;
+                            return (
+                                <button
+                                    key={option.key}
+                                    type="button"
+                                    onClick={() => handleStatusChange(option.key)}
+                                    className={`relative flex items-start gap-4 p-5 rounded-xl border-2 transition-all text-left ${isSelected
+                                            ? `${option.borderColor} ${option.bgColor} ring-2 ${option.activeRing} ring-opacity-30`
+                                            : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                                        }`}
+                                >
+                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${isSelected ? option.bgColor : 'bg-gray-100'
+                                        }`}>
+                                        <Icon className={`w-5 h-5 ${isSelected ? option.textColor : 'text-gray-400'}`} />
+                                    </div>
+                                    <div className="flex-1">
+                                        <div className="flex items-center gap-2">
+                                            <span className={`font-semibold ${isSelected ? option.textColor : 'text-gray-700'}`}>
+                                                {option.label}
+                                            </span>
+                                            {isSelected && (
+                                                <CheckCircle className={`w-4 h-4 ${option.textColor}`} />
+                                            )}
+                                        </div>
+                                        <p className="text-sm text-gray-500 mt-0.5">{option.description}</p>
+                                    </div>
+                                    {/* Radio indicator */}
+                                    <div className={`w-5 h-5 rounded-full border-2 shrink-0 mt-0.5 flex items-center justify-center ${isSelected ? option.borderColor : 'border-gray-300'
+                                        }`}>
+                                        {isSelected && (
+                                            <div className={`w-2.5 h-2.5 rounded-full ${option.key === 'published' ? 'bg-green-500' : 'bg-gray-500'
+                                                }`} />
+                                        )}
+                                    </div>
+                                </button>
+                            );
+                        })}
+                    </div>
+
+                    {/* Status Alert */}
+                    {currentStatus === 'published' && (
+                        <div className="flex items-start gap-3 p-4 bg-green-50 border border-green-200 rounded-xl">
+                            <Globe className="w-5 h-5 text-green-600 shrink-0 mt-0.5" />
+                            <div>
+                                <p className="text-sm font-medium text-green-800">This course will be published</p>
+                                <p className="text-xs text-green-600 mt-0.5">Students will be able to find, enroll in, and access this course once you save.</p>
+                            </div>
+                        </div>
+                    )}
+                    {currentStatus === 'draft' && (
+                        <div className="flex items-start gap-3 p-4 bg-gray-50 border border-gray-200 rounded-xl">
+                            <Lock className="w-5 h-5 text-gray-500 shrink-0 mt-0.5" />
+                            <div>
+                                <p className="text-sm font-medium text-gray-700">This course is in draft mode</p>
+                                <p className="text-xs text-gray-500 mt-0.5">Only you can see it. Change to Published when you're ready to go live.</p>
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                <hr className="border-gray-100" />
+
                 {/* Message Section */}
                 <div className="space-y-6">
                     <h3 className="text-xl font-semibold text-gray-900">Message</h3>
@@ -78,14 +178,6 @@ export default function PublishCourse({ data, updateData, onNext, onPrev, onSave
                                 placeholder="Enter your welcome message here..."
                                 className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all resize-none text-gray-700"
                             />
-                            <div className="flex gap-2">
-                                <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                                    <span className="text-xl">😊</span>
-                                </button>
-                                <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                                    <span className="text-xl">©</span>
-                                </button>
-                            </div>
                         </div>
 
                         {/* Congratulations Message */}
@@ -100,14 +192,6 @@ export default function PublishCourse({ data, updateData, onNext, onPrev, onSave
                                 placeholder="Enter your congratulations message here..."
                                 className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all resize-none text-gray-700"
                             />
-                            <div className="flex gap-2">
-                                <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                                    <span className="text-xl">😊</span>
-                                </button>
-                                <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                                    <span className="text-xl">©</span>
-                                </button>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -182,21 +266,33 @@ export default function PublishCourse({ data, updateData, onNext, onPrev, onSave
             </div>
 
             {/* Footer */}
-            <div className="absolute bottom-0 left-0 right-0 flex justify-between items-center px-10 py-6 bg-gray-50 border-t border-gray-100 rounded-b-2xl">
+            <div className="sticky bottom-0 left-0 right-0 flex justify-between items-center px-10 py-6 bg-white border-t border-gray-100 rounded-b-2xl">
                 <button
                     onClick={onPrev}
                     disabled={saving}
-                    className="px-6 py-3 text-gray-700 font-semibold text-sm hover:bg-white rounded-lg transition-colors border border-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-6 py-3 text-gray-700 font-semibold text-sm hover:bg-gray-50 rounded-lg transition-colors border border-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     Prev Step
                 </button>
-                <button
-                    onClick={onPublish}
-                    disabled={saving}
-                    className="px-8 py-3 bg-primary-600 text-white font-semibold rounded-lg text-sm hover:bg-primary-700 transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                    {saving ? 'Publishing...' : 'Submit For Review'}
-                </button>
+                <div className="flex items-center gap-3">
+                    <button
+                        onClick={onSave}
+                        disabled={saving}
+                        className="px-6 py-3 border border-gray-200 text-gray-700 font-semibold rounded-lg text-sm hover:bg-gray-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        {saving ? 'Saving...' : 'Save as Draft'}
+                    </button>
+                    <button
+                        onClick={onPublish}
+                        disabled={saving}
+                        className={`px-8 py-3 font-semibold rounded-lg text-sm transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed ${currentStatus === 'published'
+                                ? 'bg-green-600 text-white hover:bg-green-700'
+                                : 'bg-primary-600 text-white hover:bg-primary-700'
+                            }`}
+                    >
+                        {saving ? 'Publishing...' : currentStatus === 'published' ? '🚀 Publish Course' : 'Save & Publish'}
+                    </button>
+                </div>
             </div>
         </div>
     );

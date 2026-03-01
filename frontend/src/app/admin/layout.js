@@ -66,7 +66,7 @@ export default function AdminLayout({ children }) {
                 </div>
 
                 {/* Navigation */}
-                <nav className="flex-1 py-6 space-y-1 overflow-y-auto">
+                <nav className="flex-1 py-6 space-y-1 overflow-y-auto scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
                     {navItems.map((item) => {
                         // Exact match for dashboard, startsWith for others to handle subpages
                         const isActive = item.href === '/admin'

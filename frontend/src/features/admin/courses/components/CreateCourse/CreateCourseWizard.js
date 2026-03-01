@@ -12,7 +12,7 @@ import { coursesApi } from '@/services/courses.api';
 
 export default function CreateCourseWizard({ initialData }) {
     const router = useRouter();
-    const { course, updateCourseInfo, addNode, updateNode, deleteNode, moveNode, activeItemId, selectItem } = useCourseForm(initialData);
+    const { course, updateCourseInfo, addNode, updateNode, deleteNode, moveNode, activeItemId, selectItem, toApiFormat } = useCourseForm(initialData);
     const [currentStep, setCurrentStep] = useState(0);
     const [saving, setSaving] = useState(false);
     const [courseId, setCourseId] = useState(initialData?._id || null);
@@ -43,26 +43,8 @@ export default function CreateCourseWizard({ initialData }) {
         try {
             setSaving(true);
 
-            // Transform data for backend (snake_case)
-            const courseData = {
-                title: course.title || 'Untitled Course',
-                subtitle: course.subtitle || '',
-                category: course.category || 'Uncategorized',
-                sub_category: course.subCategory || null,
-                level: course.level || 'beginner',
-                duration: course.duration || '',
-                thumbnail: course.thumbnail || '',
-                trailer: course.trailer || '',
-                descriptions: course.descriptions || '',
-                what_to_learn: course.whatToLearn || [],
-                target_audience: course.targetAudience || [],
-                requirements: course.requirements || [],
-                tags: course.tags || [],
-                welcome_message: course.welcomeMessage || '',
-                congratulations_message: course.congratulationsMessage || '',
-                price: course.price || 0,
-                original_price: course.originalPrice || 0,
-            };
+            // Use centralized transform helper
+            const courseData = toApiFormat();
 
             let savedCourse;
 
@@ -84,6 +66,11 @@ export default function CreateCourseWizard({ initialData }) {
 
             if (showNotification) {
                 alert('Course saved successfully!');
+            }
+
+            // Redirect to edit page after first creation to prevent duplicates
+            if (!initialData?._id && savedCourse._id && !courseId) {
+                router.replace(`/admin/courses/edit/${savedCourse._id}`);
             }
 
             return savedCourse;

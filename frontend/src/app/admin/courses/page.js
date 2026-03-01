@@ -1,23 +1,32 @@
 'use client';
 
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
-import { Plus, BookOpen, MoreVertical } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Plus, BookOpen, MoreVertical, Globe, Lock, Trash2, Edit3 } from 'lucide-react';
 import { Button } from '@/components/ui';
 import { coursesApi } from '@/services/courses.api';
 
 export default function CoursesPage() {
     const [courses, setCourses] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [openMenu, setOpenMenu] = useState(null); // course._id or null
 
     useEffect(() => {
         fetchCourses();
     }, []);
 
+    // Close menu on outside click
+    useEffect(() => {
+        const handleClickOutside = () => setOpenMenu(null);
+        if (openMenu) {
+            document.addEventListener('click', handleClickOutside);
+            return () => document.removeEventListener('click', handleClickOutside);
+        }
+    }, [openMenu]);
+
     const fetchCourses = async () => {
         try {
             setLoading(true);
-            // Fetch ALL courses (draft + published) for admin
             const response = await coursesApi.getAllCourses();
             setCourses(response?.data || []);
         } catch (error) {
@@ -25,6 +34,37 @@ export default function CoursesPage() {
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleStatusChange = async (courseId, newStatus) => {
+        try {
+            if (newStatus === 'published') {
+                await coursesApi.publishCourse(courseId);
+            } else {
+                // Set back to draft via update
+                await coursesApi.updateCourse(courseId, { status: 'draft' });
+            }
+            // Update local state immediately
+            setCourses(prev =>
+                prev.map(c => c._id === courseId ? { ...c, status: newStatus } : c)
+            );
+        } catch (error) {
+            console.error('Failed to update status:', error);
+            alert('Failed to update course status. Please try again.');
+        }
+        setOpenMenu(null);
+    };
+
+    const handleDelete = async (courseId) => {
+        if (!confirm('Are you sure you want to delete this course? This action cannot be undone.')) return;
+        try {
+            await coursesApi.deleteCourse(courseId);
+            setCourses(prev => prev.filter(c => c._id !== courseId));
+        } catch (error) {
+            console.error('Failed to delete course:', error);
+            alert('Failed to delete course. Please try again.');
+        }
+        setOpenMenu(null);
     };
 
     if (loading) {
@@ -59,15 +99,78 @@ export default function CoursesPage() {
                             <div className="p-3 bg-purple-100 rounded-lg text-purple-600">
                                 <BookOpen size={24} />
                             </div>
-                            <button className="text-gray-400 hover:text-gray-600">
-                                <MoreVertical size={20} />
-                            </button>
+
+                            {/* Three Dots Menu */}
+                            <div className="relative">
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setOpenMenu(openMenu === course._id ? null : course._id);
+                                    }}
+                                    className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                                >
+                                    <MoreVertical size={20} />
+                                </button>
+
+                                {/* Dropdown Menu */}
+                                {openMenu === course._id && (
+                                    <div
+                                        className="absolute right-0 top-full mt-1 w-52 bg-white border border-gray-200 rounded-xl shadow-xl z-20 py-1 overflow-hidden"
+                                        onClick={(e) => e.stopPropagation()}
+                                    >
+                                        {/* Status Section */}
+                                        <div className="px-3 py-2 border-b border-gray-100">
+                                            <p className="text-[11px] uppercase tracking-wider font-semibold text-gray-400">Change Status</p>
+                                        </div>
+
+                                        {course.status !== 'published' && (
+                                            <button
+                                                onClick={() => handleStatusChange(course._id, 'published')}
+                                                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors"
+                                            >
+                                                <Globe className="w-4 h-4 text-green-500" />
+                                                <span>Publish</span>
+                                            </button>
+                                        )}
+
+                                        {course.status !== 'draft' && (
+                                            <button
+                                                onClick={() => handleStatusChange(course._id, 'draft')}
+                                                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                            >
+                                                <Lock className="w-4 h-4 text-gray-500" />
+                                                <span>Revert to Draft</span>
+                                            </button>
+                                        )}
+
+                                        {/* Actions Section */}
+                                        <div className="border-t border-gray-100">
+                                            <Link
+                                                href={`/admin/courses/edit/${course._id}`}
+                                                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                                onClick={() => setOpenMenu(null)}
+                                            >
+                                                <Edit3 className="w-4 h-4 text-gray-500" />
+                                                <span>Edit Content</span>
+                                            </Link>
+
+                                            <button
+                                                onClick={() => handleDelete(course._id)}
+                                                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                                <span>Delete Course</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                         <h3 className="font-semibold text-lg text-gray-900 mb-2">{course.title}</h3>
                         <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
                             <span>{course.enrollment_count || 0} Students</span>
                             <span>•</span>
-                            <span className={`capitalize ${course.status === 'published' ? 'text-green-600' : 'text-amber-600'}`}>
+                            <span className={`capitalize font-medium ${course.status === 'published' ? 'text-green-600' : 'text-amber-600'}`}>
                                 {course.status}
                             </span>
                         </div>

@@ -18,6 +18,15 @@ export class Course {
   @Prop({ default: null })
   sub_category: string;
 
+  @Prop({ default: '', trim: true })
+  topic: string;
+
+  @Prop({ default: '', trim: true })
+  language: string;
+
+  @Prop({ default: '', trim: true })
+  subtitle_language: string;
+
   @Prop({ type: String, enum: ['beginner', 'intermediate', 'advanced'], default: 'beginner' })
   level: string;
 

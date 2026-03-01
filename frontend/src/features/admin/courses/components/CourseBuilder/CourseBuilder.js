@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Save, ArrowLeft, Code, Layout } from 'lucide-react';
+import { Save, ArrowLeft, Code, Layout, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui';
 import Link from 'next/link';
+import { coursesApi } from '@/services/courses.api';
 
 import { useCourseForm } from '../../hooks/useCourseForm';
 import CourseOutline from './CourseOutline';
@@ -19,14 +20,40 @@ export default function CourseBuilder({ initialData }) {
         updateNode,
         deleteNode,
         selectItem,
-        getActiveData
+        getActiveData,
+        toApiFormat
     } = useCourseForm(initialData);
 
     const [viewMode, setViewMode] = useState('builder'); // 'builder' | 'json'
+    const [saving, setSaving] = useState(false);
 
-    const handleSave = () => {
-        console.log("SAVING COURSE DATA:", JSON.stringify(course, null, 2));
-        alert("Recursive structure logged to console!");
+    const handleSave = async () => {
+        if (!initialData?._id) {
+            alert('Course ID not found. Please save from the Create Course wizard first.');
+            return;
+        }
+
+        try {
+            setSaving(true);
+
+            // Use centralized transform helper
+            const courseData = toApiFormat();
+
+            // Save course metadata
+            await coursesApi.updateCourse(initialData._id, courseData);
+
+            // Save curriculum content
+            if (course.content && course.content.length > 0) {
+                await coursesApi.updateCourseContent(initialData._id, course.content);
+            }
+
+            alert('Course saved successfully!');
+        } catch (error) {
+            console.error('Failed to save course:', error);
+            alert('Failed to save course. Please try again.');
+        } finally {
+            setSaving(false);
+        }
     };
 
     const activeData = getActiveData();
@@ -64,8 +91,12 @@ export default function CourseBuilder({ initialData }) {
 
                 {/* Right */}
                 <div className="flex items-center gap-3">
-                    <Button onClick={handleSave} size="sm" className="gap-2">
-                        <Save size={16} /> Save Course
+                    <Button onClick={handleSave} size="sm" className="gap-2" disabled={saving}>
+                        {saving ? (
+                            <><Loader2 size={16} className="animate-spin" /> Saving...</>
+                        ) : (
+                            <><Save size={16} /> Save Course</>
+                        )}
                     </Button>
                 </div>
             </div>

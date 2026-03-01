@@ -1,63 +1,79 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import CourseBuilder from '@/features/admin/courses/components/CourseBuilder/CourseBuilder';
+import { coursesApi } from '@/services/courses.api';
+import { fromApiFormat } from '@/features/admin/courses/hooks/useCourseForm';
 
 export default function EditCoursePage() {
     const params = useParams();
     const { id } = params;
+    const [courseData, setCourseData] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
-    // Mock Data Fetching based on ID
-    // UPDATED: Now uses recursive 'content' structure
-    const mockCourseData = {
-        id: id,
-        title: 'Full Stack Web Development',
-        description: 'Complete guide to React and Node.js',
-        price: 4999,
-        level: 'intermediate',
-        content: [
-            {
-                id: 'module_1',
-                type: 'folder',
-                title: 'Getting Started',
-                children: [
-                    {
-                        id: 'lesson_1',
-                        type: 'file',
-                        title: 'Course Overview',
-                        data: { type: 'video', isLocked: false, content: 'vid_123' }
-                    },
-                    {
-                        id: 'lesson_2',
-                        type: 'file',
-                        title: 'Setup Environment',
-                        data: { type: 'document', isLocked: false, content: 'doc_setup' }
-                    }
-                ]
-            },
-            {
-                id: 'module_2',
-                type: 'folder',
-                title: 'React Fundamentals',
-                children: [
-                    {
-                        id: 'submodule_2_1',
-                        type: 'folder',
-                        title: 'Components Deep Dive',
-                        children: [
-                            {
-                                id: 'lesson_3',
-                                type: 'file',
-                                title: 'Props vs State',
-                                data: { type: 'video', isLocked: true, content: 'vid_react_vars' }
-                            }
-                        ]
-                    }
-                ]
+    useEffect(() => {
+        if (!id) return;
+
+        const fetchCourse = async () => {
+            try {
+                setLoading(true);
+                setError(null);
+                const response = await coursesApi.getCourseWithContent(id);
+                const course = response?.data || response;
+
+                // Transform backend snake_case to frontend camelCase
+                const transformedData = fromApiFormat(course);
+
+                setCourseData(transformedData);
+            } catch (err) {
+                console.error('Failed to fetch course:', err);
+                setError(err.message || 'Failed to load course');
+            } finally {
+                setLoading(false);
             }
-        ]
-    };
+        };
 
-    return <CourseBuilder initialData={mockCourseData} />;
+        fetchCourse();
+    }, [id]);
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center min-h-screen bg-gray-50">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
+                    <p className="text-gray-500">Loading course...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="flex items-center justify-center min-h-screen bg-gray-50">
+                <div className="text-center max-w-md">
+                    <div className="text-red-500 text-5xl mb-4">⚠️</div>
+                    <h2 className="text-xl font-semibold text-gray-900 mb-2">Failed to load course</h2>
+                    <p className="text-gray-500 mb-6">{error}</p>
+                    <button
+                        onClick={() => window.location.reload()}
+                        className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+                    >
+                        Try Again
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    if (!courseData) {
+        return (
+            <div className="flex items-center justify-center min-h-screen bg-gray-50">
+                <p className="text-gray-500">Course not found</p>
+            </div>
+        );
+    }
+
+    return <CourseBuilder initialData={courseData} />;
 }

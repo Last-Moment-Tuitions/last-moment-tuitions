@@ -15,6 +15,7 @@ import { MenusModule } from './modules/menus/menus.module';
 import { AppLoggerMiddleware } from './common/middleware/logger.middleware';
 import { TestimonialsModule } from './modules/testimonials/testimonials.module';
 import { EmailModule } from './email/email.module';
+import { UploadsModule } from './modules/uploads/uploads.module';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { EmailModule } from './email/email.module';
     CoursesModule,
     TestimonialsModule,
     MenusModule,
+    UploadsModule,
   ],
 })
 export class AppModule implements NestModule {

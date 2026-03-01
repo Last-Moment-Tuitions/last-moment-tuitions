@@ -21,6 +21,18 @@ export class CreateCourseDto {
   @IsOptional()
   sub_category?: string;
 
+  @IsString()
+  @IsOptional()
+  topic?: string;
+
+  @IsString()
+  @IsOptional()
+  language?: string;
+
+  @IsString()
+  @IsOptional()
+  subtitle_language?: string;
+
   @IsEnum(['beginner', 'intermediate', 'advanced'])
   @IsOptional()
   level?: string;

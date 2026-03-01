@@ -1,5 +1,6 @@
 import React from 'react';
-import { Video, FileText, Lock, Unlock, Folder } from 'lucide-react';
+import { Video, FileText, Lock, Unlock, Folder, ClipboardList, BookOpen, Clock } from 'lucide-react';
+import MediaPicker from '@/components/ui/MediaPicker';
 
 export default function LessonEditor({ node, onUpdate }) {
     if (!node) return <div className="p-10 text-center text-gray-500">Select an item to edit</div>;
@@ -25,6 +26,15 @@ export default function LessonEditor({ node, onUpdate }) {
         );
     }
 
+    const contentType = node.data?.type || 'video';
+
+    const contentTypes = [
+        { key: 'video', label: 'Video Lesson', icon: Video, color: 'purple' },
+        { key: 'document', label: 'Document / PDF', icon: FileText, color: 'orange' },
+        { key: 'quiz', label: 'Quiz', icon: ClipboardList, color: 'green' },
+        { key: 'assignment', label: 'Assignment', icon: BookOpen, color: 'blue' },
+    ];
+
     // Handle File Editing
     return (
         <div className="max-w-2xl mx-auto space-y-8">
@@ -32,7 +42,7 @@ export default function LessonEditor({ node, onUpdate }) {
             <div>
                 <h2 className="text-2xl font-bold text-gray-900 mb-1">Edit Lesson</h2>
                 <div className="flex items-center gap-2 text-sm text-gray-500">
-                    <span className="uppercase tracking-wide font-semibold text-xs bg-gray-100 px-2 py-0.5 rounded text-gray-600">{node.data?.type || 'file'}</span>
+                    <span className="uppercase tracking-wide font-semibold text-xs bg-gray-100 px-2 py-0.5 rounded text-gray-600">{contentType}</span>
                     <span>•</span>
                     <span className="font-mono text-xs">{node.id}</span>
                 </div>
@@ -57,68 +67,149 @@ export default function LessonEditor({ node, onUpdate }) {
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Content Type</label>
                     <div className="grid grid-cols-2 gap-3">
-                        <button
-                            onClick={() => onUpdate(node.id, { data: { ...node.data, type: 'video' } })}
-                            className={`flex items-center justify-center gap-2 p-3 rounded-lg border transition-all ${node.data?.type === 'video'
-                                    ? 'border-purple-600 bg-purple-50 text-purple-700'
+                        {contentTypes.map(({ key, label, icon: Icon, color }) => (
+                            <button
+                                key={key}
+                                onClick={() => onUpdate(node.id, { data: { ...node.data, type: key } })}
+                                className={`flex items-center justify-center gap-2 p-3 rounded-lg border transition-all ${contentType === key
+                                    ? `border-${color}-600 bg-${color}-50 text-${color}-700`
                                     : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-gray-600'
-                                }`}
-                        >
-                            <Video size={18} />
-                            <span className="font-medium text-sm">Video Lesson</span>
-                        </button>
-                        <button
-                            onClick={() => onUpdate(node.id, { data: { ...node.data, type: 'document' } })}
-                            className={`flex items-center justify-center gap-2 p-3 rounded-lg border transition-all ${node.data?.type === 'document'
-                                    ? 'border-orange-600 bg-orange-50 text-orange-700'
-                                    : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-gray-600'
-                                }`}
-                        >
-                            <FileText size={18} />
-                            <span className="font-medium text-sm">Document / PDF</span>
-                        </button>
+                                    }`}
+                            >
+                                <Icon size={18} />
+                                <span className="font-medium text-sm">{label}</span>
+                            </button>
+                        ))}
                     </div>
                 </div>
 
                 {/* Dynamic Fields based on Type */}
-                {node.data?.type === 'video' ? (
+                {contentType === 'video' && (
                     <div className="space-y-4 bg-gray-50 p-6 rounded-xl border border-gray-200">
                         <h4 className="font-semibold text-gray-900 flex items-center gap-2">
                             <Video size={18} /> Video Details
                         </h4>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Video Source (URL or Embed ID)</label>
-                            <input
-                                type="text"
-                                value={node.data?.content || ''}
-                                onChange={(e) => onUpdate(node.id, { data: { ...node.data, content: e.target.value } })}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
-                                placeholder="e.g. YouTube ID or Vimeo URL"
+                            <MediaPicker
+                                category="video"
+                                label="Upload Video or Select from Library"
+                                currentUrl={node.data?.content || ''}
+                                onSelect={(result) => onUpdate(node.id, { data: { ...node.data, content: result.url } })}
                             />
+                            <div className="mt-4">
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Or enter External URL (e.g. YouTube ID)</label>
+                                <input
+                                    type="text"
+                                    value={node.data?.content || ''}
+                                    onChange={(e) => onUpdate(node.id, { data: { ...node.data, content: e.target.value } })}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                                    placeholder="e.g. YouTube ID or Vimeo URL"
+                                />
+                            </div>
                         </div>
                     </div>
-                ) : (
+                )}
+
+                {contentType === 'document' && (
                     <div className="space-y-4 bg-gray-50 p-6 rounded-xl border border-gray-200">
                         <h4 className="font-semibold text-gray-900 flex items-center gap-2">
                             <FileText size={18} /> Document Details
                         </h4>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Upload PDF or Enter Content URL</label>
-                            <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg bg-white">
-                                <div className="space-y-1 text-center">
-                                    <FileText className="mx-auto h-12 w-12 text-gray-400" />
-                                    <div className="flex text-sm text-gray-600">
-                                        <label className="relative cursor-pointer bg-white rounded-md font-medium text-primary-600 hover:text-primary-500">
-                                            <span>Upload a PDF</span>
-                                            <input type="file" className="sr-only" />
-                                        </label>
-                                        <p className="pl-1">or drag and drop</p>
-                                    </div>
-                                </div>
+                            <MediaPicker
+                                category="document"
+                                label="Upload Document/PDF or Select from Library"
+                                currentUrl={node.data?.content || ''}
+                                onSelect={(result) => onUpdate(node.id, { data: { ...node.data, content: result.url } })}
+                            />
+                            <div className="mt-4">
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Or enter External URL</label>
+                                <input
+                                    type="text"
+                                    value={node.data?.content || ''}
+                                    onChange={(e) => onUpdate(node.id, { data: { ...node.data, content: e.target.value } })}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                                    placeholder="e.g. https://example.com/document.pdf"
+                                />
                             </div>
                         </div>
                     </div>
                 )}
+
+                {contentType === 'quiz' && (
+                    <div className="space-y-4 bg-gray-50 p-6 rounded-xl border border-gray-200">
+                        <h4 className="font-semibold text-gray-900 flex items-center gap-2">
+                            <ClipboardList size={18} /> Quiz Details
+                        </h4>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Quiz Content URL or Embed Link</label>
+                            <input
+                                type="text"
+                                value={node.data?.content || ''}
+                                onChange={(e) => onUpdate(node.id, { data: { ...node.data, content: e.target.value } })}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                                placeholder="e.g. Google Forms URL or quiz resource ID"
+                            />
+                        </div>
+                        <p className="text-xs text-gray-500">
+                            Link to an external quiz or enter a resource identifier. Full quiz builder will be available in a future update.
+                        </p>
+                    </div>
+                )}
+
+                {contentType === 'assignment' && (
+                    <div className="space-y-4 bg-gray-50 p-6 rounded-xl border border-gray-200">
+                        <h4 className="font-semibold text-gray-900 flex items-center gap-2">
+                            <BookOpen size={18} /> Assignment Details
+                        </h4>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Assignment Resource URL</label>
+                            <input
+                                type="text"
+                                value={node.data?.content || ''}
+                                onChange={(e) => onUpdate(node.id, { data: { ...node.data, content: e.target.value } })}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                                placeholder="e.g. Link to assignment instructions or resource"
+                            />
+                        </div>
+                        <p className="text-xs text-gray-500">
+                            Provide an assignment instructions URL. Submissions handling will be available in a future update.
+                        </p>
+                    </div>
+                )}
+
+                {/* Description Field */}
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Lesson Description</label>
+                    <textarea
+                        value={node.data?.description || ''}
+                        onChange={(e) => onUpdate(node.id, { data: { ...node.data, description: e.target.value } })}
+                        rows={4}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 resize-none"
+                        placeholder="Describe what students will learn in this lesson..."
+                    />
+                </div>
+
+                {/* Duration Field */}
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-1.5">
+                        <Clock size={14} /> Duration (in minutes)
+                    </label>
+                    <input
+                        type="number"
+                        min="0"
+                        value={node.data?.duration ? Math.round(node.data.duration / 60) : ''}
+                        onChange={(e) => {
+                            const minutes = parseInt(e.target.value) || 0;
+                            onUpdate(node.id, { data: { ...node.data, duration: minutes * 60 } });
+                        }}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                        placeholder="e.g. 15"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                        {node.data?.duration ? `${Math.round(node.data.duration / 60)} minutes (${node.data.duration} seconds)` : 'Not set'}
+                    </p>
+                </div>
 
                 {/* Access Control */}
                 <div>
