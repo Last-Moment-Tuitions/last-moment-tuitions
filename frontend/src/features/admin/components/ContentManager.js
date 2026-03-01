@@ -314,23 +314,21 @@ export default function ContentManager({ view = 'page' }) {
                     >
                         {/* Top Action Bar (Overlay) */}
                         <div className="absolute top-3 right-3 flex gap-1 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
-                            {view === 'page' && (
-                                <button
-                                    onClick={(e) => togglePublish(e, item)}
-                                    title={item.status === 'published' ? 'Unpublish' : 'Publish'}
-                                    disabled={togglingId === item._id}
-                                    className={`p-1.5 backdrop-blur rounded-md shadow-sm border border-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${item.status === 'published'
-                                        ? 'bg-green-50/90 text-green-600 hover:bg-green-100 hover:text-green-700'
-                                        : 'bg-white/90 text-gray-400 hover:text-gray-900'
-                                        }`}
-                                >
-                                    {togglingId === item._id ? (
-                                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                    ) : (
-                                        item.status === 'published' ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />
-                                    )}
-                                </button>
-                            )}
+                            <button
+                                onClick={(e) => togglePublish(e, item)}
+                                title={item.status === 'published' ? 'Unpublish' : 'Publish'}
+                                disabled={togglingId === item._id}
+                                className={`p-1.5 backdrop-blur rounded-md shadow-sm border border-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${item.status === 'published'
+                                    ? 'bg-green-50/90 text-green-600 hover:bg-green-100 hover:text-green-700'
+                                    : 'bg-white/90 text-gray-400 hover:text-gray-900'
+                                    }`}
+                            >
+                                {togglingId === item._id ? (
+                                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                ) : (
+                                    item.status === 'published' ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />
+                                )}
+                            </button>
                             <Link href={`/editor/${item._id}`}>
                                 <button className="p-1.5 bg-white/90 backdrop-blur text-gray-600 hover:text-blue-600 rounded-md shadow-sm border border-gray-100">
                                     <Edit className="w-3.5 h-3.5" />
@@ -354,7 +352,7 @@ export default function ContentManager({ view = 'page' }) {
                             {/* SEO Indicator Dot */}
                             <div className="flex justify-between items-start">
                                 <div className={`w-2 h-2 rounded-full ${getSeoHealth(item) === 'green' ? 'bg-green-400' : 'bg-red-400'}`} title="SEO Health" />
-                                {view === 'page' && <StatusBadge status={item.status} />}
+                                <StatusBadge status={item.status} />
                             </div>
 
                             {/* Title & Preview */}

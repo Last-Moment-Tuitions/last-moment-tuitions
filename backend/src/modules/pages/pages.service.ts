@@ -33,7 +33,19 @@ export class PagesService {
         [{ tagName: 'div', style: { background: '#111', color: '#fff', padding: '30px', 'text-align': 'center' }, content: '&copy; 2025 Last Moment Tuitions' }]
       );
 
-      // Inject if no components provided
+      // Check if a starting template was requested
+      if (pageData.sourceTemplateId) {
+        const sourceTemplate = await this.pageModel.findById(pageData.sourceTemplateId).exec();
+        if (sourceTemplate) {
+          pageData.gjsComponents = sourceTemplate.gjsComponents;
+          pageData.gjsStyles = sourceTemplate.gjsStyles;
+          pageData.gjsHtml = sourceTemplate.gjsHtml;
+          pageData.gjsCss = sourceTemplate.gjsCss;
+          pageData.gjsAssets = sourceTemplate.gjsAssets || [];
+        }
+      }
+
+      // Inject if no components provided (and no template was matched or empty template)
       if (!pageData.gjsComponents || pageData.gjsComponents.length === 0) {
         pageData.gjsComponents = [
           { type: 'template-ref', attributes: { id: headerId.toString() } },

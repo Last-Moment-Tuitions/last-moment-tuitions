@@ -42,4 +42,8 @@ export class CreatePageDto {
     @IsMongoId()
     @IsOptional()
     folder?: string;
+
+    @IsMongoId()
+    @IsOptional()
+    sourceTemplateId?: string;
 }
