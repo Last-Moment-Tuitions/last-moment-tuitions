@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../ui';
 import FileUpload from './FileUpload';
-import { Loader2, CheckCircle, Image as ImageIcon, Video, FileText } from 'lucide-react';
+import { Loader2, CheckCircle, Image as ImageIcon, Video, FileText, Link as LinkIcon, X } from 'lucide-react';
 import { getCookie } from '@/utils/cookie';
 import API_BASE_URL from '@/lib/config';
 
@@ -17,8 +17,9 @@ export default function MediaPicker({
     const [mediaItems, setMediaItems] = useState([]);
     const [loadingLibrary, setLoadingLibrary] = useState(false);
     const [error, setError] = useState(null);
-    const [activeTab, setActiveTab] = useState('upload');
+    const [activeTab, setActiveTab] = useState('external');
     const [selectedUrl, setSelectedUrl] = useState(currentUrl);
+    const [externalUrlInput, setExternalUrlInput] = useState('');
 
     useEffect(() => {
         setSelectedUrl(currentUrl);
@@ -64,6 +65,21 @@ export default function MediaPicker({
         if (onSelect) onSelect(item);
     };
 
+    const handleExternalUrlSubmit = () => {
+        if (!externalUrlInput.trim()) return;
+
+        setSelectedUrl(externalUrlInput);
+        if (onSelect) {
+            onSelect({
+                url: externalUrlInput,
+                key: `external-${Date.now()}`,
+                originalName: 'External Link',
+                size: 0,
+                mimeType: 'text/html'
+            });
+        }
+    };
+
     const Icon = category === 'image' ? ImageIcon : category === 'video' ? Video : FileText;
 
     return (
@@ -71,7 +87,8 @@ export default function MediaPicker({
             <label className="block text-sm font-semibold text-gray-700">{label}</label>
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid w-full grid-cols-2">
+                <TabsList className="grid w-full grid-cols-3">
+                    <TabsTrigger value="external">External URL</TabsTrigger>
                     <TabsTrigger value="upload">Upload New</TabsTrigger>
                     <TabsTrigger value="library">Media Library</TabsTrigger>
                 </TabsList>
@@ -133,6 +150,62 @@ export default function MediaPicker({
                             </div>
                         )}
                     </div>
+                </TabsContent>
+
+                <TabsContent value="external" className="pt-2">
+                    {selectedUrl && activeTab === 'external' ? (
+                        <div className="relative border border-gray-200 rounded-xl p-4 bg-white">
+                            <div className="flex items-center gap-3">
+                                <CheckCircle className="w-5 h-5 text-green-500 shrink-0" />
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-sm text-gray-700 truncate">{selectedUrl}</p>
+                                </div>
+                                <button
+                                    onClick={() => {
+                                        setSelectedUrl('');
+                                        setExternalUrlInput('');
+                                        if (onSelect) onSelect(null);
+                                    }}
+                                    className="p-1.5 hover:bg-red-50 rounded-lg text-gray-400 hover:text-red-500 transition-colors"
+                                    title="Remove"
+                                >
+                                    <X className="w-4 h-4" />
+                                </button>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="border border-gray-200 rounded-xl p-6 bg-gray-50/50 min-h-[250px] flex flex-col items-center justify-center">
+                            <LinkIcon className="w-12 h-12 text-gray-300 mb-4" />
+                            <h4 className="text-gray-900 font-medium mb-1">Add from URL</h4>
+                            <p className="text-sm text-gray-500 mb-6 text-center max-w-sm">
+                                Paste a direct link to an image, or a video URL from YouTube or Vimeo.
+                            </p>
+
+                            <div className="w-full max-w-md flex gap-2">
+                                <input
+                                    type="url"
+                                    placeholder="https://..."
+                                    value={externalUrlInput}
+                                    onChange={(e) => setExternalUrlInput(e.target.value)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') {
+                                            e.preventDefault();
+                                            handleExternalUrlSubmit();
+                                        }
+                                    }}
+                                    className="flex-1 px-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
+                                    required
+                                />
+                                <button
+                                    type="button"
+                                    onClick={handleExternalUrlSubmit}
+                                    className="px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-700 transition-colors"
+                                >
+                                    Add
+                                </button>
+                            </div>
+                        </div>
+                    )}
                 </TabsContent>
             </Tabs>
         </div>
