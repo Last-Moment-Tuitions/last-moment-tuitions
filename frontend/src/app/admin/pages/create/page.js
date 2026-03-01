@@ -18,7 +18,9 @@ function CreatePageContent() {
         metaDescription: '',
         type: 'page', // Default
         folder: null, // Default
+        sourceTemplateId: '', // Added for selecting a template
     });
+    const [availableTemplates, setAvailableTemplates] = useState([]);
 
     useEffect(() => {
         const typeParam = searchParams.get('type');
@@ -29,6 +31,16 @@ function CreatePageContent() {
             type: typeParam === 'template' ? 'template' : 'page',
             folder: (folderParam && folderParam !== 'null') ? folderParam : null
         }));
+
+        // Fetch templates for the dropdown if creating a page
+        if (typeParam !== 'template') {
+            adminService.getPages({ type: 'template', status: 'published' })
+                .then(res => {
+                    const templates = res?.data || res || [];
+                    setAvailableTemplates(templates);
+                })
+                .catch(err => console.error("Failed to fetch templates", err));
+        }
     }, [searchParams]);
 
     const generateSlug = (title) => {
@@ -59,6 +71,9 @@ function CreatePageContent() {
             const payload = { ...formData };
             if (!payload.folder) {
                 delete payload.folder;
+            }
+            if (!payload.sourceTemplateId) {
+                delete payload.sourceTemplateId;
             }
             const data = await adminService.createPage(payload);
             if (data && data._id) {
@@ -168,6 +183,29 @@ function CreatePageContent() {
                                 disabled={loading}
                             />
                         </div>
+
+                        {/* Starting Template Selection (Pages Only) */}
+                        {!isTemplate && (
+                            <div className="space-y-2">
+                                <label className="block text-sm font-semibold text-gray-900">Starting Template</label>
+                                <select
+                                    value={formData.sourceTemplateId || ''}
+                                    onChange={(e) => setFormData({ ...formData, sourceTemplateId: e.target.value })}
+                                    className="block w-full px-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:border-black focus:ring-1 focus:ring-black transition-all shadow-sm bg-white text-gray-900"
+                                    disabled={loading || availableTemplates.length === 0}
+                                >
+                                    <option value="">Blank Page (Default Layout)</option>
+                                    {availableTemplates.map(template => (
+                                        <option key={template._id} value={template._id}>
+                                            {template.title}
+                                        </option>
+                                    ))}
+                                </select>
+                                {availableTemplates.length === 0 && (
+                                    <p className="text-xs text-gray-500 mt-1">No published templates available.</p>
+                                )}
+                            </div>
+                        )}
                     </div>
 
                     {/* Actions */}

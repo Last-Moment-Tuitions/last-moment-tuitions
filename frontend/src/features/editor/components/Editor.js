@@ -29,29 +29,37 @@ export function Editor({ pageId }) {
         loadAdvancedBlocks(editor);
         loadTemplateRefBlock(editor);
 
+        let isMounted = true;
+
         // Fetch Page Data
         const fetchPage = async () => {
             try {
                 const page = await adminService.getPage(pageId);
+                
+                if (!isMounted) return;
 
-                if (page.gjsComponents && page.gjsComponents.length > 0) {
-                    editor.loadProjectData({
-                        components: page.gjsComponents,
-                        styles: page.gjsStyles,
-                        assets: page.gjsAssets
-                    });
+                if (page.gjsComponents) {
+                    editor.setComponents(page.gjsComponents);
+                }
+                if (page.gjsStyles) {
+                    editor.setStyle(page.gjsStyles);
+                }
+                if (page.gjsAssets) {
+                    editor.Assets.add(page.gjsAssets);
                 }
             } catch (err) {
+                if (!isMounted) return;
                 console.error("Failed to load page", err);
                 showToast(err.message || 'Failed to load page', 'error');
             } finally {
-                setLoading(false);
+                if (isMounted) setLoading(false);
             }
         };
 
         fetchPage();
 
         return () => {
+            isMounted = false;
             if (editor) editor.destroy();
         };
     }, [pageId]);

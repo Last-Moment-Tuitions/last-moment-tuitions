@@ -31,7 +31,19 @@ export class PagesService {
     }
 
     async create(createPageDto: CreatePageDto) {
-        const createdPage = new this.pageModel(createPageDto);
+        const pageData: any = { ...createPageDto };
+
+        if (pageData.sourceTemplateId) {
+            const sourceTemplate = await this.pageModel.findById(pageData.sourceTemplateId).exec();
+            if (sourceTemplate) {
+                pageData.gjsComponents = sourceTemplate.gjsComponents;
+                pageData.gjsStyles = sourceTemplate.gjsStyles;
+                pageData.gjsHtml = sourceTemplate.gjsHtml;
+                pageData.gjsCss = sourceTemplate.gjsCss;
+            }
+        }
+
+        const createdPage = new this.pageModel(pageData);
         return createdPage.save();
     }
 
