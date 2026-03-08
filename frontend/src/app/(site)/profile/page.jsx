@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { useRouter } from 'next/navigation';
-import { Upload, Eye, EyeOff, ArrowRight, Loader2 } from 'lucide-react';
+import { Upload, Eye, EyeOff, ArrowRight, Loader2, PlayCircle, MonitorPlay, Trophy, Users, ArrowLeft } from 'lucide-react';
 import { Button, Input, Label } from '@/components/ui';
 import API_BASE_URL from '@/lib/config';
 
@@ -12,7 +12,7 @@ export default function ProfilePage() {
     const { toast } = useToast();
     const router = useRouter();
 
-    const [activeTab, setActiveTab] = useState('Settings');
+    const [activeTab, setActiveTab] = useState('Dashboard');
     const tabs = ['Dashboard', 'Courses', 'Wishlist', 'Purchase History', 'Settings'];
 
     // Password State
@@ -239,7 +239,150 @@ export default function ProfilePage() {
 
                 {/* Content Area */}
                 <div className="bg-white p-8 rounded-b-xl shadow-sm min-h-[500px]">
-                    {activeTab === 'Settings' ? (
+                    {activeTab === 'Dashboard' ? (
+                        <div className="w-full">
+                            <h2 className="text-xl font-bold text-gray-900 mb-6">Dashboard</h2>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+                                {/* Enrolled Courses */}
+                                <div className="bg-[#ecfeff] rounded-sm p-6 flex items-center gap-4">
+                                    <div className="bg-white p-3 rounded-sm flex items-center justify-center h-14 w-14 shadow-sm">
+                                        <PlayCircle className="text-[#063f78]" size={28} />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-2xl font-bold text-gray-900">957</h3>
+                                        <p className="text-sm text-gray-600">Enrolled Courses</p>
+                                    </div>
+                                </div>
+                                {/* Active Courses */}
+                                <div className="bg-[#ecfeff] rounded-sm p-6 flex items-center gap-4">
+                                    <div className="bg-white p-3 rounded-sm flex items-center justify-center h-14 w-14 shadow-sm">
+                                        <MonitorPlay className="text-[#063f78]" size={28} />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-2xl font-bold text-gray-900">6</h3>
+                                        <p className="text-sm text-gray-600">Active Courses</p>
+                                    </div>
+                                </div>
+                                {/* Completed Courses */}
+                                <div className="bg-[#ecfeff] rounded-sm p-6 flex items-center gap-4">
+                                    <div className="bg-white p-3 rounded-sm flex items-center justify-center h-14 w-14 shadow-sm">
+                                        <Trophy className="text-[#063f78]" size={28} />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-2xl font-bold text-gray-900">951</h3>
+                                        <p className="text-sm text-gray-600">Completed Courses</p>
+                                    </div>
+                                </div>
+                                {/* Course Instructors */}
+                                <div className="bg-[#ecfeff] rounded-sm p-6 flex items-center gap-4">
+                                    <div className="bg-white p-3 rounded-sm flex items-center justify-center h-14 w-14 shadow-sm">
+                                        <Users className="text-[#063f78]" size={28} />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-2xl font-bold text-gray-900">241</h3>
+                                        <p className="text-sm text-gray-600">Course Instructors</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center justify-between mb-6">
+                                <h2 className="text-xl font-bold text-gray-900">Let's start learning, {user?.firstName}</h2>
+                                <div className="flex gap-2">
+                                    <button className="bg-[#eff6ff] p-2 hover:bg-[#ffe4da] rounded-sm transition-colors">
+                                        <ArrowLeft className="text-[#063f78]" size={20} />
+                                    </button>
+                                    <button className="bg-[#eff6ff] p-2 hover:bg-[#ffe4da] rounded-sm transition-colors">
+                                        <ArrowRight className="text-[#063f78]" size={20} />
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                                {/* Course 1 */}
+                                <div className="border border-gray-200 rounded-sm overflow-hidden flex flex-col relative bg-white pb-[2px]">
+                                    <div className="h-40 w-full relative">
+                                        <img src="https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=500&q=80" alt="Course" className="w-full h-full object-cover" />
+                                    </div>
+                                    <div className="p-4 flex-1 flex flex-col justify-between">
+                                        <div>
+                                            <h4 className="text-xs text-gray-500 mb-1 line-clamp-1">Reiki Level I, II and Master/Teacher Program</h4>
+                                            <p className="text-sm font-semibold text-gray-900 line-clamp-1">1. Introductions</p>
+                                        </div>
+                                        <div className="mt-4">
+                                            <button className="w-full py-2 bg-[#eff6ff] text-[#063f78] font-medium text-sm rounded-sm hover:bg-[#ffe4da] transition-colors">
+                                                Watch Lecture
+                                            </button>
+                                        </div>
+                                    </div>
+                                    {/* Progress bar empty for first one */}
+                                    <div className="h-[2px] bg-gray-100 w-full absolute bottom-0 left-0"></div>
+                                </div>
+
+                                {/* Course 2 */}
+                                <div className="border border-gray-200 rounded-sm overflow-hidden flex flex-col relative bg-white pb-[2px]">
+                                    <div className="h-40 w-full relative">
+                                        <img src="https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=500&q=80" alt="Course" className="w-full h-full object-cover" />
+                                    </div>
+                                    <div className="p-4 flex-1 flex flex-col justify-between">
+                                        <div>
+                                            <h4 className="text-xs text-gray-500 mb-1 line-clamp-1">The Complete 2021 Web Development Bootcamp</h4>
+                                            <p className="text-sm font-semibold text-gray-900 line-clamp-1">167. What You'll Need to Get Started - Se...</p>
+                                        </div>
+                                        <div className="mt-4 flex items-center justify-between gap-4">
+                                            <button className="flex-1 py-2 bg-[#063f78] text-[#fff] font-medium text-sm rounded-sm hover:bg-[#ffe4da] transition-colors">
+                                                Watch Lecture
+                                            </button>
+                                            <span className="text-xs font-semibold text-green-500 whitespace-nowrap">61% Completed</span>
+                                        </div>
+                                    </div>
+                                    <div className="h-[2px] w-full bg-gray-100 absolute bottom-0 left-0">
+                                        <div className="h-full bg-[#063f78]" style={{ width: '61%' }}></div>
+                                    </div>
+                                </div>
+
+                                {/* Course 3 */}
+                                <div className="border border-gray-200 rounded-sm overflow-hidden flex flex-col relative bg-white pb-[2px]">
+                                    <div className="h-40 w-full relative">
+                                        <img src="https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=500&q=80" alt="Course" className="w-full h-full object-cover" />
+                                    </div>
+                                    <div className="p-4 flex-1 flex flex-col justify-between">
+                                        <div>
+                                            <h4 className="text-xs text-gray-500 mb-1 line-clamp-1">Copywriting - Become a Freelance Copywriter...</h4>
+                                            <p className="text-sm font-semibold text-gray-900 line-clamp-1">1. How to get started with figma</p>
+                                        </div>
+                                        <div className="mt-4">
+                                            <button className="w-full py-2 bg-[#eff6ff] text-[#063f78] font-medium text-sm rounded-sm hover:bg-[#ffe4da] transition-colors">
+                                                Watch Lecture
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div className="h-[2px] bg-gray-100 w-full absolute bottom-0 left-0"></div>
+                                </div>
+
+                                {/* Course 4 */}
+                                <div className="border border-gray-200 rounded-sm overflow-hidden flex flex-col relative bg-white pb-[2px]">
+                                    <div className="h-40 w-full relative">
+                                        <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=500&q=80" alt="Course" className="w-full h-full object-cover" />
+                                    </div>
+                                    <div className="p-4 flex-1 flex flex-col justify-between">
+                                        <div>
+                                            <h4 className="text-xs text-gray-500 mb-1 line-clamp-1">2021 Complete Python Bootcamp From Zero to...</h4>
+                                            <p className="text-sm font-semibold text-gray-900 line-clamp-1">9. Advanced CSS - Selector Priority</p>
+                                        </div>
+                                        <div className="mt-4 flex items-center justify-between gap-4">
+                                            <button className="flex-1 py-2 bg-[#063f78] text-[#fff] font-medium text-sm rounded-sm hover:bg-[#e85535] transition-colors">
+                                                Watch Lecture
+                                            </button>
+                                            <span className="text-xs font-semibold text-green-500 whitespace-nowrap">12% Finish</span>
+                                        </div>
+                                    </div>
+                                    <div className="h-[2px] w-full bg-gray-100 absolute bottom-0 left-0">
+                                        <div className="h-full bg-[#063f78]" style={{ width: '12%' }}></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    ) : activeTab === 'Settings' ? (
                         <div className="bg-transparent max-w-5xl mx-auto">
 
                             {/* Account Settings Section */}
