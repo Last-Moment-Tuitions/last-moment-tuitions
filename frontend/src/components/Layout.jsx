@@ -100,13 +100,27 @@ export function Header() {
                 <div className="hidden md:flex items-center gap-3 xl:gap-4">
                     {user ? (
                         <div className="flex items-center gap-4">
-                            <span className="text-sm font-semibold text-gray-700">
-                                Hello, {user.firstName || 'User'}
-                            </span>
+                            {/* Profile */}
+                            <Link href="/profile" className="flex flex-col items-center cursor-pointer">
+                                <img
+                                    src={user?.profilePhoto || "/assets/default-avatar.svg"}
+                                    alt="Profile"
+                                    onError={(e) => {
+                                        e.currentTarget.src = "/assets/default-avatar.svg";
+                                    }}
+                                    className="w-10 h-10 rounded-full object-cover border border-gray-200 shadow-sm hover:scale-105 transition"
+                                />
+
+                                <span className="text-xs font-semibold text-gray-700 mt-1">
+                                    {user?.firstName || "User"}
+                                </span>
+                            </Link>
+
+                            {/* Logout Button */}
                             <Button
                                 onClick={() => {
                                     setLoggingOut(true);
-                                    logout(() => toast.success('Logged out successfully'));
+                                    logout(() => toast.success("Logged out successfully"));
                                 }}
                                 disabled={loggingOut}
                                 variant="outline"
@@ -118,14 +132,27 @@ export function Header() {
                                         Logging out...
                                     </>
                                 ) : (
-                                    'Logout'
+                                    "Logout"
                                 )}
                             </Button>
+
                         </div>
                     ) : (
                         <>
-                            <Link href="/signin" className="text-gray-700 font-semibold hover:text-primary-600 transition-colors text-sm whitespace-nowrap">Sign in</Link>
-                            <Button href="/signup" variant="primary" className="rounded-full px-5 py-2 text-sm font-bold shadow-lg shadow-primary-500/20 whitespace-nowrap">Create Account</Button>
+                            <Link
+                                href="/signin"
+                                className="text-gray-700 font-semibold hover:text-primary-600 transition-colors text-sm whitespace-nowrap"
+                            >
+                                Sign in
+                            </Link>
+
+                            <Button
+                                href="/signup"
+                                variant="primary"
+                                className="rounded-full px-5 py-2 text-sm font-bold shadow-lg shadow-primary-500/20 whitespace-nowrap"
+                            >
+                                Create Account
+                            </Button>
                         </>
                     )}
                 </div>
@@ -161,7 +188,7 @@ export function Header() {
                         >
                             Home
                         </Link>
-                        
+
                         {navItems.map((item, idx) => (
                             <div key={idx} className="flex flex-col">
                                 {item.type === 'link' ? (
