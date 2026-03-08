@@ -7,12 +7,14 @@ import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import contentService from '@/services/contentService';
 import menuService from '@/services/menuService';
+import { useCart } from '@/context/CartContext';
 
-import { ChevronDown, Search, Menu, X } from 'lucide-react';
+import { ChevronDown, Search, Menu, X, ShoppingCart } from 'lucide-react';
 
 export function Header() {
     const pathname = usePathname();
     const { user, logout } = useAuth();
+    const { cartItems } = useCart();
     const { toast } = useToast();
     const [navItems, setNavItems] = useState([]);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -98,8 +100,22 @@ export function Header() {
 
                 {/* Right Section: Auth Buttons */}
                 <div className="hidden md:flex items-center gap-3 xl:gap-4">
+                    {/* Shopping Cart Icon - ALWAYS Visible */}
+                    <Link
+                        href="/cart"
+                        className="relative p-2 text-gray-600 hover:text-primary-600 hover:bg-primary-50 rounded-full transition-all group"
+                        title="Shopping Cart"
+                    >
+                        <ShoppingCart className="w-6 h-6" />
+                        {cartItems.length > 0 && (
+                            <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary-600 text-[10px] font-bold text-white ring-2 ring-white group-hover:bg-primary-500">
+                                {cartItems.length}
+                            </span>
+                        )}
+                    </Link>
+
                     {user ? (
-                        <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-4 border-l border-gray-100 pl-4">
                             <span className="text-sm font-semibold text-gray-700">
                                 Hello, {user.firstName || 'User'}
                             </span>
@@ -130,14 +146,24 @@ export function Header() {
                     )}
                 </div>
 
-                {/* Mobile Menu Button */}
-                <button
-                    className="lg:hidden p-2 text-gray-600 hover:text-primary-600 transition-colors"
-                    onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                    aria-label="Toggle menu"
-                >
-                    {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-                </button>
+                {/* Mobile Menu Button with Cart Indicator */}
+                <div className="lg:hidden flex items-center gap-2">
+                    <Link href="/cart" className="p-2 text-primary-600 relative">
+                        <ShoppingCart size={20} />
+                        {cartItems.length > 0 && (
+                            <span className="absolute top-1 right-1 flex h-3 w-3 items-center justify-center rounded-full bg-primary-600 text-[8px] font-bold text-white">
+                                {cartItems.length}
+                            </span>
+                        )}
+                    </Link>
+                    <button
+                        className="p-2 text-gray-600 hover:text-primary-600 transition-colors"
+                        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                        aria-label="Toggle menu"
+                    >
+                        {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+                    </button>
+                </div>
             </div>
 
             {/* Mobile Menu Overlay */}
@@ -161,7 +187,7 @@ export function Header() {
                         >
                             Home
                         </Link>
-                        
+
                         {navItems.map((item, idx) => (
                             <div key={idx} className="flex flex-col">
                                 {item.type === 'link' ? (

@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { Button, Badge, Accordion, AccordionItem, AccordionTrigger, AccordionContent, CourseCard } from '@/components/ui';
+import { useCart } from '@/context/CartContext';
 
 // --- MOCK DATA ---
 const COURSE_DATA = {
@@ -24,6 +25,7 @@ const COURSE_DATA = {
     students: 236568,
     lastUpdated: "11/2024",
     language: "English",
+    image: "https://images.unsplash.com/photo-1581291518137-97d425c04cc1?q=80&w=600&auto=format&fit=crop",
     price: 4999,
     originalPrice: 12999,
     discount: "62% off",
@@ -176,6 +178,7 @@ const RELATED_COURSES = [
 export default function CourseDetailPage({ params }) {
     const data = COURSE_DATA;
     const [activeTab, setActiveTab] = useState('overview');
+    const { addToCart } = useCart();
 
     return (
         <div className="bg-gray-50 min-h-screen pb-20 font-sans">
@@ -527,7 +530,10 @@ export default function CourseDetailPage({ params }) {
 
                             {/* Buttons */}
                             <div className="flex gap-3 mb-6">
-                                <Button className="flex-1 h-12 text-base font-bold bg-white text-primary-600 border-2 border-primary-100 hover:border-primary-600 hover:bg-primary-50 transition-colors">
+                                <Button
+                                    onClick={() => addToCart(data)}
+                                    className="flex-1 h-12 text-base font-bold bg-white text-primary-600 border-2 border-primary-100 hover:border-primary-600 hover:bg-primary-50 transition-colors"
+                                >
                                     Add To Cart
                                 </Button>
                                 <Button className="flex-1 h-12 text-base font-bold bg-primary-600 text-white hover:bg-primary-700 shadow-lg shadow-primary-500/30 transition-all hover:scale-[1.02]">

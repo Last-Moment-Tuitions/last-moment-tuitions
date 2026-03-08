@@ -11,6 +11,10 @@ import Redis from 'ioredis';
 import { v4 as uuidv4 } from 'uuid';
 import { createHash } from 'crypto';
 
+import { Model } from 'mongoose';
+import { InjectModel } from '@nestjs/mongoose';
+import { Enrollment, EnrollmentDocument } from '../modules/courses/entities/enrollment.entity';
+
 @Injectable()
 export class AuthService {
     constructor(
@@ -18,6 +22,7 @@ export class AuthService {
         private firebaseService: FirebaseService,
         private emailService: EmailService,
         @Inject('REDIS_CLIENT') private redis: Redis,
+        @InjectModel(Enrollment.name) private enrollmentModel: Model<EnrollmentDocument>,
     ) { }
 
     async signup(signupDto: SignupDto) {
@@ -50,7 +55,8 @@ export class AuthService {
                 roles: userObj.roles,
                 firstName: userObj.firstName,
                 lastName: userObj.lastName,
-                email: userObj.email
+                email: userObj.email,
+                enrollmentCount: 0 // New user has 0 enrollments
             },
             message: 'User created successfully'
         };
@@ -202,7 +208,8 @@ export class AuthService {
                             roles: userObj.roles,
                             firstName: userObj.firstName,
                             lastName: userObj.lastName,
-                            email: userObj.email
+                            email: userObj.email,
+                            enrollmentCount: await this.enrollmentModel.countDocuments({ user_id: user._id })
                         }
                     };
                 }
@@ -258,7 +265,8 @@ export class AuthService {
                 roles: userObj.roles,
                 firstName: userObj.firstName,
                 lastName: userObj.lastName,
-                email: userObj.email
+                email: userObj.email,
+                enrollmentCount: await this.enrollmentModel.countDocuments({ user_id: user._id })
             }
         };
     }
@@ -355,6 +363,15 @@ export class AuthService {
 
     }
     async getProfile(userId: string) {
-        return this.usersService.findByIdPublic(userId);
+        const user = await this.usersService.findByIdPublic(userId);
+        if (!user) return null;
+
+        const enrollmentCount = await this.enrollmentModel.countDocuments({ user_id: userId });
+
+        const userObj = user.toObject ? user.toObject() : user;
+        return {
+            ...userObj,
+            enrollmentCount
+        };
     }
 }
