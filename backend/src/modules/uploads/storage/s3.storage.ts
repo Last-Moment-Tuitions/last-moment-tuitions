@@ -30,6 +30,10 @@ export class S3StorageProvider implements StorageProvider {
         filename: string,
         contentType: string
     ): Promise<{ uploadUrl: string; key: string; publicUrl: string }> {
+        if (!process.env.AWS_S3_BUCKET || !process.env.AWS_ACCESS_KEY_ID) {
+            throw new Error('AWS credentials (AWS_S3_BUCKET or AWS_ACCESS_KEY_ID) are missing from backend environment variables. Please configure S3 in your .env file.');
+        }
+
         const ext = path.extname(filename);
         const uniqueFilename = `${uuidv4()}${ext}`;
         const key = `${folder}/${uniqueFilename}`;

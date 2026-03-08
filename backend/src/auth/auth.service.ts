@@ -352,8 +352,32 @@ export class AuthService {
         await this.redis.del(`reset_token:${resetToken}`);
 
         return { message: 'Password reset successfully' };
-
     }
+
+    async changePassword(userId: string, currentPassword: string, newPassword: string) {
+        const user = await this.usersService.findById(userId);
+        if (!user || !user.passwordHash) {
+            throw new UnauthorizedException('Invalid user');
+        }
+
+        const isValid = await argon2.verify(user.passwordHash, currentPassword);
+        if (!isValid) {
+            throw new UnauthorizedException('Incorrect current password');
+        }
+
+        const hashedPassword = await argon2.hash(newPassword);
+        await this.usersService.updateById(userId, {
+            passwordHash: hashedPassword
+        });
+
+        return { message: 'Password changed successfully' };
+    }
+
+    async updateProfilePhoto(userId: string, profilePhoto: string) {
+        await this.usersService.updateById(userId, { profilePhoto });
+        return { message: 'Profile photo updated successfully', profilePhoto };
+    }
+
     async getProfile(userId: string) {
         return this.usersService.findByIdPublic(userId);
     }

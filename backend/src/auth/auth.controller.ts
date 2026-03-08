@@ -1,5 +1,5 @@
 
-import { Controller, Post, Body, UseGuards, Get, Req, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Get, Req, HttpCode, HttpStatus, Patch } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { SignupDto } from './dto/signup.dto';
 import { LoginDto } from './dto/login.dto';
@@ -44,6 +44,23 @@ export class AuthController {
     @UseGuards(AuthGuard)
     async getProfile(@Req() req) {
         return this.authService.getProfile(req.user.userId);
+    }
+
+    @Patch('me/profile-photo')
+    @UseGuards(AuthGuard)
+    async updateProfilePhoto(@Req() req, @Body('profilePhoto') profilePhoto: string) {
+        return this.authService.updateProfilePhoto(req.user.userId, profilePhoto);
+    }
+
+    @Post('me/change-password')
+    @UseGuards(AuthGuard)
+    @HttpCode(HttpStatus.OK)
+    async changePassword(
+        @Req() req,
+        @Body('currentPassword') currentPassword: string,
+        @Body('newPassword') newPassword: string
+    ) {
+        return this.authService.changePassword(req.user.userId, currentPassword, newPassword);
     }
 
     @Post('forgot-password')

@@ -97,11 +97,9 @@ export function Header() {
                 </ul>
 
                 {/* Right Section: Auth Buttons */}
-                {/* Right Section: Auth Buttons */}
                 <div className="hidden md:flex items-center gap-3 xl:gap-4">
                     {user ? (
                         <div className="flex items-center gap-4">
-
                             {/* Profile */}
                             <Link href="/profile" className="flex flex-col items-center cursor-pointer">
                                 <img
