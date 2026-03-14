@@ -38,10 +38,16 @@ export function Editor({ pageId }) {
                 
                 if (!isMounted) return;
 
-                if (page.gjsComponents) {
+                if (page.gjsComponents && (!Array.isArray(page.gjsComponents) || page.gjsComponents.length > 0)) {
                     editor.setComponents(page.gjsComponents);
+                } else if (page.gjsHtml) {
+                    // Fallback: Parse raw HTML back into editor blocks (handles seeded data)
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = page.gjsHtml;
+                    if (page.gjsCss) { tempDiv.innerHTML += `<style>${page.gjsCss}</style>`; }
+                    editor.setComponents(tempDiv.innerHTML);
                 }
-                if (page.gjsStyles) {
+                if (page.gjsStyles && (!Array.isArray(page.gjsStyles) || page.gjsStyles.length > 0)) {
                     editor.setStyle(page.gjsStyles);
                 }
                 if (page.gjsAssets) {
@@ -163,10 +169,14 @@ export function Editor({ pageId }) {
                     <div id="gjs" className="h-full w-full"></div>
                 </div>
 
-                {/* Styles Sidebar */}
+                {/* Properties Sidebar */}
                 <div className={`w-64 bg-gray-800 border-l border-gray-700 flex flex-col text-white z-40 ${isPreview ? 'hidden' : 'block'}`}>
-                    <div className="p-3 font-bold text-xs uppercase text-gray-400">Styles</div>
-                    <div id="styles-container" className="flex-1 overflow-y-auto"></div>
+                    {/* Settings / Traits */}
+                    <div className="p-3 font-bold text-xs uppercase text-gray-400 border-b border-gray-700 bg-gray-900">Settings</div>
+                    <div id="traits-container" className="p-2 border-b border-gray-700 min-h-[120px] max-h-[50%] overflow-y-auto"></div>
+                    {/* Styles */}
+                    <div className="p-3 font-bold text-xs uppercase text-gray-400 bg-gray-900">Styles</div>
+                    <div id="styles-container" className="flex-1 overflow-y-auto pb-8"></div>
                 </div>
             </div>
         </div>

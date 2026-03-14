@@ -49,12 +49,15 @@ export const gjsConfig = {
     blockManager: {
         appendTo: '#blocks',
     },
+    traitManager: {
+        appendTo: '#traits-container',
+    },
     selectorManager: { appendTo: '#styles-container' },
     styleManager: {
         appendTo: '#styles-container',
         sectors: [{
-            name: 'Dimension',
-            open: false,
+            name: 'Spacing & Size',
+            open: true,
             buildProps: ['width', 'min-height', 'padding', 'margin'],
             properties: [{
                 type: 'integer',
@@ -65,25 +68,6 @@ export const gjsConfig = {
                 min: 0,
             }]
         }, {
-            name: 'Layout',
-            open: true,
-            buildProps: ['display', 'flex-direction', 'flex-wrap', 'justify-content', 'align-items', 'align-content', 'gap'],
-            properties: [
-                {
-                    name: 'Display',
-                    property: 'display',
-                    type: 'select',
-                    defaults: 'block',
-                    list: [
-                        { value: 'block', name: 'Block' },
-                        { value: 'inline-block', name: 'Inline Block' },
-                        { value: 'flex', name: 'Flex' },
-                        { value: 'grid', name: 'Grid' },
-                        { value: 'none', name: 'None' }
-                    ],
-                }
-            ]
-        }, {
             name: 'Typography',
             open: false,
             buildProps: ['font-family', 'font-size', 'font-weight', 'letter-spacing', 'color', 'line-height', 'text-align'],
@@ -91,10 +75,6 @@ export const gjsConfig = {
             name: 'Decorations',
             open: false,
             buildProps: ['background-color', 'border-radius', 'border', 'box-shadow', 'background'],
-        }, {
-            name: 'Extra',
-            open: false,
-            buildProps: ['opacity', 'cursor', 'overflow'],
         }]
     },
 };

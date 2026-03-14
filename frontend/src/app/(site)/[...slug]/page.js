@@ -73,35 +73,74 @@ async function getTemplateContent(id) {
 async function resolveTemplateRefs(html) {
     if (!html) return html;
 
-    // Find all <template-ref> tags
-    const regex = /<template-ref\s+id="([^"]+)"[^>]*><\/template-ref>/g; // Updated regex
+    // Find all <template-ref> tags, optionally matching data-props="..."
+    // The previous regex was: /<template-ref[^>]*data-template-id="([^"]+)"[^>]*>([\s\S]*?)<\/template-ref>/gi;
+    // We update it to optionally capture data-props if present:
+    const regex = /<template-ref[^>]*(?:data-template-id="([^"]+)"[^>]*data-props='([^']+)'|data-props='([^']+)'[^>]*data-template-id="([^"]+)"|data-template-id="([^"]+)")[^>]*>([\s\S]*?)<\/template-ref>/gi;
+
     let match;
     let resolvedHtml = html;
 
     // We need to process matches sequentially to avoid issues with string replacement
-    // However, string replacement on a mutating string is tricky with regex exec
-    // Better approach: collect all replacements first
     const replacements = [];
 
     while ((match = regex.exec(html)) !== null) {
-        const [fullTag, templateId] = match;
-        replacements.push({ fullTag, templateId });
+        const fullTag = match[0];
+        
+        // Due to the regex having optional attribute capture groups in different orders,
+        // we extract the values safely.
+        // It's safer to extract attributes via local regex match against the full tag 
+        // to avoid complex numbered capture group offsets.
+        const idMatch = fullTag.match(/data-template-id="([^"]+)"/i);
+        const propsMatch = fullTag.match(/data-props=(['"])(.*?)\1/i); // Matches ' or " quotes
+
+        const templateId = idMatch ? idMatch[1] : null;
+        let propsObj = {};
+
+        if (propsMatch) {
+            try {
+                // Decode HTML entities if stored as such, e.g. &quot; to "
+                const decodedProps = propsMatch[2].replace(/&quot;/g, '"');
+                propsObj = JSON.parse(decodedProps);
+            } catch (e) {
+                console.error("Failed to parse data-props JSON for template:", templateId, e);
+            }
+        }
+
+        if (templateId) {
+            replacements.push({ fullTag, templateId, propsObj });
+        }
     }
 
     // Fetch and replace
-    for (const { fullTag, templateId } of replacements) {
+    for (const { fullTag, templateId, propsObj } of replacements) {
         try {
             // Fetch the template content
             const res = await fetch(`${API_BASE_URL}/pages/id/${templateId}`, {
-                cache: 'no-store' // Updated cache strategy
+                cache: 'no-store' // Ensure dynamic components are always fresh based on ID
             });
 
             if (res.ok) {
                 const data = await res.json();
                 if (data.success && data.data) {
-                    // Recursively resolve references in the template itself
-                    const innerContent = await resolveTemplateRefs(data.data.gjsHtml);
-                    resolvedHtml = resolvedHtml.replace(fullTag, innerContent || '');
+                    // Start with the raw template HTML
+                    let templateHtml = data.data.gjsHtml;
+
+                    // Interpolate props inside the template HTML
+                    if (propsObj && Object.keys(propsObj).length > 0) {
+                        for (const [key, value] of Object.entries(propsObj)) {
+                            // Replace {{ key }} or {{key}} with the value string
+                            const propRegex = new RegExp(`{{\\s*${key}\\s*}}`, 'g');
+                            templateHtml = templateHtml.replace(propRegex, value);
+                        }
+                    }
+
+                    // Recursively resolve references in the resolved template itself
+                    const innerContent = await resolveTemplateRefs(templateHtml);
+
+                    // Include the CSS of the template
+                    const innerCss = data.data.gjsCss ? `<style>${data.data.gjsCss}</style>` : '';
+                    resolvedHtml = resolvedHtml.replace(fullTag, innerCss + (innerContent || ''));
                 } else {
                     resolvedHtml = resolvedHtml.replace(fullTag, '');
                 }
