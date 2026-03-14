@@ -8,7 +8,7 @@ import { loadAdvancedBlocks } from '@/features/editor/core/blocks/advanced';
 import { loadTemplateRefBlock } from '@/features/editor/core/blocks/templateRef';
 import '@/features/editor/core/editor/editor.css';
 import { Button } from '@/components/ui';
-import { Save, ArrowLeft, Eye, EyeOff } from 'lucide-react';
+import { Save, ArrowLeft, Eye, EyeOff, Settings } from 'lucide-react';
 import Link from 'next/link';
 
 export function Editor({ pageId }) {
@@ -17,6 +17,7 @@ export function Editor({ pageId }) {
     const [saving, setSaving] = useState(false);
     const [toast, setToast] = useState(null); // { message, type }
     const [isPreview, setIsPreview] = useState(false);
+    const [rightSidebarOpen, setRightSidebarOpen] = useState(true); // Default open on desktop
 
     useEffect(() => {
         if (!pageId) return;
@@ -135,6 +136,14 @@ export function Editor({ pageId }) {
                         {isPreview ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                         Preview
                     </Button>
+                    <Button 
+                        onClick={() => setRightSidebarOpen(!rightSidebarOpen)} 
+                        variant="outline" 
+                        size="sm" 
+                        className="bg-gray-800 border-gray-700 text-gray-300 hover:text-white lg:hidden"
+                    >
+                        <Settings className="w-4 h-4" />
+                    </Button>
                     <Button onClick={handleSave} disabled={saving} size="sm" className="bg-primary-600 hover:bg-primary-700 gap-2 min-w-[100px]">
                         {saving ? (
                             <>Saving...</>
@@ -169,13 +178,27 @@ export function Editor({ pageId }) {
                     <div id="gjs" className="h-full w-full"></div>
                 </div>
 
-                {/* Properties Sidebar */}
-                <div className={`w-64 bg-gray-800 border-l border-gray-700 flex flex-col text-white z-40 ${isPreview ? 'hidden' : 'block'}`}>
+                {/* Properties Sidebar (Right) */}
+                <div 
+                    className={`
+                        absolute lg:relative right-0 top-0 h-full w-64 bg-gray-800 border-l border-gray-700 flex flex-col text-white z-40 transition-transform duration-300 ease-in-out
+                        ${isPreview ? 'hidden' : 'flex'}
+                        ${rightSidebarOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'}
+                        lg:w-64 lg:block
+                    `}
+                >
                     {/* Settings / Traits */}
-                    <div className="p-3 font-bold text-xs uppercase text-gray-400 border-b border-gray-700 bg-gray-900">Settings</div>
-                    <div id="traits-container" className="p-2 border-b border-gray-700 min-h-[120px] max-h-[50%] overflow-y-auto"></div>
+                    <div className="p-3 font-bold text-xs uppercase text-gray-400 border-b border-gray-700 bg-gray-900 flex justify-between items-center">
+                        <span>Settings</span>
+                        {/* Close button for mobile */}
+                        <button onClick={() => setRightSidebarOpen(false)} className="lg:hidden text-gray-500 hover:text-white">
+                            &times;
+                        </button>
+                    </div>
+                    {/* Added overflow-y-auto to allow scrolling for traits if there are many */}
+                    <div id="traits-container" className="p-2 border-b border-gray-700 min-h-[120px] max-h-[50vh] overflow-y-auto"></div>
                     {/* Styles */}
-                    <div className="p-3 font-bold text-xs uppercase text-gray-400 bg-gray-900">Styles</div>
+                    <div className="p-3 font-bold text-xs uppercase text-gray-400 bg-gray-900 border-t border-gray-700">Styles</div>
                     <div id="styles-container" className="flex-1 overflow-y-auto pb-8"></div>
                 </div>
             </div>

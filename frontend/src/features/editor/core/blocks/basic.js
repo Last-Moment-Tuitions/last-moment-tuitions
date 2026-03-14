@@ -22,6 +22,54 @@ export const loadBlocks = (editor) => {
         content: '<h1 class="text-4xl font-extrabold text-gray-900 mb-4">Heading 1</h1>'
     });
 
+    // 12. List
+    bm.add('list', {
+        label: `
+            <svg class="w-8 h-8 mb-1 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
+            </svg>
+            <div class="gjs-block-label">List</div>
+        `,
+        category: 'Typography',
+        content: `
+            <ul class="list-disc pl-5 mb-4 text-gray-700">
+                <li class="mb-1">List item 1</li>
+                <li class="mb-1">List item 2</li>
+                <li class="mb-1">List item 3</li>
+            </ul>
+        `
+    });
+
+    // 13. Template Slot (Critical for Template References)
+    bm.add('template-slot', {
+        label: `
+            <svg class="w-8 h-8 mb-1 mx-auto text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"></path>
+            </svg>
+            <div class="gjs-block-label">Template Slot</div>
+        `,
+        category: 'Advanced',
+        content: {
+            type: 'default',
+            tagName: 'div',
+            attributes: { 'data-slot': 'main-content' },
+            style: {
+                padding: '20px',
+                border: '2px dashed #93c5fd', // Tailwind blue-300
+                'min-height': '100px',
+                'background-color': '#eff6ff', // Tailwind blue-50
+                display: 'flex',
+                'align-items': 'center',
+                'justify-content': 'center'
+            },
+            components: `
+                <div style="color: #2563eb; font-family: sans-serif; font-size: 14px; font-weight: 500; pointer-events: none;">
+                    Drop Content Here (data-slot: main-content)
+                </div>
+            `
+        }
+    });
+
     bm.add('h2', {
         label: 'Heading 2',
         category: 'Typography',
