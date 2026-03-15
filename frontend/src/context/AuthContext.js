@@ -34,7 +34,8 @@ export function AuthProvider({ children, initialUser = null }) {
 
             // Then verify session with API call
             const sessionId = getSessionId();
-            const headers = sessionId ? { 'x-session-id': sessionId } : {};
+            // Changed to X-Session-Id for CORS compatibility
+            const headers = sessionId ? { 'X-Session-Id': sessionId } : {};
 
             const res = await fetch(`${API_BASE_URL}/auth/me`, { headers });
 
@@ -72,6 +73,8 @@ export function AuthProvider({ children, initialUser = null }) {
     };
 
     const logout = async (onLogout) => {
+        console.log('[AuthContext] Logout initiated');
+        
         // Call the optional callback before logout (for toast notifications)
         if (onLogout && typeof onLogout === 'function') {
             onLogout();
@@ -79,16 +82,23 @@ export function AuthProvider({ children, initialUser = null }) {
 
         try {
             const sessionId = getSessionId();
-            const headers = sessionId ? { 'x-session-id': sessionId } : {};
-            await fetch(`${API_BASE_URL}/auth/logout`, {
+            // Changed to X-Session-Id for CORS compatibility
+            const headers = sessionId ? { 'X-Session-Id': sessionId } : {};
+            
+            // Removed 'await' to ensure immediate redirect and no spinning button
+            fetch(`${API_BASE_URL}/auth/logout`, {
                 method: 'POST',
                 headers
-            });
+            }).catch(err => console.error('Logout sync failed', err));
+
         } catch (error) {
             console.error('Logout failed', error);
         }
+
         setUser(null);
         localStorage.removeItem('user');
+        localStorage.removeItem('sessionId');
+        localStorage.removeItem('cart');
         // Clear cookie if not HttpOnly (backend clears it usually, but we can try)
         document.cookie = 'sessionId=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
 

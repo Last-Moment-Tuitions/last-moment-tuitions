@@ -13,8 +13,8 @@ import { ChevronDown, Search, Menu, X, ShoppingCart } from 'lucide-react';
 
 export function Header() {
     const pathname = usePathname();
-    const { user, logout } = useAuth();
-    const { cartItems } = useCart();
+    const { user, logout } = useAuth() || {};
+    const { cartItems = [], clearCart } = useCart() || {};
     const { toast } = useToast();
     const [navItems, setNavItems] = useState([]);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -120,9 +120,19 @@ export function Header() {
                                 Hello, {user.firstName || 'User'}
                             </span>
                             <Button
-                                onClick={() => {
+                                onClick={async () => {
                                     setLoggingOut(true);
-                                    logout(() => toast.success('Logged out successfully'));
+                                    try {
+                                        await logout(() => {
+                                            toast.success('Logged out successfully');
+                                        });
+                                    } catch (err) {
+                                        console.error('Logout error:', err);
+                                        toast.error('Failed to logout');
+                                    } finally {
+                                        // Reset state in case we don't redirect or it takes long
+                                        setLoggingOut(false);
+                                    }
                                 }}
                                 disabled={loggingOut}
                                 variant="outline"

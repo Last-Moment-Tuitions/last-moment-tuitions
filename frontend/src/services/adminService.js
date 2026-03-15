@@ -18,7 +18,7 @@ api.interceptors.request.use((config) => {
     // AuthContext usually manages this, but for robustness as requested:
     const sessionId = getCookie('sessionId');
     if (sessionId) {
-        config.headers['x-session-id'] = sessionId;
+        config.headers['X-Session-Id'] = sessionId;
     }
     return config;
 }, (error) => {

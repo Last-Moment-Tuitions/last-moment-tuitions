@@ -14,7 +14,7 @@ import { useCart } from '@/context/CartContext';
 
 // --- MOCK DATA ---
 const COURSE_DATA = {
-    id: '1',
+    id: '69b51517987db35d311d828c',
     title: "Complete Website Responsive Design: from Figma to Webflow to Website Design",
     subtitle: "3 in 1 Course: Learn to design websites with Figma, build with Webflow, and make a living freelancing.",
     category: "Development",
@@ -130,7 +130,7 @@ const COURSE_DATA = {
 
 const RELATED_COURSES = [
     {
-        id: '2',
+        id: '67c5705335d189ced54df5f6',
         title: "UPSC Civil Services Prelims 2024 - Complete Guide",
         category: "Government",
         price: 2499,
@@ -141,7 +141,7 @@ const RELATED_COURSES = [
         instructor: "Dr. Anjali Verma"
     },
     {
-        id: '3',
+        id: '67c74233f20d20d4f40f3676',
         title: "Engineering Mathematics I & II for Sem 1",
         category: "Engineering",
         price: 999,
@@ -152,7 +152,7 @@ const RELATED_COURSES = [
         instructor: "Prof. Das"
     },
     {
-        id: '4',
+        id: '67c74233f20d20d4f40f3677',
         title: "IBPS PO & Clerk Complete Preparation Batch",
         category: "Preparation Exams",
         price: 1499,
@@ -163,7 +163,7 @@ const RELATED_COURSES = [
         instructor: "Banking Adda"
     },
     {
-        id: '5',
+        id: '67c74233f20d20d4f40f3678',
         title: "Python for Data Science and Machine Learning",
         category: "Programming",
         price: 699,

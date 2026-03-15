@@ -66,6 +66,7 @@ export default function SignInPage() {
             }
 
             document.cookie = `sessionId=${accessToken}; path=/; max-age=${expiresIn}; SameSite=Lax; Secure`;
+            localStorage.setItem('sessionId', accessToken);
             toast.success('Login successful! Welcome back.');
             login(user);
             router.push('/');
@@ -96,6 +97,7 @@ export default function SignInPage() {
                 }
 
                 document.cookie = `sessionId=${accessToken}; path=/; max-age=${expiresIn}; SameSite=Lax; Secure`;
+                localStorage.setItem('sessionId', accessToken);
                 toast.success('Login successful! Welcome back.');
                 login(user);
             } else {
@@ -125,7 +127,7 @@ export default function SignInPage() {
             </div>
 
             {/* Right Side: Form */}
-            <div className="w-full lg:w-[58%] flex flex-col items-center lg:items-start justify-center p-6 sm:p-12 lg:p-20 overflow-y-auto bg-white min-h-screen lg:min-h-0">
+            <div className="w-full lg:w-[58%] flex flex-col items-center lg:items-center justify-center p-6 sm:p-12 lg:p-20 overflow-y-auto bg-white min-h-screen lg:min-h-0">
                 <div className="max-w-md w-full py-8">
                     <div className="mb-8 text-center lg:text-left">
                         <h2 className="text-3xl sm:text-4xl font-extrabold text-primary-900 mb-3 tracking-tight">Sign In</h2>
