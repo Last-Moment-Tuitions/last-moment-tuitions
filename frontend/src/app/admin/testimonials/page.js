@@ -50,14 +50,15 @@ export default function TestimonialAdmin() {
 
         try {
             if (editingId) {
-                await testimonialService.update(editingId, formData);
+                const updatedData = await testimonialService.update(editingId, formData);
+                setTestimonials(prev => prev.map(t => t._id === editingId ? { ...t, ...updatedData } : t));
                 toast.success("Updated successfully!");
             } else {
-                await testimonialService.create(formData);
+                const newTestimonial = await testimonialService.create(formData);
+                setTestimonials(prev => [newTestimonial, ...prev]);
                 toast.success("Added successfully!");
             }
             closeModal();
-            loadData();
         } catch (error) {
             toast.error(error.message || "Operation failed");
         }
@@ -65,12 +66,12 @@ export default function TestimonialAdmin() {
 
     // --- Delete Functionality ---
     const handleDelete = async (id) => {
-        if (!toast.confirm("Are you sure you want to delete this testimonial?")) return;
+        if (!(await toast.confirm("Are you sure you want to delete this testimonial?"))) return;
 
         try {
             await testimonialService.delete(id);
+            setTestimonials(prev => prev.filter(t => t._id !== id));
             toast.success("Deleted");
-            loadData();
         } catch (error) {
             toast.error(error.message);
         }

@@ -1,4 +1,3 @@
-
 import { Module, MiddlewareConsumer, NestModule, RequestMethod } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
@@ -16,6 +15,7 @@ import { AppLoggerMiddleware } from './common/middleware/logger.middleware';
 import { TestimonialsModule } from './modules/testimonials/testimonials.module';
 import { EmailModule } from './email/email.module';
 import { CartModule } from './modules/cart/cart.module';
+import { UploadsModule } from './modules/uploads/uploads.module';
 
 @Module({
   imports: [
@@ -40,6 +40,7 @@ import { CartModule } from './modules/cart/cart.module';
     TestimonialsModule,
     MenusModule,
     CartModule,
+    UploadsModule,
   ],
 })
 export class AppModule implements NestModule {

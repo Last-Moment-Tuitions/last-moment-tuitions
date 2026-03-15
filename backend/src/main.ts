@@ -10,6 +10,7 @@ import helmet from 'helmet';
 import { ConfigService } from '@nestjs/config';
 import { AllExceptionsFilter } from './common/filters/http-exception.filter';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
+import * as path from 'path';
 
 async function bootstrap() {
     const app = await NestFactory.create<NestExpressApplication>(AppModule, new ExpressAdapter());
@@ -20,9 +21,14 @@ async function bootstrap() {
 
     app.use(functionalLogger);
 
-    // Increase body size limit for large GrapesJS payloads
-    app.use(json({ limit: '1mb' }));
-    app.use(urlencoded({ extended: true, limit: '1mb' }));
+    // Increase body size limit for large payloads and file uploads
+    app.use(json({ limit: '50mb' }));
+    app.use(urlencoded({ extended: true, limit: '50mb' }));
+
+    // Serve uploaded files statically (for local storage provider)
+    app.useStaticAssets(path.join(process.cwd(), 'uploads'), {
+        prefix: '/uploads/',
+    });
 
     // Global Prefix
     app.setGlobalPrefix('api');

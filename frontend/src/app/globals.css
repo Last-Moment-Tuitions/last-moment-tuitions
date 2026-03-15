@@ -216,3 +216,13 @@ html {
   background-color: var(--color-primary-200);
   color: var(--color-primary-900);
 }
+
+/* Hide scrollbar while keeping scroll functionality */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}

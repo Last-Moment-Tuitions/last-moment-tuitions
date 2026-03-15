@@ -19,7 +19,6 @@ export class TestimonialsController {
 
     @Get()
     async findAll(@Query('target_page') target_page?: string) {
-        console.log('Fetching testimonials for:', target_page);
         return this.testimonialsService.findAll(target_page);
     }
 

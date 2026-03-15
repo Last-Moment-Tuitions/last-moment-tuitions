@@ -1,12 +1,12 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, use } from 'react';
 import {
     Star, Play, FileText, Download, Award, Clock,
     CheckCircle, Globe, Share2, Heart, Monitor,
     Smartphone, Infinity, ChevronDown, ChevronRight,
-    Facebook, Twitter, Youtube, Instagram,
-    FolderOpen, PlayCircle, File, BarChart, Captions, AlertCircle, Copy, Mail
+    FolderOpen, PlayCircle, File, BarChart, Captions, AlertCircle, Lock,
+    Video, BookOpen, ClipboardList
 } from 'lucide-react';
 import Link from 'next/link';
 import { Button, Badge, Accordion, AccordionItem, AccordionTrigger, AccordionContent, CourseCard } from '@/components/ui';
@@ -106,26 +106,7 @@ const COURSE_DATA = {
                 ]
             }
         ]
-    },
-    reviews: [
-        {
-            id: 1,
-            user: "Guy Hawkins",
-            avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Guy",
-            rating: 5,
-            date: "1 week ago",
-            comment: "I appreciate the precise short videos (10 mins or less each) because overly long videos tend to make me lose focus. The instructor is very knowledgeable in Web Design and it shows as he shares his knowledge. These were my best 6 months of training. Thanks, Vako."
-        },
-        {
-            id: 2,
-            user: "Jane Doe",
-            avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Jane",
-            rating: 4,
-            date: "2 weeks ago",
-            comment: "Great course for beginners. The Figma section was a bit fast-paced but I managed to catch up. Webflow part is gold!"
-        }
-    ]
-
+    }
 };
 
 const RELATED_COURSES = [
@@ -176,38 +157,36 @@ const RELATED_COURSES = [
 ];
 
 export default function CourseDetailPage({ params }) {
-    const data = COURSE_DATA;
+    const { id } = use(params);
     const [activeTab, setActiveTab] = useState('overview');
     const { addToCart } = useCart();
 
+    const data = COURSE_DATA;
+
     return (
         <div className="bg-gray-50 min-h-screen pb-20 font-sans">
-
             <div className="container mx-auto px-4 py-8">
-                {/* --- Breadcrumb --- */}
+
+                {/* Breadcrumb */}
                 <nav className="flex items-center gap-2 text-sm text-gray-500 mb-6">
-                    <span className="hover:text-primary-600 cursor-pointer">Home</span>
+                    <Link href="/" className="hover:text-primary-600">Home</Link>
+                    <ChevronRight size={14} />
+                    <Link href="/courses" className="hover:text-primary-600">Courses</Link>
                     <ChevronRight size={14} />
                     <span className="hover:text-primary-600 cursor-pointer">{data.category}</span>
                     <ChevronRight size={14} />
-                    <span className="hover:text-primary-600 cursor-pointer">{data.subcategory}</span>
-                    <ChevronRight size={14} />
-                    <span className="text-gray-900 font-medium">{data.topic}</span>
+                    <span className="text-gray-900 font-medium truncate max-w-[200px]">{data.title}</span>
                 </nav>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 relative">
 
-                    {/* --- MAIN CONTENT COLUMN --- */}
+                    {/* MAIN CONTENT */}
                     <div className="lg:col-span-2 space-y-8">
 
-                        {/* Header Info */}
+                        {/* Title Section */}
                         <div className="space-y-4">
-                            <h1 className="text-3xl lg:text-4xl font-bold text-gray-900 leading-tight">
-                                {data.title}
-                            </h1>
-                            <p className="text-lg text-gray-600">
-                                {data.subtitle}
-                            </p>
+                            <h1 className="text-3xl lg:text-4xl font-bold text-gray-900 leading-tight">{data.title}</h1>
+                            <p className="text-lg text-gray-600 font-medium">{data.subtitle}</p>
 
                             <div className="flex flex-wrap items-center gap-6 text-sm pt-2">
                                 <div className="flex items-center gap-3">
@@ -220,24 +199,33 @@ export default function CourseDetailPage({ params }) {
                                 <div className="flex items-center gap-1">
                                     <div className="flex text-amber-500">
                                         {[...Array(5)].map((_, i) => (
-                                            <Star key={i} size={16} className={i < Math.floor(data.rating) ? "fill-current" : "text-gray-300"} />
+                                            <Star key={i} size={16} className={i < 4 ? "fill-current" : "text-gray-300"} />
                                         ))}
                                     </div>
                                     <span className="font-bold text-gray-900">{data.rating}</span>
                                     <span className="text-gray-500">({data.ratingCount.toLocaleString()} Ratings)</span>
                                 </div>
+                                <div className="text-gray-500">
+                                    <span className="font-medium text-gray-900">{data.students.toLocaleString()}</span> students
+                                </div>
                             </div>
                         </div>
 
-                        {/* Video Area (Trailer) */}
-                        <div className="relative rounded-2xl overflow-hidden shadow-lg bg-black h-64 md:h-80 lg:h-96 w-full">
-                            <iframe
-                                className="w-full h-full"
-                                src="https://www.youtube.com/embed/LXb3EKWsInQ?start=10"
-                                title="Course Trailer"
-                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                allowFullScreen
-                            ></iframe>
+                        {/* Video / Thumbnail Area */}
+                        <div className="relative rounded-2xl overflow-hidden shadow-2xl bg-black group h-64 md:h-80 lg:h-96 w-full">
+                            <img
+                                src={data.image}
+                                alt={data.title}
+                                className="w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-700"
+                            />
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/40 transition-all">
+                                <div className="w-16 h-16 md:w-20 md:h-20 bg-white rounded-full flex items-center justify-center shadow-xl transform group-hover:scale-110 transition-all cursor-pointer">
+                                    <Play className="text-primary-600 fill-primary-600 ml-1" size={24} />
+                                </div>
+                            </div>
+                            <div className="absolute bottom-6 left-6 text-white text-sm font-bold bg-black/40 px-3 py-1.5 rounded-lg backdrop-blur-sm">
+                                Preview this course
+                            </div>
                         </div>
 
                         {/* Tabs Navigation */}
@@ -261,17 +249,10 @@ export default function CourseDetailPage({ params }) {
                             </div>
                         </div>
 
-                        {/* Overview Section */}
-                        <section className="space-y-8 scroll-mt-32" id="overview">
-                            <div>
-                                <h3 className="text-2xl font-bold text-gray-900 mb-4">Description</h3>
-                                <div className="prose prose-blue max-w-none text-gray-600 whitespace-pre-line leading-relaxed">
-                                    {data.description}
-                                </div>
-                            </div>
-
-                            {/* What You Will Learn Box */}
-                            <div className="bg-green-50/50 border border-green-100 rounded-2xl p-8">
+                        {/* Content Sections */}
+                        <section className="space-y-12 scroll-mt-32" id="overview">
+                            {/* What you'll learn */}
+                            <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm">
                                 <h3 className="text-xl font-bold text-gray-900 mb-6">What you will learn in this course</h3>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
                                     {data.whatYouWillLearn.map((item, i) => (
@@ -283,67 +264,86 @@ export default function CourseDetailPage({ params }) {
                                 </div>
                             </div>
 
+                            {/* Description */}
+                            <div className="space-y-6">
+                                <h3 className="text-2xl font-bold text-gray-900 border-l-4 border-primary-600 pl-4">Description</h3>
+                                <div className="prose prose-blue max-w-none text-gray-600 whitespace-pre-line leading-relaxed text-[15px]">
+                                    {data.description}
+                                </div>
+                            </div>
+
                             {/* Requirements */}
-                            <div>
-                                <h3 className="text-2xl font-bold text-gray-900 mb-4">Course Requirements</h3>
-                                <ul className="list-disc list-inside space-y-2 text-gray-600 ml-2">
+                            <div className="space-y-6">
+                                <h3 className="text-2xl font-bold text-gray-900">Requirements</h3>
+                                <ul className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     {data.requirements.map((req, i) => (
-                                        <li key={i}>{req}</li>
+                                        <li key={i} className="flex items-center gap-3 text-gray-600">
+                                            <div className="w-1.5 h-1.5 rounded-full bg-primary-600 shrink-0" />
+                                            <span className="text-sm">{req}</span>
+                                        </li>
                                     ))}
                                 </ul>
                             </div>
 
-                            {/* Who Content is For */}
-                            <div>
-                                <h3 className="text-2xl font-bold text-gray-900 mb-4">Who this course is for:</h3>
-                                <ul className="list-disc list-inside space-y-2 text-gray-600 ml-2">
+                            {/* Target Audience */}
+                            <div className="space-y-6">
+                                <h3 className="text-2xl font-bold text-gray-900">Who this course is for:</h3>
+                                <div className="space-y-3">
                                     {data.whoIsFor.map((item, i) => (
-                                        <li key={i}>{item}</li>
+                                        <div key={i} className="flex items-start gap-3 text-gray-600">
+                                            <ChevronRight className="text-primary-600 shrink-0 mt-1" size={16} />
+                                            <p className="text-sm">{item}</p>
+                                        </div>
                                     ))}
-                                </ul>
+                                </div>
                             </div>
                         </section>
 
                         {/* Curriculum Section */}
                         <section className="scroll-mt-32" id="curriculum">
-                            <div className="flex flex-wrap items-center justify-between mb-6">
+                            <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
                                 <h3 className="text-2xl font-bold text-gray-900">Curriculum</h3>
-                                <div className="flex items-center gap-4 text-sm text-gray-500">
-                                    <span className="flex items-center gap-1"><FolderOpen size={16} /> {data.curriculum.sections} Sections</span>
-                                    <span className="flex items-center gap-1"><PlayCircle size={16} /> {data.curriculum.lectures} Lectures</span>
-                                    <span className="flex items-center gap-1"><Clock size={16} /> {data.curriculum.duration} Total Length</span>
+                                <div className="flex items-center gap-4 text-sm text-gray-500 font-medium">
+                                    <span>{data.curriculum.sections} Sections</span>
+                                    <span>•</span>
+                                    <span>{data.curriculum.lectures} Lectures</span>
+                                    <span>•</span>
+                                    <span>{data.curriculum.duration} Total length</span>
                                 </div>
                             </div>
 
-                            <div className="border border-gray-200 rounded-xl overflow-hidden bg-white">
+                            <div className="border border-gray-200 rounded-xl overflow-hidden bg-white shadow-sm">
                                 <Accordion type="single" collapsible className="w-full">
                                     {data.curriculum.content.map((section, idx) => (
-                                        <AccordionItem key={section.id} value={section.id}>
-                                            <AccordionTrigger className="px-6 py-4 hover:no-underline hover:bg-gray-50">
+                                        <AccordionItem key={idx} value={`section-${idx}`} className="border-b border-gray-200 last:border-0">
+                                            <AccordionTrigger className="px-6 py-4 hover:no-underline hover:bg-gray-50 data-[state=open]:bg-gray-50 transition-colors">
                                                 <div className="flex flex-1 items-center justify-between mr-4 text-left">
-                                                    <span className="font-semibold text-gray-900 text-lg">{section.title}</span>
-                                                    <span className="text-sm text-gray-500 font-normal hidden sm:block">
+                                                    <span className="font-bold text-gray-900 group-hover:text-primary-600 transition-colors">{section.title}</span>
+                                                    <span className="text-sm text-gray-500 font-medium hidden sm:block">
                                                         {section.lectures} lectures • {section.duration}
                                                     </span>
                                                 </div>
                                             </AccordionTrigger>
-                                            <AccordionContent className="p-0 border-t border-gray-100">
-                                                <div className="divide-y divide-gray-50">
-                                                    {section.items.map((item, itemIdx) => (
-                                                        <Link
-                                                            key={itemIdx}
-                                                            href={`/courses/${data.id}/learn/lecture/${item.id}`}
-                                                            className="flex items-center justify-between px-6 py-3 hover:bg-gray-50 transition-colors group"
-                                                        >
-                                                            <div className="flex items-center gap-3">
-                                                                {item.type === 'video' ? <PlayCircle size={16} className="text-gray-400 group-hover:text-primary-600 transition-colors" /> : <File size={16} className="text-gray-400 group-hover:text-primary-600 transition-colors" />}
-                                                                <span className="text-gray-700 text-sm font-medium group-hover:text-primary-700 transition-colors">{item.title}</span>
+                                            <AccordionContent className="p-0 bg-white">
+                                                <div className="divide-y divide-gray-100">
+                                                    {section.items.map((item, i) => (
+                                                        <div key={i} className="flex items-center justify-between px-6 py-4 hover:bg-gray-50 transition-colors group">
+                                                            <div className="flex items-center gap-4">
+                                                                {item.type === 'video' ? (
+                                                                    <PlayCircle className="text-gray-400 group-hover:text-primary-600" size={18} />
+                                                                ) : (
+                                                                    <FileText className="text-gray-400 group-hover:text-primary-600" size={18} />
+                                                                )}
+                                                                <span className="text-gray-700 font-medium text-sm group-hover:text-gray-900">{item.title}</span>
                                                             </div>
                                                             <div className="flex items-center gap-4">
-                                                                {item.free && <span className="text-xs text-primary-600 bg-primary-50 px-2 py-0.5 rounded-full font-medium">Preview</span>}
-                                                                <span className="text-xs text-gray-500">{item.duration || item.size}</span>
+                                                                {item.free && (
+                                                                    <span className="text-xs font-bold text-primary-600 bg-primary-50 px-2 py-0.5 rounded-full">Preview</span>
+                                                                )}
+                                                                {!item.free && <Lock size={14} className="text-gray-400" />}
+                                                                <span className="text-xs text-gray-500 font-medium">{item.duration || item.size}</span>
                                                             </div>
-                                                        </Link>
+                                                        </div>
                                                     ))}
                                                 </div>
                                             </AccordionContent>
@@ -356,261 +356,187 @@ export default function CourseDetailPage({ params }) {
                         {/* Instructor Section */}
                         <section className="scroll-mt-32" id="instructor">
                             <h3 className="text-2xl font-bold text-gray-900 mb-6">Instructor</h3>
-                            <div className="bg-white border border-gray-200 rounded-2xl p-8">
-                                <div className="flex flex-col md:flex-row gap-6">
+                            <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm">
+                                <div className="flex flex-col md:flex-row gap-8">
                                     <div className="shrink-0">
-                                        <img src={data.instructor.image} alt={data.instructor.name} className="w-24 h-24 rounded-full object-cover border-4 border-gray-50 shadow-sm" />
+                                        <img src={data.instructor.image} alt={data.instructor.name} className="w-24 h-24 rounded-full object-cover border-4 border-gray-50 shadow-md" />
+                                        <div className="mt-4 space-y-2">
+                                            <div className="flex items-center gap-2 text-sm font-medium text-gray-600">
+                                                <Star size={16} className="text-amber-400 fill-amber-400" />
+                                                <span>{data.instructor.rating} Instructor Rating</span>
+                                            </div>
+                                            <div className="flex items-center gap-2 text-sm font-medium text-gray-600">
+                                                <Award size={16} className="text-primary-500" />
+                                                <span>{data.instructor.reviews.toLocaleString()} Reviews</span>
+                                            </div>
+                                            <div className="flex items-center gap-2 text-sm font-medium text-gray-600">
+                                                <Monitor size={16} className="text-primary-500" />
+                                                <span>{data.instructor.students.toLocaleString()} Students</span>
+                                            </div>
+                                            <div className="flex items-center gap-2 text-sm font-medium text-gray-600">
+                                                <PlayCircle size={16} className="text-primary-500" />
+                                                <span>{data.instructor.courses} Courses</span>
+                                            </div>
+                                        </div>
                                     </div>
                                     <div className="flex-1 space-y-4">
-                                        <div>
-                                            <h4 className="text-xl font-bold text-gray-900">{data.instructor.name}</h4>
-                                            <p className="text-gray-500 text-sm">{data.instructor.role}</p>
+                                        <div className="pb-4 border-b border-gray-100">
+                                            <h4 className="text-xl font-bold text-gray-900 hover:text-primary-600 transition-colors cursor-pointer">{data.instructor.name}</h4>
+                                            <p className="text-gray-500 text-sm font-medium">{data.instructor.role}</p>
                                         </div>
-
-                                        <div className="flex flex-wrap gap-6 text-sm">
-                                            <div className="flex items-center gap-2">
-                                                <Star className="text-amber-500 fill-amber-500" size={16} />
-                                                <span className="font-semibold text-gray-900">{data.instructor.rating}</span> Rating
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                                <Award className="text-primary-500" size={16} />
-                                                <span className="font-semibold text-gray-900">{data.instructor.reviews.toLocaleString()}</span> Reviews
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                                <Monitor className="text-primary-500" size={16} />
-                                                <span className="font-semibold text-gray-900">{data.instructor.students.toLocaleString()}</span> Students
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                                <PlayCircle className="text-primary-500" size={16} />
-                                                <span className="font-semibold text-gray-900">{data.instructor.courses}</span> Courses
-                                            </div>
-                                        </div>
-
-                                        <p className="text-gray-600 leading-relaxed text-sm">
+                                        <p className="text-gray-600 leading-relaxed text-[15px]">
                                             {data.instructor.bio}
-                                            <button className="text-primary-600 font-medium ml-1 hover:underline">Read more</button>
                                         </p>
+                                        <Button variant="outline" className="text-primary-600 border-primary-200 hover:bg-primary-50 font-bold">Show More</Button>
                                     </div>
                                 </div>
                             </div>
                         </section>
 
-                        {/* Reviews Section */}
+                        {/* Reviews/Feedback Section */}
                         <section className="scroll-mt-32" id="reviews">
-                            <h3 className="text-2xl font-bold text-gray-900 mb-6">Student Feedback</h3>
-
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-10">
-                                {/* Rating Summary */}
-                                <div className="bg-white border border-gray-200 rounded-2xl p-6 flex flex-col items-center justify-center text-center shadow-sm">
-                                    <div className="text-5xl font-extrabold text-gray-900 mb-2">{data.rating}</div>
-                                    <div className="flex items-center gap-1 mb-2">
-                                        {[...Array(5)].map((_, i) => (
-                                            <Star key={i} className="fill-amber-400 text-amber-400" size={20} />
-                                        ))}
+                            <h3 className="text-2xl font-bold text-gray-900 mb-8">Student Feedback</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+                                <div className="md:col-span-1 flex flex-col items-center justify-center p-8 bg-primary-50 rounded-2xl border border-primary-100 shadow-sm">
+                                    <h4 className="text-5xl font-black text-primary-600 mb-2">{data.rating}</h4>
+                                    <div className="flex text-amber-500 mb-2">
+                                        {[...Array(5)].map((_, i) => <Star key={i} size={18} className="fill-current" />)}
                                     </div>
-                                    <div className="text-sm text-gray-500 font-medium">Course Rating</div>
+                                    <span className="text-primary-800 font-bold text-sm">Course Rating</span>
                                 </div>
-
-                                {/* Bars */}
-                                <div className="md:col-span-2 space-y-3">
-                                    {[5, 4, 3, 2, 1].map((stars, idx) => (
-                                        <div key={idx} className="flex items-center gap-4">
-                                            <div className="bg-white border border-gray-200 rounded-sm h-2 flex-1 overflow-hidden">
+                                <div className="md:col-span-3 space-y-3">
+                                    {[5, 4, 3, 2, 1].map((star) => (
+                                        <div key={star} className="flex items-center gap-4 group cursor-pointer">
+                                            <div className="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden">
                                                 <div
-                                                    className="h-full bg-amber-400 rounded-sm"
-                                                    style={{ width: idx === 0 ? '75%' : idx === 1 ? '15%' : '5%' }}
-                                                ></div>
+                                                    className="bg-primary-600 h-full rounded-full transition-all duration-1000 group-hover:bg-primary-700"
+                                                    style={{ width: `${star === 5 ? 75 : star === 4 ? 18 : 2}%` }}
+                                                />
                                             </div>
-                                            <div className="flex items-center gap-1 w-20 justify-end">
-                                                <div className="flex translate-y-[-1px]">
+                                            <div className="flex items-center gap-2 min-w-[120px]">
+                                                <div className="flex text-amber-400">
                                                     {[...Array(5)].map((_, i) => (
-                                                        <Star key={i} size={12} className={i < stars ? "fill-amber-400 text-amber-400" : "text-gray-300"} />
+                                                        <Star key={i} size={12} className={i < star ? "fill-current" : "text-gray-200"} />
                                                     ))}
                                                 </div>
-                                                <span className="text-xs text-gray-500 font-medium ml-2">{idx === 0 ? '75%' : idx === 1 ? '15%' : '5%'}</span>
+                                                <span className="text-xs font-bold text-gray-900">{star === 5 ? 75 : star === 4 ? 18 : 2}%</span>
                                             </div>
                                         </div>
                                     ))}
                                 </div>
                             </div>
+                        </section>
 
-                            {/* Review List */}
-                            <div className="space-y-6">
-                                {data.reviews.map((review) => (
-                                    <div key={review.id} className="bg-white border border-gray-100 rounded-xl p-6 hover:shadow-md transition-shadow">
-                                        <div className="flex gap-4">
-                                            <img src={review.avatar} alt={review.user} className="w-10 h-10 rounded-full" />
-                                            <div className="flex-1">
-                                                <div className="flex items-center justify-between mb-2">
-                                                    <div>
-                                                        <h5 className="font-bold text-gray-900 text-sm">{review.user}</h5>
-                                                        <div className="flex items-center gap-2 mt-1">
-                                                            <div className="flex text-amber-500">
-                                                                {[...Array(5)].map((_, i) => (
-                                                                    <Star key={i} size={12} className={i < review.rating ? "fill-current" : "text-gray-300"} />
-                                                                ))}
-                                                            </div>
-                                                            <span className="text-xs text-gray-500">• {review.date}</span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <p className="text-gray-600 text-sm leading-relaxed">
-                                                    {review.comment}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </div>
+                        {/* Related Courses */}
+                        <section className="pt-12 border-t border-gray-200">
+                            <h3 className="text-2xl font-bold text-gray-900 mb-8">Related Courses</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                                {RELATED_COURSES.slice(0, 3).map((course) => (
+                                    <CourseCard key={course.id} course={course} />
                                 ))}
                             </div>
-
-                            <Button variant="outline" className="w-full mt-6">View all Reviews</Button>
                         </section>
 
                     </div>
 
-
-                    {/* --- SIDEBAR COLUMN --- */}
+                    {/* SIDEBAR Section */}
                     <div className="relative">
-                        <div className="sticky top-24 bg-white border border-gray-100 rounded-sm p-6 shadow-soft animate-fade-in-up">
-
-                            {/* Price */}
-                            <div className="flex items-center justify-between mb-2">
+                        <div className="sticky top-24 bg-white border border-gray-100 rounded-2xl p-6 shadow-soft animate-fade-in-up">
+                            <div className="flex items-center justify-between mb-4">
                                 <div className="flex items-baseline gap-3">
                                     <span className="text-3xl font-bold text-gray-900">₹{data.price}</span>
                                     <span className="text-lg text-gray-400 line-through">₹{data.originalPrice}</span>
                                 </div>
-                                <span className="bg-orange-100 text-orange-600 px-2 py-1 rounded text-sm font-bold">{data.discount}</span>
-                            </div>
-
-                            <div className="flex items-center gap-2 text-red-500 text-sm font-medium mb-6">
-                                <Clock size={16} />
-                                <span>2 days left at this price!</span>
+                                <span className="bg-orange-100 text-orange-600 px-2 py-1 rounded text-xs font-bold">{data.discount}</span>
                             </div>
 
                             <hr className="border-gray-100 mb-6" />
 
-                            {/* Meta List */}
                             <div className="space-y-4 mb-8">
                                 <div className="flex items-center justify-between text-sm">
-                                    <div className="flex items-center gap-2 text-gray-600 font-medium">
+                                    <div className="flex items-center gap-3 text-gray-600 font-medium">
                                         <Clock size={18} className="text-primary-600" />
-                                        <span>Course Duration</span>
+                                        <span>Duration</span>
                                     </div>
-                                    <span className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-xs font-bold">{data.curriculum.duration}</span>
+                                    <span className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-[11px] font-bold">{data.curriculum.duration}</span>
                                 </div>
                                 <div className="flex items-center justify-between text-sm">
-                                    <div className="flex items-center gap-2 text-gray-600 font-medium">
+                                    <div className="flex items-center gap-3 text-gray-600 font-medium">
                                         <BarChart size={18} className="text-primary-600" />
-                                        <span>Course Level</span>
+                                        <span>Level</span>
                                     </div>
-                                    <span className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-xs font-bold">{data.level}</span>
+                                    <span className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-[11px] font-bold">All Levels</span>
                                 </div>
                                 <div className="flex items-center justify-between text-sm">
-                                    <div className="flex items-center gap-2 text-gray-600 font-medium">
-                                        <Monitor size={18} className="text-primary-600" />
-                                        <span>Students Enrolled</span>
-                                    </div>
-                                    <span className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-xs font-bold">{data.students.toLocaleString()}</span>
-                                </div>
-                                <div className="flex items-center justify-between text-sm">
-                                    <div className="flex items-center gap-2 text-gray-600 font-medium">
-                                        <FileText size={18} className="text-primary-600" />
+                                    <div className="flex items-center gap-3 text-gray-600 font-medium">
+                                        <Captions size={18} className="text-primary-600" />
                                         <span>Language</span>
                                     </div>
-                                    <span className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-xs font-bold">{data.language}</span>
+                                    <span className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-[11px] font-bold">{data.language}</span>
                                 </div>
                                 <div className="flex items-center justify-between text-sm">
-                                    <div className="flex items-center gap-2 text-gray-600 font-medium">
-                                        <Captions size={18} className="text-primary-600" />
-                                        <span>Subtitle Language</span>
+                                    <div className="flex items-center gap-3 text-gray-600 font-medium">
+                                        <Award size={18} className="text-primary-600" />
+                                        <span>Certificate</span>
                                     </div>
-                                    <span className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-xs font-bold">{data.subtitles}</span>
+                                    <span className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-[11px] font-bold">Yes</span>
                                 </div>
                             </div>
 
-                            {/* Buttons */}
-                            <div className="flex gap-3 mb-6">
+                            <div className="flex flex-col gap-3 mb-8">
                                 <Button
                                     onClick={() => addToCart(data)}
-                                    className="flex-1 h-12 text-base font-bold bg-white text-primary-600 border-2 border-primary-100 hover:border-primary-600 hover:bg-primary-50 transition-colors"
+                                    className="w-full h-12 text-base font-bold bg-[#153A8D] text-white hover:bg-[#153A8D]/90 shadow-lg shadow-blue-500/20 transition-all hover:scale-[1.02]"
                                 >
                                     Add To Cart
                                 </Button>
-                                <Button className="flex-1 h-12 text-base font-bold bg-primary-600 text-white hover:bg-primary-700 shadow-lg shadow-primary-500/30 transition-all hover:scale-[1.02]">
+                                <Button className="w-full h-12 text-base font-bold bg-white text-[#153A8D] border-2 border-[#153A8D] hover:bg-blue-50 transition-colors">
                                     Buy Now
                                 </Button>
                             </div>
 
+                            <div className="text-center mb-8">
+                                <p className="text-xs text-gray-400 font-medium">30-Day Money-Back Guarantee</p>
+                            </div>
+
                             <hr className="border-gray-100 mb-6" />
 
-                            {/* Includes */}
-                            <div className="mb-8">
+                            <div>
                                 <h4 className="font-bold text-gray-900 mb-4 text-sm">This course includes:</h4>
-                                <ul className="space-y-3">
+                                <ul className="space-y-4">
                                     <li className="flex items-center gap-3 text-sm text-gray-600">
                                         <Monitor className="text-primary-500" size={18} />
-                                        <span>Lifetime access</span>
+                                        <span className="font-medium">Lifetime access</span>
                                     </li>
                                     <li className="flex items-center gap-3 text-sm text-gray-600">
                                         <Award className="text-primary-500" size={18} />
-                                        <span>30-days money-back guarantee</span>
-                                    </li>
-                                    <li className="flex items-center gap-3 text-sm text-gray-600">
-                                        <File size={18} className="text-primary-500" />
-                                        <span>Free exercises file & downloadable resources</span>
-                                    </li>
-                                    <li className="flex items-center gap-3 text-sm text-gray-600">
-                                        <Award className="text-primary-500" size={18} />
-                                        <span>Shareable certificate of completion</span>
+                                        <span className="font-medium">Certificate of completion</span>
                                     </li>
                                     <li className="flex items-center gap-3 text-sm text-gray-600">
                                         <Smartphone className="text-primary-500" size={18} />
-                                        <span>Access on mobile, tablet and TV</span>
+                                        <span className="font-medium">Access on mobile & tablet</span>
                                     </li>
                                     <li className="flex items-center gap-3 text-sm text-gray-600">
-                                        <Captions className="text-primary-500" size={18} />
-                                        <span>English subtitles</span>
-                                    </li>
-                                    <li className="flex items-center gap-3 text-sm text-gray-600">
-                                        <Globe className="text-primary-500" size={18} />
-                                        <span>100% online course</span>
+                                        <Infinity className="text-primary-500" size={18} />
+                                        <span className="font-medium">Full lifetime access</span>
                                     </li>
                                 </ul>
                             </div>
 
-                            {/* Share */}
-
-
+                            <div className="mt-8 flex items-center justify-center gap-6">
+                                <button className="flex items-center gap-2 text-xs font-bold text-gray-500 hover:text-primary-600 transition-colors">
+                                    <Share2 size={16} /> Share
+                                </button>
+                                <button className="flex items-center gap-2 text-xs font-bold text-gray-500 hover:text-primary-600 transition-colors">
+                                    <Heart size={16} /> Wishlist
+                                </button>
+                            </div>
                         </div>
                     </div>
 
                 </div>
             </div>
-
-
-            {/* --- Related Courses Section --- */}
-            <div className="bg-white border-t border-gray-200 py-16">
-                <div className="container mx-auto px-4">
-                    <h3 className="text-3xl font-bold text-gray-900 mb-8">Related Courses</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                        {RELATED_COURSES.map((course) => (
-                            <CourseCard
-                                key={course.id}
-                                id={course.id}
-                                title={course.title}
-                                category={course.category}
-                                price={course.price}
-                                oldPrice={course.originalPrice}
-                                rating={course.rating}
-                                students={course.students}
-                                image={course.image}
-                                instructor={course.instructor}
-                                className="h-full"
-                            />
-                        ))}
-                    </div>
-                </div>
-            </div>
         </div>
     );
 }
+

@@ -20,6 +20,10 @@ const INITIAL_COURSE_STATE = {
     level: 'beginner',
     duration: '',
     price: 0,
+    originalPrice: 0,
+    status: 'draft',
+    welcomeMessage: '',
+    congratulationsMessage: '',
     content: [
         {
             id: 'root_folder_1',
@@ -295,6 +299,32 @@ export function useCourseForm(initialData = null) {
         return findNode(course.content, activeItemId);
     };
 
+    // Transform camelCase form state → snake_case for backend API
+    const toApiFormat = () => ({
+        title: course.title || 'Untitled Course',
+        subtitle: course.subtitle || '',
+        category: course.category || 'Uncategorized',
+        sub_category: course.subCategory || null,
+        topic: course.topic || '',
+        level: course.level || 'beginner',
+        language: course.language || '',
+        subtitle_language: course.subtitleLanguage || '',
+        duration: course.duration || '',
+        thumbnail: course.thumbnail || '',
+        trailer: course.trailer || '',
+        descriptions: course.descriptions || course.description || '',
+        what_to_learn: course.whatToLearn || [],
+        target_audience: course.targetAudience || [],
+        requirements: course.requirements || [],
+        tags: course.tags || [],
+        welcome_message: course.welcomeMessage || '',
+        congratulations_message: course.congratulationsMessage || '',
+        price: course.price || 0,
+        original_price: course.originalPrice || 0,
+        status: course.status || 'draft',
+        instructor: course.instructor || null,
+    });
+
     return {
         course,
         activeItemId,
@@ -305,6 +335,39 @@ export function useCourseForm(initialData = null) {
         deleteNode,
         moveNode,
         selectItem,
-        getActiveData
+        getActiveData,
+        toApiFormat
+    };
+}
+
+// Static helper: Transform snake_case API data → camelCase for form state
+export function fromApiFormat(apiData) {
+    return {
+        _id: apiData._id,
+        title: apiData.title || '',
+        subtitle: apiData.subtitle || '',
+        description: apiData.descriptions || '',
+        descriptions: apiData.descriptions || '',
+        thumbnail: apiData.thumbnail || '',
+        trailer: apiData.trailer || '',
+        category: apiData.category || '',
+        subCategory: apiData.sub_category || '',
+        topic: apiData.topic || '',
+        language: apiData.language || '',
+        subtitleLanguage: apiData.subtitle_language || '',
+        level: apiData.level || 'beginner',
+        duration: apiData.duration || '',
+        price: apiData.price || 0,
+        originalPrice: apiData.original_price || 0,
+        currency: apiData.currency || 'INR',
+        status: apiData.status || 'draft',
+        whatToLearn: apiData.what_to_learn || [],
+        targetAudience: apiData.target_audience || [],
+        requirements: apiData.requirements || [],
+        tags: apiData.tags || [],
+        welcomeMessage: apiData.welcome_message || '',
+        congratulationsMessage: apiData.congratulations_message || '',
+        instructor: apiData.instructor || null,
+        content: apiData.curriculum || apiData.content || [],
     };
 }

@@ -12,19 +12,19 @@ api.interceptors.request.use((config) => {
         const parts = value.split(`; ${name}=`);
         if (parts.length === 2) return parts.pop().split(';').shift();
     };
-    
+
     // AuthContext manages this, but adding it for robustness
     const sessionId = getCookie('sessionId');
     if (sessionId) {
         config.headers['X-Session-Id'] = sessionId;
     }
-    
+
     // In case the frontend passes token in localstorage
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
     if (token) {
         config.headers.Authorization = `Bearer ${token}`;
     }
-    
+
     return config;
 }, (error) => Promise.reject(error));
 
@@ -42,7 +42,10 @@ export const testimonialService = {
     getByPage: async (pageTag) => {
         try {
             const response = await api.get('/testimonials', {
-                params: { target_page: pageTag }
+                params: {
+                    target_page: pageTag,
+                    _t: new Date().getTime()
+                }
             });
             return Array.isArray(response.data) ? response.data : [];
         } catch (error) {

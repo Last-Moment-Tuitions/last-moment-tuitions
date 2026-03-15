@@ -46,7 +46,7 @@ export default function CartPage() {
                             {/* Table */}
                             <div className="flex flex-col justify-start pb-6 bg-[#FFFFFF] border border-[#E9EAF0] w-full overflow-hidden">
                                 {/* Table Header - Desktop Only */}
-                                <div className="w-full hidden md:grid grid-cols-[3fr_1fr_1fr] gap-0 border-b border-[#E9EAF0] text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                <div className="w-full hidden md:grid grid-cols-[3fr_1fr_1fr] gap-0 border-b border-[#E9EAF0] text-[11px] font-bold text-gray-400 uppercase tracking-[0.15em]">
                                     <div className="p-4 md:pl-12 md:pr-6">COURSE</div>
                                     <div className="p-4 md:pr-6 text-left">PRICES</div>
                                     <div className="p-4 text-left">ACTION</div>
@@ -94,10 +94,10 @@ export default function CartPage() {
 
                                                     {/* Text Details Area */}
                                                     <div className="flex-1 min-w-0 flex flex-col gap-1.5">
-                                                        <div className="flex items-center gap-1.5 text-xs">
+                                                        <div className="flex items-center gap-1.5 text-[11px]">
                                                             <Star className="text-orange-400 fill-orange-400" size={12} />
                                                             <span className="font-bold text-gray-900">{item.rating || '4.8'}</span>
-                                                            <span className="text-gray-500 font-medium ml-1">({(item.ratingCount || 451444).toLocaleString()} Reviews)</span>
+                                                            <span className="text-gray-400">(451,444 Reviews)</span>
                                                         </div>
                                                         <h3 className="font-bold text-gray-900 text-sm sm:text-base md:text-[15px] leading-snug line-clamp-2">
                                                             {item.title}
@@ -111,7 +111,7 @@ export default function CartPage() {
                                                 {/* Section 2: Price Tag */}
                                                 <div className="flex flex-col md:pr-6 md:h-full md:justify-center mt-4 md:mt-0 pt-3 md:pt-0 border-t md:border-t-0 border-gray-50">
                                                     <div className="flex items-center justify-between md:justify-start md:gap-2">
-                                                        <span className="md:hidden text-xs font-bold text-gray-500 uppercase">Prices</span>
+                                                        <span className="md:hidden text-[9px] font-bold text-gray-400 uppercase">Prices</span>
                                                         <div className="flex items-baseline gap-2">
                                                             <span className="text-base md:text-lg font-bold text-[#153A8D]">₹{(item.price || 0).toLocaleString()}</span>
                                                             {item.originalPrice && (
@@ -123,7 +123,7 @@ export default function CartPage() {
 
                                                 {/* Section 3: Actions (Wishlist) */}
                                                 <div className="flex items-center justify-between md:justify-start md:h-full mt-2 md:mt-0">
-                                                    <span className="md:hidden text-xs font-bold text-gray-500 uppercase">Action</span>
+                                                    <span className="md:hidden text-[9px] font-bold text-gray-400 uppercase">Action</span>
                                                     {/* Mobile "Wishlist" button */}
                                                     <button className="flex md:hidden items-center gap-2 px-4 py-2 bg-[#F0F2F5] text-[#153A8D] rounded-lg">
                                                         <Heart size={14} className="stroke-[2.5px]" />
