@@ -8,7 +8,9 @@ const ToastContext = createContext();
 export const useToast = () => {
     const context = useContext(ToastContext);
     if (!context) {
-        throw new Error('useToast must be used within a ToastProvider');
+        // Return no-op during SSR or when outside provider
+        const noop = () => {};
+        return { toast: { success: noop, error: noop, info: noop, loading: noop, default: noop, dismiss: noop, confirm: () => Promise.resolve(false) } };
     }
     return context;
 };

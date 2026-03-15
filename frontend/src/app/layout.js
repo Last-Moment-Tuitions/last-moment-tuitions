@@ -1,6 +1,7 @@
 import './globals.css';
 import { AuthProvider } from '@/context/AuthContext';
 import { ToastProvider } from '@/context/ToastContext';
+import { CartProvider } from '@/context/CartContext';
 
 
 export const metadata = {
@@ -51,8 +52,10 @@ export default async function RootLayout({ children }) {
       <body suppressHydrationWarning>
         <AuthProvider initialUser={initialUser}>
           <ToastProvider>
-            <SessionMonitor />
-            {children}
+            <CartProvider>
+              <SessionMonitor />
+              {children}
+            </CartProvider>
           </ToastProvider>
         </AuthProvider>
       </body>
