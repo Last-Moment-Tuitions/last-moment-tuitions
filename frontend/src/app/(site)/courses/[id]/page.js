@@ -460,9 +460,11 @@ export default function CourseDetailPage({ params }) {
                                 <Button className="flex-1 h-12 text-base font-bold bg-white text-primary-600 border-2 border-primary-100 hover:border-primary-600 hover:bg-primary-50 transition-colors">
                                     Add To Cart
                                 </Button>
-                                <Button className="flex-1 h-12 text-base font-bold bg-primary-600 text-white hover:bg-primary-700 shadow-lg shadow-primary-500/30 transition-all hover:scale-[1.02]">
-                                    Buy Now
-                                </Button>
+                                <Link href={`/checkout/${id}`} className="flex-1">
+                                    <Button className="w-full h-12 text-base font-bold bg-primary-600 text-white hover:bg-primary-700 shadow-lg shadow-primary-500/30 transition-all hover:scale-[1.02]">
+                                        Buy Now
+                                    </Button>
+                                </Link>
                             </div>
 
                             <hr className="border-gray-100 mb-6" />
