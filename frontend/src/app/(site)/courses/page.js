@@ -12,6 +12,8 @@ import {
     Badge
 } from '@/components/ui';
 import { coursesApi } from '@/services/courses.api';
+import { ordersApi } from '@/services/orders.api';
+import { useAuth } from '@/context/AuthContext';
 
 const CATEGORIES = [
     { id: 'gov', label: 'Government', count: 42, icon: <Building2 size={18} /> },
@@ -25,6 +27,8 @@ export default function CoursesPage() {
     const [courses, setCourses] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const { user } = useAuth();
+    const [purchaseHistory, setPurchaseHistory] = useState([]);
 
     // Filters state
     const [searchQuery, setSearchQuery] = useState('');
@@ -35,6 +39,35 @@ export default function CoursesPage() {
     useEffect(() => {
         fetchCourses();
     }, []);
+
+    useEffect(() => {
+        if (user?.email) {
+            fetchPurchaseHistory();
+        } else {
+            setPurchaseHistory([]);
+        }
+    }, [user]);
+
+    const fetchPurchaseHistory = async () => {
+        try {
+            const response = await ordersApi.getOrdersByUser(user.email);
+            // Safely extract orders array based on various response formats
+            let orders = [];
+            if (Array.isArray(response)) {
+                orders = response;
+            } else if (response && Array.isArray(response.details)) {
+                orders = response.details;
+            } else if (response && Array.isArray(response.data)) {
+                orders = response.data;
+            }
+
+            // Filter only completed or paid orders
+            const validOrders = orders.filter(order => order.status === 'completed' || order.status === 'paid');
+            setPurchaseHistory(validOrders);
+        } catch (err) {
+            console.error('Failed to fetch purchase history:', err);
+        }
+    };
 
     const fetchCourses = async () => {
         try {
@@ -53,7 +86,8 @@ export default function CoursesPage() {
                 enrollmentCount: course.enrollment_count,
                 createdAt: course.createdAt || course.updatedAt || new Date().toISOString(),
                 image: course.thumbnail || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=1000&auto=format&fit=crop',
-                instructor: course.instructor?.name || 'Unknown Instructor'
+                instructor: course.instructor?.name || 'Unknown Instructor',
+                level: course.level || 'Beginner'
             }));
 
             setCourses(transformedCourses);
@@ -352,6 +386,8 @@ export default function CoursesPage() {
                                     image={course.image}
                                     instructor={course.instructor}
                                     id={course.id}
+                                    level={course.level}
+                                    isPurchased={purchaseHistory.some(order => order.course_id === course.id)}
                                     className="h-full"
                                 />
                             )) : (

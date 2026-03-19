@@ -26,5 +26,5 @@ api.interceptors.response.use(
 
 export const ordersApi = {
     createOrder: (data) => api.post('/orders', data),
-    getOrder: (id) => api.get(`/orders/${id}`),
+    getOrdersByUser: (email) => api.get(`/orders/user?email=${email}`),
 };
