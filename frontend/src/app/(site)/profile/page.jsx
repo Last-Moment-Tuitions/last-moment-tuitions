@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { useRouter } from 'next/navigation';
-import { Upload, Eye, EyeOff, ArrowRight, Loader2, PlayCircle, MonitorPlay, Trophy, Users, ArrowLeft, ShoppingBag, Clock, CheckCircle2, XCircle, ChevronRight, FileText } from 'lucide-react';
+import { Upload, Eye, EyeOff, ArrowRight, Loader2, PlayCircle, MonitorPlay, Trophy, Users, ArrowLeft, ShoppingBag, Clock, CheckCircle2, XCircle, ChevronRight, FileText, Mail, Instagram, Linkedin, X } from 'lucide-react';
 import { Button, Input, Label } from '@/components/ui';
 import API_BASE_URL from '@/lib/config';
 
@@ -28,6 +28,7 @@ export default function ProfilePage() {
     const fileInputRef = useRef(null);
     const [uploadingPhoto, setUploadingPhoto] = useState(false);
     const [previewPhoto, setPreviewPhoto] = useState(null);
+    const [showSupport, setShowSupport] = useState(false);
     const [selectedFile, setSelectedFile] = useState(null);
     const [purchaseHistory, setPurchaseHistory] = useState([]);
     const [historyLoading, setHistoryLoading] = useState(false);
@@ -267,7 +268,7 @@ export default function ProfilePage() {
     };
 
     return (
-        <div className="bg-gray-50 min-h-screen pb-20 font-sans">
+        <div className="bg-gray-50 min-h-screen pb-20 font-sans overflow-x-hidden">
             {/* Top peach background area */}
             <div className="h-48 bg-[#eff6ff] w-full"></div>
 
@@ -284,15 +285,15 @@ export default function ProfilePage() {
                                     className="w-full h-full object-cover"
                                 />
                             </div>
-                            <div>
-                                <h1 className="text-2xl font-bold text-gray-900 mb-1">{user?.firstName} {user?.lastName || ''}</h1>
-                                <p className="text-sm text-gray-500 font-medium tracking-wide">{user?.email}</p>
+                            <div className="min-w-0 flex-1">
+                                <h1 className="text-2xl font-bold text-gray-900 mb-1 truncate">{user?.firstName} {user?.lastName || ''}</h1>
+                                <p className="text-sm text-gray-500 font-medium tracking-wide truncate">{user?.email}</p>
                             </div>
                         </div>
                         <Button
                             className="bg-[#eff6ff] text-primary-600 hover:bg-[#ffdfd4] rounded-sm py-2 px-6 shadow-none flex items-center gap-2 group whitespace-nowrap focus:ring-0 active:scale-100 disabled:opacity-100 hover:translate-y-0"
                             style={{ background: '#eff6ff', color: '#063f78' }}
-                            onClick={() => { }}
+                            onClick={() => setShowSupport(true)}
                         >
                             <span style={{ color: '#063f78' }}>Contact Support</span>
                             <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" style={{ color: '#063f78' }} />
@@ -844,6 +845,74 @@ export default function ProfilePage() {
                     )}
                 </div>
             </div>
+
+            {/* Contact Support Modal */}
+            {showSupport && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="bg-white w-full max-w-md rounded-xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+                        {/* Header */}
+                        <div className="bg-[#063f78] p-6 text-white flex justify-between items-center">
+                            <div>
+                                <h3 className="text-xl font-bold">Contact Support</h3>
+                                <p className="text-[#eff6ff]/80 text-xs mt-1">We're here to help you</p>
+                            </div>
+                            <button 
+                                onClick={() => setShowSupport(false)}
+                                className="p-2 hover:bg-white/10 rounded-full transition-colors"
+                            >
+                                <X size={20} />
+                            </button>
+                        </div>
+                        
+                        {/* Body */}
+                        <div className="p-8 space-y-6">
+                            <div className="flex items-center gap-4 group cursor-pointer" onClick={() => window.open('mailto:lastmomenttuitions@gmail.com')}>
+                                <div className="w-12 h-12 bg-[#eff6ff] rounded-lg flex items-center justify-center text-[#063f78] group-hover:bg-[#063f78] group-hover:text-white transition-all duration-300">
+                                    <Mail size={24} />
+                                </div>
+                                <div>
+                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Email Us</p>
+                                    <p className="text-gray-900 font-semibold group-hover:text-[#063f78] transition-colors">lastmomenttuitions@gmail.com</p>
+                                </div>
+                            </div>
+
+                            <hr className="border-gray-100" />
+
+                            <div className="flex items-center gap-4 group cursor-pointer" onClick={() => window.open('https://instagram.com/lastmomenttuition')}>
+                                <div className="w-12 h-12 bg-pink-50 rounded-lg flex items-center justify-center text-pink-600 group-hover:bg-pink-600 group-hover:text-white transition-all duration-300">
+                                    <Instagram size={24} />
+                                </div>
+                                <div>
+                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Instagram</p>
+                                    <p className="text-gray-900 font-semibold group-hover:text-pink-600 transition-colors">@lastmomenttuition</p>
+                                </div>
+                            </div>
+
+                            <hr className="border-gray-100" />
+
+                            <div className="flex items-center gap-4 group cursor-pointer" onClick={() => window.open('https://www.linkedin.com/in/last-moment-tuitions')}>
+                                <div className="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center text-[#0a66c2] group-hover:bg-[#0a66c2] group-hover:text-white transition-all duration-300">
+                                    <Linkedin size={24} />
+                                </div>
+                                <div>
+                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">LinkedIn</p>
+                                    <p className="text-gray-900 font-semibold group-hover:text-[#0a66c2] transition-colors">Last Moment Tuitions</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Footer */}
+                        <div className="bg-gray-50 p-6 flex justify-center">
+                            <button 
+                                onClick={() => setShowSupport(false)}
+                                className="px-8 py-2.5 bg-gray-900 text-white font-bold text-sm rounded-sm hover:bg-black transition-colors"
+                            >
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

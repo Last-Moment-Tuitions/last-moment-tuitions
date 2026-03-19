@@ -8,7 +8,7 @@ import { useToast } from '@/context/ToastContext';
 import contentService from '@/services/contentService';
 import menuService from '@/services/menuService';
 
-import { ChevronDown, Search, Menu, X } from 'lucide-react';
+import { ChevronDown, Search, Menu, X, ArrowRight } from 'lucide-react';
 
 export function Header() {
     const pathname = usePathname();
@@ -231,10 +231,34 @@ export function Header() {
                     <div className="border-t border-gray-100 pt-4 flex flex-col gap-3">
                         {user ? (
                             <>
-                                <div className="px-4 py-2 text-sm text-gray-600">
-                                    Signed in as <span className="font-semibold text-gray-900">{user.firstName}</span>
-                                </div>
-                                <Button onClick={() => { logout(); setIsMobileMenuOpen(false); }} variant="outline" className="w-full justify-center">
+                                <Link
+                                    href="/profile"
+                                    onClick={() => setIsMobileMenuOpen(false)}
+                                    className="flex items-center gap-3 px-4 py-3 hover:bg-primary-50 rounded-lg transition-colors border border-gray-100 bg-white shadow-sm ring-1 ring-black/5"
+                                >
+                                    <img
+                                        src={user?.profilePhoto || "/assets/default-avatar.svg"}
+                                        alt="Profile"
+                                        onError={(e) => { e.currentTarget.src = "/assets/default-avatar.svg"; }}
+                                        className="w-10 h-10 rounded-full object-cover border border-gray-200"
+                                    />
+                                    <div className="flex-1 min-w-0">
+                                        <div className="text-sm font-bold text-gray-900 truncate">{user.firstName} {user.lastName || ''}</div>
+                                        <div className="text-xs text-primary-600 font-medium">View Profile</div>
+                                    </div>
+                                    <ArrowRight size={16} className="text-gray-400" />
+                                </Link>
+                                <Button
+                                    onClick={() => {
+                                        setLoggingOut(true);
+                                        logout(() => {
+                                            toast.success("Logged out successfully");
+                                            setIsMobileMenuOpen(false);
+                                        });
+                                    }}
+                                    variant="outline"
+                                    className="w-full justify-center py-2.5 text-sm font-bold"
+                                >
                                     Logout
                                 </Button>
                             </>
