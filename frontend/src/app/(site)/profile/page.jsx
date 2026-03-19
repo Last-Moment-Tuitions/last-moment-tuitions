@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { useRouter } from 'next/navigation';
-import { Upload, Eye, EyeOff, ArrowRight, Loader2, PlayCircle, MonitorPlay, Trophy, Users, ArrowLeft } from 'lucide-react';
+import { Upload, Eye, EyeOff, ArrowRight, Loader2, PlayCircle, MonitorPlay, Trophy, Users, ArrowLeft, ShoppingBag, Clock, CheckCircle2, XCircle, ChevronRight, FileText } from 'lucide-react';
 import { Button, Input, Label } from '@/components/ui';
 import API_BASE_URL from '@/lib/config';
 
@@ -29,12 +29,96 @@ export default function ProfilePage() {
     const [uploadingPhoto, setUploadingPhoto] = useState(false);
     const [previewPhoto, setPreviewPhoto] = useState(null);
     const [selectedFile, setSelectedFile] = useState(null);
+    const [purchaseHistory, setPurchaseHistory] = useState([]);
+    const [historyLoading, setHistoryLoading] = useState(false);
+    const [allCourses, setAllCourses] = useState([]);
+    const [myCourses, setMyCourses] = useState([]);
+    const [coursesLoading, setCoursesLoading] = useState(false);
 
     useEffect(() => {
         if (!loading && !user) {
             router.push('/signin');
         }
     }, [user, loading, router]);
+
+    useEffect(() => {
+        if (activeTab === 'Purchase History' && user?.email) {
+            fetchPurchaseHistory();
+        }
+        if (activeTab === 'Courses') {
+            fetchAllCourses();
+        }
+    }, [activeTab, user?.email]);
+
+    const fetchPurchaseHistory = async () => {
+        setHistoryLoading(true);
+        console.log('[ProfilePage] Fetching purchase history for:', user?.email);
+        try {
+            const sessionId = getSessionId();
+            const headers = sessionId ? { 'x-session-id': sessionId } : {};
+            const encodedEmail = encodeURIComponent(user.email);
+
+            console.log(`[ProfilePage] Requesting: ${API_BASE_URL}/orders/user/${encodedEmail}`);
+
+            const res = await fetch(`${API_BASE_URL}/orders/user/${encodedEmail}`, {
+                method: 'GET',
+                headers: {
+                    ...headers,
+                    'Accept': 'application/json'
+                },
+                credentials: 'include'
+            });
+
+            if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+
+            const responseData = await res.json();
+            const orders = responseData.details || responseData;
+
+            console.log('[ProfilePage] Success, fetched orders:', orders?.length || 0);
+            setPurchaseHistory(Array.isArray(orders) ? orders : []);
+        } catch (error) {
+            console.error('[ProfilePage] Error fetching purchase history:', error);
+            // Don't show toast for "Failed to fetch" silently to avoid spam if it's a dev server issue
+            // but for production or specific tasks it's helpful
+            toast.error('Unable to load purchase history. Please check if backend is running.');
+        } finally {
+            setHistoryLoading(false);
+        }
+    };
+
+    const fetchAllCourses = async () => {
+        setCoursesLoading(true);
+        try {
+            const res = await fetch(`${API_BASE_URL}/courses`);
+            if (!res.ok) throw new Error('Failed to fetch courses');
+            const result = await res.json();
+            // NestJS interceptor wraps data in 'data' field here (from courses controller)
+            const courses = result.data || result;
+            setAllCourses(Array.isArray(courses) ? courses : []);
+
+            // If we have purchase history, we can filter My Courses
+            if (purchaseHistory.length === 0 && user?.email) {
+                await fetchPurchaseHistory();
+            }
+        } catch (error) {
+            console.error('Error fetching courses:', error);
+        } finally {
+            setCoursesLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        // Filter purchased courses by checking common course_id
+        if (allCourses.length > 0 && purchaseHistory.length > 0) {
+            // Get unique course IDs from orders that are paid or pending_payment
+            const purchasedIds = [...new Set(purchaseHistory
+                .filter(order => order.status === 'completed' || order.status === 'paid' || order.status === 'pending_payment')
+                .map(order => order.course_id))];
+
+            const myEnrolled = allCourses.filter(course => purchasedIds.includes(course._id));
+            setMyCourses(myEnrolled);
+        }
+    }, [allCourses, purchaseHistory]);
 
     if (loading || !user) {
         return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
@@ -239,7 +323,110 @@ export default function ProfilePage() {
 
                 {/* Content Area */}
                 <div className="bg-white p-8 rounded-b-xl shadow-sm min-h-[500px]">
-                    {activeTab === 'Dashboard' ? (
+                    {activeTab === 'Courses' ? (
+                        <div className="w-full">
+                            {/* My Courses Section */}
+                            {myCourses.length > 0 && (
+                                <div className="mb-12">
+                                    <div className="flex items-center gap-2 mb-6">
+                                        <div className="p-2 bg-[#eff6ff] rounded-sm">
+                                            <MonitorPlay className="text-[#063f78]" size={20} />
+                                        </div>
+                                        <h2 className="text-2xl font-bold text-gray-900">My Courses</h2>
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                        {myCourses.map((course) => (
+                                            <div key={course._id} className="border border-gray-100 rounded-sm overflow-hidden flex flex-col group hover:shadow-md transition-shadow">
+                                                <div className="h-44 w-full relative">
+                                                    <img src={course.featuredImage || "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=500&q=80"} alt={course.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                                                    <div className="absolute top-3 left-3 bg-green-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-sm uppercase">Purchased</div>
+                                                </div>
+                                                <div className="p-5 flex-1 flex flex-col justify-between bg-white">
+                                                    <div>
+                                                        <span className="text-[10px] font-bold text-primary-600 uppercase tracking-widest block mb-1">{course.category || 'Course'}</span>
+                                                        <h4 className="text-base font-bold text-gray-900 mb-2 line-clamp-2 min-h-[3rem]">{course.title}</h4>
+                                                    </div>
+                                                    <div className="mt-4">
+                                                        <button
+                                                            onClick={() => router.push(`/courses/${course._id}/learn`)}
+                                                            className="w-full py-2.5 bg-[#063f78] text-white font-bold text-sm rounded-sm hover:bg-[#053260] transition-colors flex items-center justify-center gap-2"
+                                                        >
+                                                            Start Learning <ChevronRight size={16} />
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <hr className="mt-12 border-gray-100" />
+                                </div>
+                            )}
+
+                            {/* All Courses / Catalog Section */}
+                            <div className="mb-8">
+                                <div className="flex items-center justify-between mb-8">
+                                    <div className="flex items-center gap-2">
+                                        <div className="p-2 bg-[#eff6ff] rounded-sm">
+                                            <ShoppingBag className="text-[#063f78]" size={20} />
+                                        </div>
+                                        <h2 className="text-2xl font-bold text-gray-900">
+                                            {myCourses.length > 0 ? 'All Courses' : 'All Courses'}
+                                        </h2>
+                                    </div>
+                                    <div className="text-xs font-bold text-[#063f78] bg-[#eff6ff] px-3 py-1.5 rounded-sm">
+                                        {allCourses.length} COURSES
+                                    </div>
+                                </div>
+
+                                {coursesLoading ? (
+                                    <div className="flex flex-col items-center justify-center py-20">
+                                        <Loader2 className="w-10 h-10 text-[#063f78] animate-spin mb-4" />
+                                        <p className="text-gray-500 font-medium font-sans">Wait a moment, Loading Catalog...</p>
+                                    </div>
+                                ) : (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                        {allCourses.map((course) => {
+                                            const isPurchased = myCourses.some(mc => mc._id === course._id);
+                                            return (
+                                                <div key={course._id} className="border border-gray-100 rounded-sm overflow-hidden flex flex-col group bg-gray-50/30">
+                                                    <div className="h-44 w-full relative">
+                                                        <img src={course.featuredImage || "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=500&q=80"} alt={course.title} className="w-full h-full object-cover" />
+                                                        <div className="absolute inset-0 bg-black/5 group-hover:bg-transparent transition-colors"></div>
+                                                    </div>
+                                                    <div className="p-5 flex-1 flex flex-col justify-between bg-white border-t border-gray-50">
+                                                        <div>
+                                                            <div className="flex items-center justify-between mb-2">
+                                                                <span className="text-[10px] font-bold text-gray-400 capitalize bg-gray-50 px-2 py-0.5 rounded-sm">{course.level || 'Beginner'}</span>
+                                                                <span className="text-sm font-bold text-[#063f78]">₹{course.price?.toLocaleString() || '499'}</span>
+                                                            </div>
+                                                            <h4 className="text-base font-bold text-gray-900 mb-2 line-clamp-2 min-h-[3rem] group-hover:text-[#063f78] transition-colors">{course.title}</h4>
+                                                        </div>
+                                                        <div className="mt-4">
+                                                            {isPurchased ? (
+                                                                <button
+                                                                    onClick={() => router.push(`/courses/${course._id}/learn`)}
+                                                                    className="w-full py-2.5 bg-[#eff6ff] text-[#063f78] font-bold text-sm rounded-sm hover:bg-[#ffdfd4] transition-colors flex items-center justify-center gap-2"
+                                                                >
+                                                                    Start Learning <ChevronRight size={16} />
+                                                                </button>
+                                                            ) : (
+                                                                <button
+                                                                    onClick={() => router.push(`/courses/${course._id}`)}
+                                                                    className="w-full py-2.5 bg-gray-900 text-white font-bold text-sm rounded-sm hover:bg-black transition-colors flex items-center justify-center gap-2"
+                                                                >
+                                                                    Enroll Now <ArrowRight size={16} />
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    ) : activeTab === 'Dashboard' ? (
                         <div className="w-full">
                             <h2 className="text-xl font-bold text-gray-900 mb-6">Dashboard</h2>
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
@@ -381,6 +568,109 @@ export default function ProfilePage() {
                                     </div>
                                 </div>
                             </div>
+                        </div>
+                    ) : activeTab === 'Purchase History' ? (
+                        <div className="w-full">
+                            <div className="flex items-center justify-between mb-8">
+                                <div>
+                                    <h2 className="text-2xl font-bold text-gray-900">Purchase History</h2>
+                                    <p className="text-sm text-gray-500 mt-1">Manage and track all your course enrollments and payments.</p>
+                                </div>
+                                <div className="bg-[#eff6ff] text-[#063f78] px-4 py-2 rounded-sm text-sm font-semibold flex items-center gap-2">
+                                    <ShoppingBag size={18} />
+                                    <span>{purchaseHistory.length} Orders</span>
+                                </div>
+                            </div>
+
+                            {historyLoading ? (
+                                <div className="flex flex-col items-center justify-center py-20">
+                                    <Loader2 className="w-10 h-10 text-[#063f78] animate-spin mb-4" />
+                                    <p className="text-gray-500 font-medium">Fetching your orders...</p>
+                                </div>
+                            ) : purchaseHistory.length > 0 ? (
+                                <div className="overflow-x-auto border border-gray-100 rounded-sm">
+                                    <table className="w-full text-left border-collapse">
+                                        <thead>
+                                            <tr className="bg-gray-50 border-b border-gray-100">
+                                                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Order Details</th>
+                                                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Date</th>
+                                                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Amount</th>
+                                                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
+                                                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Invoice</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-50">
+                                            {purchaseHistory.map((order) => (
+                                                <tr key={order.order_id} className="hover:bg-gray-50/50 transition-colors group">
+                                                    <td className="px-6 py-5">
+                                                        <div className="flex flex-col">
+                                                            <span className="text-sm font-bold text-gray-900 group-hover:text-[#063f78] transition-colors line-clamp-1">{order.course_title}</span>
+                                                            <span className="text-[11px] font-medium text-gray-400 mt-1 flex items-center gap-1.5">
+                                                                <FileText size={12} className="text-gray-300" />
+                                                                {order.order_id}
+                                                            </span>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-5">
+                                                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                                                            <Clock size={14} className="text-gray-400" />
+                                                            {new Date(order.created_at).toLocaleDateString('en-US', {
+                                                                month: 'short',
+                                                                day: 'numeric',
+                                                                year: 'numeric'
+                                                            })}
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-5">
+                                                        <span className="text-sm font-bold text-gray-900">₹{order.final_amount.toLocaleString()}</span>
+                                                    </td>
+                                                    <td className="px-6 py-5">
+                                                        {order.status === 'completed' || order.status === 'paid' ? (
+                                                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-green-50 text-green-600 border border-green-100 uppercase tracking-tight">
+                                                                <CheckCircle2 size={12} /> Success
+                                                            </span>
+                                                        ) : order.status === 'pending_payment' ? (
+                                                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-amber-50 text-amber-600 border border-amber-100 uppercase tracking-tight">
+                                                                <Clock size={12} /> Pending
+                                                            </span>
+                                                        ) : (
+                                                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-red-50 text-red-600 border border-red-100 uppercase tracking-tight">
+                                                                <XCircle size={12} /> {order.status}
+                                                            </span>
+                                                        )}
+                                                    </td>
+                                                    <td className="px-6 py-5 text-right">
+                                                        <button
+                                                            className="flex items-center gap-2 px-3 py-1.5 text-xs font-bold text-[#063f78] bg-[#eff6ff] hover:bg-[#ffdfd4] rounded-sm transition-all active:scale-95"
+                                                            onClick={() => router.push(`/order-confirmation?order_id=${order.order_id}`)}
+                                                            title="View Invoice"
+                                                        >
+                                                            <FileText size={14} />
+                                                            Invoice
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            ) : (
+                                <div className="text-center py-20 bg-gray-50/50 rounded-sm border border-dashed border-gray-200">
+                                    <div className="bg-white w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm border border-gray-100">
+                                        <ShoppingBag className="text-gray-300" size={32} />
+                                    </div>
+                                    <h3 className="text-lg font-bold text-gray-900 mb-2">No purchases yet</h3>
+                                    <p className="text-gray-500 max-w-sm mx-auto mb-8 text-sm">
+                                        You haven't purchased any courses yet. Explore our courses to start your learning journey.
+                                    </p>
+                                    <Button
+                                        onClick={() => router.push('/courses')}
+                                        className="bg-[#063f78] text-white hover:bg-[#053260] font-bold px-8 py-3 h-auto"
+                                    >
+                                        Explore Courses
+                                    </Button>
+                                </div>
+                            )}
                         </div>
                     ) : activeTab === 'Settings' ? (
                         <div className="bg-transparent max-w-5xl mx-auto">

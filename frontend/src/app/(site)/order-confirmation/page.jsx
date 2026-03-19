@@ -56,7 +56,7 @@ export default function OrderConfirmationPage() {
     return (
         <div className="bg-gray-50 min-h-screen py-12">
             <div className="container mx-auto px-4 max-w-5xl">
-                
+
                 {/* Success Header */}
                 <div className="text-center mb-10">
                     <div className="inline-flex items-center justify-center w-20 h-20 bg-green-100 rounded-full mb-6">
@@ -69,14 +69,14 @@ export default function OrderConfirmationPage() {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
-                    
+
                     {/* Left Column - Customer Details */}
                     <div className="md:col-span-7 space-y-6">
                         <div className="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-gray-100">
                             <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2 border-b border-gray-100 pb-4">
                                 Customer Details
                             </h3>
-                            
+
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                 <div className="space-y-1">
                                     <div className="text-sm text-gray-500 flex items-center gap-2"><User size={16} /> Name</div>
@@ -100,7 +100,8 @@ export default function OrderConfirmationPage() {
                         </div>
 
                         <div className="flex gap-4">
-                            <Link href={`/courses/${order.course_id}/learn`} className="flex-1">
+                            {/* <Link href={`/courses/${order.course_id}/learn`} className="flex-1"> */}
+                            <Link href={`/profile`} className="flex-1">
                                 <button className="w-full py-4 px-4 bg-primary-600 hover:bg-primary-700 text-white rounded-xl font-bold text-lg shadow-lg shadow-primary-500/30 transition-all hover:-translate-y-0.5 flex items-center justify-center gap-2">
                                     Start Learning <ChevronRight size={20} />
                                 </button>
