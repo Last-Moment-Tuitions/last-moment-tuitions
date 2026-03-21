@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import { Button } from '@/components/ui';
 import ViewTracker from '@/components/ViewTracker';
+import GenericSectionInteractivity from '@/components/GenericSectionInteractivity';
 
 import API_BASE_URL from '@/lib/config';
 
@@ -86,7 +87,7 @@ async function resolveTemplateRefs(html) {
 
     while ((match = regex.exec(html)) !== null) {
         const fullTag = match[0];
-        
+
         // Due to the regex having optional attribute capture groups in different orders,
         // we extract the values safely.
         // It's safer to extract attributes via local regex match against the full tag 
@@ -129,9 +130,34 @@ async function resolveTemplateRefs(html) {
                     // Interpolate props inside the template HTML
                     if (propsObj && Object.keys(propsObj).length > 0) {
                         for (const [key, value] of Object.entries(propsObj)) {
+                            // Escape key for safety
+                            const safeKey = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
                             // Replace {{ key }} or {{key}} with the value string
-                            const propRegex = new RegExp(`{{\\s*${key}\\s*}}`, 'g');
+                            const propRegex = new RegExp(`{{\\s*${safeKey}\\s*}}`, 'g');
                             templateHtml = templateHtml.replace(propRegex, value);
+
+                            // Replace text inside data-var="key"
+                            // Match: open tag -> content -> close tag
+                            const textRegex = new RegExp(`(<[^>]+data-var=["']${safeKey}["'][^>]*>)([\\s\\S]*?)(<\\/[a-z0-9]+>)`, 'gi');
+                            templateHtml = templateHtml.replace(textRegex, (match, openTag, innerContent, closeTag) => {
+                                return `${openTag}${value}${closeTag}`;
+                            });
+
+                            // Replace src for data-var-src="key"
+                            templateHtml = templateHtml.replace(new RegExp(`(<[^>]+data-var-src=["']${safeKey}["'][^>]*>)`, 'gi'), (tag) => {
+                                return tag.replace(/(src=["'])([^"']*)(["'])/i, (m, p1, p2, p3) => `${p1}${value}${p3}`);
+                            });
+
+                            // Replace href for data-var-link="key"
+                            templateHtml = templateHtml.replace(new RegExp(`(<[^>]+data-var-link=["']${safeKey}["'][^>]*>)`, 'gi'), (tag) => {
+                                return tag.replace(/(href=["'])([^"']*)(["'])/i, (m, p1, p2, p3) => `${p1}${value}${p3}`);
+                            });
+
+                            // Replace src for data-var-video="key"
+                            templateHtml = templateHtml.replace(new RegExp(`(<[^>]+data-var-video=["']${safeKey}["'][^>]*>)`, 'gi'), (tag) => {
+                                return tag.replace(/(src=["'])([^"']*)(["'])/i, (m, p1, p2, p3) => `${p1}${value}${p3}`);
+                            });
                         }
                     }
 
@@ -178,6 +204,7 @@ export default async function DynamicPage({ params }) {
                 <>
                     {page.gjsCss && <style dangerouslySetInnerHTML={{ __html: page.gjsCss }} />}
                     <div dangerouslySetInnerHTML={{ __html: finalHtml }} />
+                    <GenericSectionInteractivity />
                 </>
             ) : (
                 <div className="py-20 text-center">

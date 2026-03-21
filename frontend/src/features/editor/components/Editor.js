@@ -185,14 +185,14 @@ export function Editor({ pageId }) {
                 {/* Properties Sidebar (Right) */}
                 <div
                     className={`
-                        absolute lg:relative right-0 top-0 h-full w-64 bg-gray-800 border-l border-gray-700 flex flex-col text-white z-40 transition-transform duration-300 ease-in-out
+                        absolute lg:relative right-0 top-0 h-full w-64 bg-gray-800 border-l border-gray-700 flex flex-col text-white z-40 transition-transform duration-300 ease-in-out overflow-hidden
                         ${isPreview ? 'hidden' : 'flex'}
                         ${rightSidebarOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'}
                         lg:w-64 lg:block
                     `}
                 >
                     {/* Settings / Traits */}
-                    <div className="p-3 font-bold text-xs uppercase text-gray-400 border-b border-gray-700 bg-gray-900 flex justify-between items-center">
+                    <div className="p-3 font-bold text-xs uppercase text-gray-400 border-b border-gray-700 bg-gray-900 flex justify-between items-center flex-shrink-0">
                         <span>Settings</span>
                         {/* Close button for mobile */}
                         <button onClick={() => setRightSidebarOpen(false)} className="lg:hidden text-gray-500 hover:text-white">
@@ -200,10 +200,10 @@ export function Editor({ pageId }) {
                         </button>
                     </div>
                     {/* Added overflow-y-auto to allow scrolling for traits if there are many */}
-                    <div id="traits-container" className="p-2 border-b border-gray-700 min-h-[120px] max-h-[50vh] overflow-y-auto"></div>
+                    <div id="traits-container" className="p-2 border-b border-gray-700 min-h-[120px] max-h-[50vh] overflow-y-auto flex-shrink-0"></div>
                     {/* Styles */}
-                    <div className="p-3 font-bold text-xs uppercase text-gray-400 bg-gray-900 border-t border-gray-700">Styles</div>
-                    <div id="styles-container" className="flex-1 overflow-y-auto pb-8"></div>
+                    <div className="p-3 font-bold text-xs uppercase text-gray-400 bg-gray-900 border-t border-gray-700 flex-shrink-0">Styles</div>
+                    <div id="styles-container" className="flex-1 overflow-y-auto overflow-x-hidden min-h-0 pb-8"></div>
                 </div>
             </div>
         </div>

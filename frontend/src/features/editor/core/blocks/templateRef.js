@@ -177,8 +177,31 @@ export const loadTemplateRefBlock = (editor) => {
                     const changed = model.changedAttributes();
                     if (!changed) return;
                     const hasVarChange = Object.keys(changed).some(k => k.startsWith('prop_'));
-                    if (hasVarChange) this.trigger('change:templateContent');
+                    if (hasVarChange) {
+                        this.trigger('change:templateContent');
+                        this.updateDataProps();
+                    }
                 });
+            },
+
+            updateDataProps() {
+                const propsObj = {};
+                const attrs = this.attributes;
+                for (const key in attrs) {
+                    // Collect all generic section traits into a JSON object 
+                    // for SSR rendering on the frontend
+                    if (key.startsWith('prop_')) {
+                        const realKey = key.substring(5);
+                        propsObj[realKey] = attrs[key];
+                    }
+                }
+                const currentDataProps = this.getAttributes()['data-props'];
+                const newDataProps = JSON.stringify(propsObj);
+
+                if (currentDataProps !== newDataProps) {
+                    // Update the model attributes so GrapsJS serializes it to the HTML
+                    this.addAttributes({ 'data-props': newDataProps });
+                }
             },
 
             handleTemplateChange() {
@@ -595,6 +618,11 @@ export const loadTemplateRefBlock = (editor) => {
                         const existingNames = currentTraits.models.map(t => t.get('name'));
                         const toAdd = newTraits.filter(t => !existingNames.includes(t.name));
                         toAdd.forEach(t => currentTraits.add(t));
+                    }
+
+                    // Push model traits into attributes quietly for HTML Serialization
+                    if (typeof this.model.updateDataProps === 'function') {
+                        this.model.updateDataProps();
                     }
 
                     // ── Apply Variable Values to HTML ───────────────────────────
