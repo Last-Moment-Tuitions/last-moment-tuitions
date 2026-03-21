@@ -71,6 +71,19 @@ export const adminService = {
         return response.data;
     },
 
+    // Section/Template fetchers — used by templateBlocks.js to discover available sections
+    getTemplates: async (params = {}) => {
+        const response = await api.get('/pages', { params: { type: 'template', status: 'all', ...params } });
+        return response.data;
+    },
+
+    getSections: async (category = '') => {
+        const params = { type: 'template', status: 'all' };
+        if (category) params.category = category;
+        const response = await api.get('/pages', { params });
+        return response.data;
+    },
+
     getPage: async (id) => {
         const response = await api.get(`/admin/pages/id/${id}`);
         return response.data;

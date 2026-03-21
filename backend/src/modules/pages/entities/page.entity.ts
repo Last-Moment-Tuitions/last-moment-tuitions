@@ -24,6 +24,12 @@ export class Page {
   @Prop({ type: String, enum: ['page', 'template'], default: 'page' })
   type: string;
 
+  @Prop({ type: String, default: '' })
+  category: string;
+
+  @Prop({ type: MongooseSchema.Types.Mixed, default: {} })
+  defaultProps: Record<string, any>;
+
   @Prop({ type: [MongooseSchema.Types.Mixed], default: [] })
   gjsComponents: any[];
 

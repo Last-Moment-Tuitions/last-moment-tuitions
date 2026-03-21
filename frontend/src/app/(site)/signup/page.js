@@ -239,7 +239,7 @@ export default function SignUpPage() {
                                             required
                                             value={formData.password}
                                             onChange={handleChange}
-                                            className="rounded-md border-gray-200 bg-white h-11 text-sm placeholder:text-gray-400 focus-visible:ring-primary-500 pr-10"
+                                            className={`rounded-md border-gray-200 bg-white h-11 text-sm placeholder:text-gray-400 focus-visible:ring-primary-500 pr-10 ${errors.password ? "border-red-500" : ""}`}
                                         />
                                         <button
                                             type="button"
@@ -249,6 +249,7 @@ export default function SignUpPage() {
                                             {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                                         </button>
                                     </div>
+                                    {errors.password && <p className="text-xs text-red-500 font-medium ml-1">{errors.password}</p>}
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="confirmPassword" className="text-sm font-medium text-gray-700">Confirm Password *</Label>

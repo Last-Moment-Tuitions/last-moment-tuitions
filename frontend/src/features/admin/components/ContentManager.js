@@ -9,6 +9,13 @@ import { Plus, Edit, Trash, ExternalLink, Search, Check, Folder, ChevronRight, H
 
 export default function ContentManager({ view = 'page' }) {
     const { toast } = useToast();
+
+    // Sections are stored as type:template in MongoDB but displayed separately in the UI
+    const apiType = view === 'section' ? 'template' : view;
+    // Human-readable labels
+    const viewLabel = view === 'section' ? 'Section' : view === 'template' ? 'Template' : 'Page';
+    const viewLabelPlural = viewLabel + 's';
+
     // Navigation State
     const [currentFolder, setCurrentFolder] = useState(null); // null = root
     const [breadcrumbs, setBreadcrumbs] = useState([{ id: null, name: 'Home' }]);
@@ -227,15 +234,19 @@ export default function ContentManager({ view = 'page' }) {
             <div className="flex flex-col gap-4 border-b border-gray-100 pb-6">
                 <div className="flex md:items-center justify-between gap-4">
                     <div>
-                        <h1 className="text-xl font-semibold text-gray-900 tracking-tight capitalize">{view}s Manager</h1>
+                        <h1 className="text-xl font-semibold text-gray-900 tracking-tight capitalize">{viewLabelPlural} Manager</h1>
+                        {view === 'section' && (
+                            <p className="text-sm text-gray-500 mt-0.5">Reusable sections available in the page editor block panel</p>
+                        )}
                     </div>
                     <div className="flex gap-2">
                         <Button onClick={handleCreateFolderClick} variant="outline" className="h-9 gap-2 text-gray-700 border-gray-200">
                             <FolderPlus className="w-4 h-4" /> New Folder
                         </Button>
-                        <Link href={`/admin/pages/create?type=${view}&folder=${currentFolder || ''}`}>
+                        {/* Sections route to create page with type=template so they're stored correctly */}
+                        <Link href={`/admin/pages/create?type=${apiType}&folder=${currentFolder || ''}`}>
                             <Button className="bg-gray-900 hover:bg-black text-white px-4 py-2 h-9 text-sm font-medium shadow-sm gap-2">
-                                <Plus className="w-4 h-4" /> New {view === 'template' ? 'Template' : 'Page'}
+                                <Plus className="w-4 h-4" /> New {viewLabel}
                             </Button>
                         </Link>
                     </div>
@@ -260,7 +271,7 @@ export default function ContentManager({ view = 'page' }) {
             {/* Controls */}
             <div className="flex justify-between items-center">
                 <div className="text-sm text-gray-500">
-                    {folders.length} Folders, {pages.length} Pages
+                    {folders.length} Folders, {pages.length} {viewLabelPlural}
                 </div>
                 <div className="relative w-full md:w-64">
                     <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
@@ -361,10 +372,10 @@ export default function ContentManager({ view = 'page' }) {
                                     {item.title}
                                 </h3>
                                 <p className="text-xs text-gray-400 font-mono truncate">
-                                    {view === 'template' ? item._id : `/${item.slug}`}
-                                    {view === 'template' && (
+                                    {view === 'page' ? `/${item.slug}` : item.category ? `category: ${item.category}` : item._id}
+                                    {(view === 'template' || view === 'section') && (
                                         <button onClick={() => copyToClipboard(item._id)} className="ml-2 hover:text-black inline-flex align-middle">
-                                            {copiedId === item._id ? <Check className="w-3 h-3 text-green-500" /> : <span className="text-[10px] uppercase border px-1 rounded">Copy</span>}
+                                            {copiedId === item._id ? <Check className="w-3 h-3 text-green-500" /> : <span className="text-[10px] uppercase border px-1 rounded">Copy ID</span>}
                                         </button>
                                     )}
                                 </p>
@@ -380,6 +391,11 @@ export default function ContentManager({ view = 'page' }) {
                                     {item.viewCount || 0} views
                                 </span>
                             )}
+                            {view === 'section' && item.category && (
+                                <span className="flex items-center gap-1 text-orange-500 font-medium">
+                                    <span className="uppercase tracking-wide text-[10px]">{item.category}</span>
+                                </span>
+                            )}
                         </div>
                     </div>
                 ))}
@@ -390,12 +406,17 @@ export default function ContentManager({ view = 'page' }) {
                         <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mb-4">
                             <Folder className="w-8 h-8 text-gray-300" />
                         </div>
-                        <h3 className="text-lg font-medium text-gray-900">This folder is empty</h3>
+                        <h3 className="text-lg font-medium text-gray-900">No {viewLabelPlural.toLowerCase()} yet</h3>
                         <p className="text-gray-500 mt-1 max-w-sm mx-auto">
-                            Get started by creating a new folder or adding a page here.
+                            {view === 'section'
+                                ? 'Create reusable sections that appear as blocks in the page editor.'
+                                : 'Get started by creating a new folder or adding a page here.'}
                         </p>
                         <div className="mt-6 flex justify-center gap-3">
                             <Button onClick={handleCreateFolderClick} variant="outline">Create Folder</Button>
+                            <Link href={`/admin/pages/create?type=${apiType}&folder=${currentFolder || ''}`}>
+                                <Button className="bg-gray-900 text-white">New {viewLabel}</Button>
+                            </Link>
                         </div>
                     </div>
                 )}
