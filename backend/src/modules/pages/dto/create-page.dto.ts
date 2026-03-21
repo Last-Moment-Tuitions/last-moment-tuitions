@@ -39,6 +39,13 @@ export class CreatePageDto {
     @IsEnum(['page', 'template'])
     type?: string;
 
+    @IsString()
+    @IsOptional()
+    category?: string;
+
+    @IsOptional()
+    defaultProps?: Record<string, any>;
+
     @IsEnum(PageStatus)
     @IsOptional()
     status?: PageStatus;

@@ -6,6 +6,7 @@ import { initEditor } from '@/features/editor/core/editor/Manager';
 import { loadBlocks } from '@/features/editor/core/blocks/basic';
 import { loadAdvancedBlocks } from '@/features/editor/core/blocks/advanced';
 import { loadTemplateRefBlock } from '@/features/editor/core/blocks/templateRef';
+import { loadTemplateBlocks } from '@/features/editor/core/blocks/templateBlocks';
 import '@/features/editor/core/editor/editor.css';
 import { Button } from '@/components/ui';
 import { Save, ArrowLeft, Eye, EyeOff, Settings } from 'lucide-react';
@@ -25,10 +26,13 @@ export function Editor({ pageId }) {
         const editor = initEditor(pageId);
         editorRef.current = editor;
 
-        // Load Blocks
+        // Load Blocks (sync)
         loadBlocks(editor);
         loadAdvancedBlocks(editor);
         loadTemplateRefBlock(editor);
+
+        // Load Section/Template Blocks from API (async, non-blocking)
+        loadTemplateBlocks(editor);
 
         let isMounted = true;
 
@@ -36,7 +40,7 @@ export function Editor({ pageId }) {
         const fetchPage = async () => {
             try {
                 const page = await adminService.getPage(pageId);
-                
+
                 if (!isMounted) return;
 
                 if (page.gjsComponents && (!Array.isArray(page.gjsComponents) || page.gjsComponents.length > 0)) {
@@ -136,10 +140,10 @@ export function Editor({ pageId }) {
                         {isPreview ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                         Preview
                     </Button>
-                    <Button 
-                        onClick={() => setRightSidebarOpen(!rightSidebarOpen)} 
-                        variant="outline" 
-                        size="sm" 
+                    <Button
+                        onClick={() => setRightSidebarOpen(!rightSidebarOpen)}
+                        variant="outline"
+                        size="sm"
                         className="bg-gray-800 border-gray-700 text-gray-300 hover:text-white lg:hidden"
                     >
                         <Settings className="w-4 h-4" />
@@ -179,7 +183,7 @@ export function Editor({ pageId }) {
                 </div>
 
                 {/* Properties Sidebar (Right) */}
-                <div 
+                <div
                     className={`
                         absolute lg:relative right-0 top-0 h-full w-64 bg-gray-800 border-l border-gray-700 flex flex-col text-white z-40 transition-transform duration-300 ease-in-out
                         ${isPreview ? 'hidden' : 'flex'}

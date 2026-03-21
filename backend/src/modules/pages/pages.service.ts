@@ -61,21 +61,24 @@ export class PagesService {
   }
 
   async findAll(query: any) {
-    const { folder, type, status } = query;
+    const { folder, type, status, category } = query;
     const filter: any = {};
     if (folder !== undefined) {
       filter.folder = (folder === 'null' || !folder) ? null : folder;
     }
     if (type) filter.type = type;
+    if (category) filter.category = category;
 
-    if (status && status !== 'all') {
+    if (status === 'all') {
+      // No status filter — return all documents (used by editor block loader)
+    } else if (status && status !== 'all') {
       filter.status = status;
     } else if (!status) {
       filter.status = 'published';
     }
 
     return this.pageModel.find(filter)
-      .select('title slug updatedAt folder type status viewCount')
+      .select('title slug updatedAt folder type status viewCount category defaultProps')
       .sort({ updatedAt: -1 })
       .exec();
   }
@@ -143,20 +146,35 @@ export class PagesService {
     return hierarchy;
   }
 
-  // Helper
-  private async _getOrCreateTemplate(slug: string, title: string, html: string, components: any[]) {
-    let template = await this.pageModel.findOne({ slug, type: 'template' }).exec();
-    if (!template) {
-      template = await new this.pageModel({
+  // Generic helper — creates any section/template if it doesn't exist yet
+  async _getOrCreateSection(
+    slug: string,
+    title: string,
+    category: string,
+    html: string,
+    css: string,
+    defaultProps: Record<string, any>,
+    components: any[] = []
+  ) {
+    let section = await this.pageModel.findOne({ slug, type: 'template' }).exec();
+    if (!section) {
+      section = await new this.pageModel({
         title,
         slug,
         type: 'template',
+        category,
         gjsHtml: html,
-        gjsCss: '',
+        gjsCss: css,
         gjsComponents: components,
-        status: PageStatus.PUBLISHED // Templates should default to published to be usable
+        defaultProps,
+        status: PageStatus.PUBLISHED,
       }).save();
     }
-    return template._id;
+    return section._id;
+  }
+
+  // Legacy alias — kept for backwards compat with existing page creation logic
+  private async _getOrCreateTemplate(slug: string, title: string, html: string, components: any[]) {
+    return this._getOrCreateSection(slug, title, '', html, '', {}, components);
   }
 }
