@@ -17,7 +17,17 @@
  */
 
 // Module-level template cache (survives re-renders, cleared on page reload)
-const _templateCache = new Map();
+export const _templateCache = new Map();
+
+if (typeof window !== 'undefined') {
+    window.addEventListener('clear-template-cache', (e) => {
+        if (e.detail && e.detail.id) {
+            _templateCache.delete(e.detail.id);
+        } else {
+            _templateCache.clear();
+        }
+    });
+}
 
 /**
  * Convert a variable name to a human-readable trait label.
@@ -333,19 +343,23 @@ export const loadTemplateRefBlock = (editor) => {
                     <style>@keyframes spin{100%{transform:rotate(360deg)}}</style>`;
 
                 try {
-                    const configModule = await import('@/lib/config');
-                    const API_BASE_URL = configModule.default;
-
                     // ── Fetch with cache ───────────────────────────────────────
                     let templateData;
                     if (_templateCache.has(templateId)) {
                         templateData = _templateCache.get(templateId);
                     } else {
-                        const res = await fetch(`${API_BASE_URL}/pages/id/${templateId}`);
-                        if (!res.ok) throw new Error(`API Error: ${res.status} for template ${templateId}`);
-                        const json = await res.json();
-                        if (!json.success || !json.data) throw new Error(`No data for template ${templateId}`);
-                        templateData = json.data;
+                        const { adminService } = await import('@/services/adminService');
+                        templateData = await adminService.getPage(templateId);
+                        
+                        if (!templateData) {
+                             throw new Error(`No data for template ${templateId}`);
+                        }
+                        
+                        // Handle the case where the backend wraps it in 'data' even if interceptor missed it somehow
+                        if (templateData.data) {
+                            templateData = templateData.data;
+                        }
+
                         _templateCache.set(templateId, templateData);
                     }
 
@@ -390,6 +404,18 @@ export const loadTemplateRefBlock = (editor) => {
                             textVars.set(name, fetchedDefaultProps[name] || el.textContent.trim() || '');
                         }
                     });
+
+                    // Auto-detect {{ variable }} text in the HTML for backward compatibility
+                    // This creates traits for plain {{ variable }} placements so users can edit them.
+                    const templateRegex = /\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g;
+                    let match;
+                    while ((match = templateRegex.exec(html)) !== null) {
+                        const name = match[1];
+                        if (!textVars.has(name) && !name.startsWith('img_') && !name.startsWith('video_')) {
+                            // Only add if not already captured by other rules to avoid duplicates
+                            textVars.set(name, fetchedDefaultProps[name] || `{{${name}}}`);
+                        }
+                    }
 
                     // 2. data-var-src (image src)
                     const imageVars = new Map();  // varName → defaultSrc
@@ -706,7 +732,18 @@ export const loadTemplateRefBlock = (editor) => {
                         }
                     });
 
-                    const finalHtml = renderDoc.body.innerHTML;
+                    let finalHtml = renderDoc.body.innerHTML;
+
+                    // Apply {{ variable }} global text replacements for backwards compatibility
+                    textVars.forEach((_, name) => {
+                        const propKey = `prop_${name}`;
+                        const value = this.model.get(propKey);
+                        if (value !== undefined && value !== null) {
+                            // Replace exactly {{name}} or {{ name }} in the final HTML
+                            const regex = new RegExp(`\\{\\{\\s*${name}\\s*\\}\\}`, 'g');
+                            finalHtml = finalHtml.replace(regex, value);
+                        }
+                    });
 
                     // ── Dynamic module row expansion ───────────────────────────
                     // If modules_count > base module count, inject additional rows
@@ -783,6 +820,158 @@ export const loadTemplateRefBlock = (editor) => {
                             htmlToRender = tempDoc.body.innerHTML;
                         }
                     }
+
+                    // ── Recursive Nested Template Resolution ───────────────────
+                    const resolveNested = async (htmlString) => {
+                        const tempParser = new DOMParser();
+                        const tempDoc = tempParser.parseFromString(htmlString, 'text/html');
+                        const nestedRefs = tempDoc.querySelectorAll('template-ref');
+                        if (nestedRefs.length === 0) return htmlString;
+                        
+                        const { adminService } = await import('@/services/adminService');
+                        for (const ref of nestedRefs) {
+                            const nId = ref.getAttribute('data-template-id');
+                            if (!nId) continue;
+                            
+                            try {
+                                let nData;
+                                if (_templateCache.has(nId)) {
+                                    nData = _templateCache.get(nId);
+                                } else {
+                                    nData = await adminService.getPage(nId);
+                                    if (nData?.data) nData = nData.data;
+                                    _templateCache.set(nId, nData);
+                                }
+                                
+                                if (nData) {
+                                    let nHtml = nData.gjsHtml || '';
+                                    let nProps = nData.defaultProps || {};
+                                    const rawProps = ref.getAttribute('data-props');
+                                    if (rawProps) {
+                                        try { Object.assign(nProps, JSON.parse(rawProps.replace(/&quot;/g, '"'))); } catch(e){}
+                                    }
+                                    
+                                    for (const [key, val] of Object.entries(nProps)) {
+                                        if (val !== undefined && val !== null) {
+                                            const regex = new RegExp(`\\{\\{\\s*${key}\\s*\\}\\}`, 'g');
+                                            nHtml = nHtml.replace(regex, val);
+                                        }
+                                    }
+                                    
+                                    const nDoc = tempParser.parseFromString(nHtml, 'text/html');
+                                    nDoc.querySelectorAll('[data-var]').forEach(el => {
+                                        const name = el.getAttribute('data-var');
+                                        if (nProps[name] !== undefined) {
+                                            if (el.children.length === 0) {
+                                                el.textContent = nProps[name];
+                                            } else {
+                                                el.childNodes.forEach(node => {
+                                                    if (node.nodeType === 3 && node.textContent.trim()) {
+                                                        node.textContent = nProps[name];
+                                                    }
+                                                });
+                                            }
+                                        }
+                                    });
+                                    nDoc.querySelectorAll('[data-var-src]').forEach(el => {
+                                        const name = el.getAttribute('data-var-src');
+                                        if (nProps[name]) el.setAttribute('src', nProps[name]);
+                                    });
+                                    nDoc.querySelectorAll('[data-var-video]').forEach(el => {
+                                        const name = el.getAttribute('data-var-video');
+                                        if (nProps[name]) el.setAttribute('src', nProps[name]);
+                                    });
+                                    nDoc.querySelectorAll('[data-var-link]').forEach(el => {
+                                        const name = el.getAttribute('data-var-link');
+                                        if (nProps[name]) el.setAttribute('href', nProps[name]);
+                                    });
+
+                                    // ── Dynamic module row expansion (nested) ─────────────────────────
+                                    const moduleEls = nDoc.querySelectorAll('[data-module]');
+                                    const baseModuleCount = moduleEls.length;
+                                    if (baseModuleCount > 0) {
+                                        const currentCount = parseInt(nProps['modules_count'] || baseModuleCount, 10);
+                                        if (currentCount > baseModuleCount) {
+                                            const lastModule = moduleEls[moduleEls.length - 1];
+                                            const parentList = lastModule?.parentElement;
+                                            if (parentList) {
+                                                for (let i = baseModuleCount + 1; i <= currentCount; i++) {
+                                                    const title = nProps[`mod${i}_title`] || `Module ${i}: New Topic`;
+                                                    const desc = nProps[`mod${i}_desc`] || '';
+                                                    const newRow = document.createElement('details');
+                                                    newRow.setAttribute('data-module', '');
+                                                    newRow.style.cssText = 'margin-bottom:8px; border:1px solid #e5e7eb; border-radius:8px; overflow:hidden;';
+                                                    newRow.innerHTML = `
+                                                        <summary style="display:flex; align-items:center; gap:12px; padding:14px 16px; cursor:pointer; background:#fff; list-style:none; font-weight:600; font-size:14px; color:#111827;">
+                                                            <span style="width:26px; height:26px; background:#e5e7eb; color:#374151; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; flex-shrink:0;">${i}</span>
+                                                            <span style="flex:1;" data-module-title>${title}</span>
+                                                            <span class="mod-chevron">›</span>
+                                                        </summary>
+                                                        ${desc ? `<div style="padding:12px 16px 16px 54px; background:#fff; border-top:1px solid #f3f4f6;"><p style="font-size:13px; color:#6b7280; margin:0; line-height:1.6;">${desc}</p></div>` : ''}
+                                                    `;
+                                                    parentList.appendChild(newRow);
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    // ── Dynamic testimonial row expansion (nested) ────────────────────
+                                    const testimonialEls = nDoc.querySelectorAll('[data-testimonial]');
+                                    const baseTestCount = testimonialEls.length;
+                                    if (baseTestCount > 0) {
+                                        const currentCount = parseInt(nProps['testimonials_count'] || baseTestCount, 10);
+                                        if (currentCount > baseTestCount) {
+                                            const lastTest = testimonialEls[testimonialEls.length - 1];
+                                            const parentList = lastTest?.parentElement;
+                                            if (parentList) {
+                                                for (let i = baseTestCount + 1; i <= currentCount; i++) {
+                                                    const prefix = `test_t${i}_`;
+                                                    const company = nProps[`${prefix}company`] || 'Company';
+                                                    const desc = nProps[`${prefix}desc`] || '';
+                                                    const name = nProps[`${prefix}name`] || 'Name';
+                                                    const role = nProps[`${prefix}role`] || 'Role';
+                                                    const logoSrc = nProps[`${prefix}logo`] || `https://placehold.co/40x40/475569/ffffff?text=C${i}`;
+                                                    const avatarSrc = nProps[`${prefix}avatar`] || `https://i.pravatar.cc/60?img=${i + 10}`;
+
+                                                    const newRow = document.createElement('div');
+                                                    newRow.setAttribute('data-testimonial', '');
+                                                    newRow.style.cssText = 'flex:0 0 320px; background:#fff; border-radius:16px; padding:32px; box-shadow:0 10px 25px rgba(0,0,0,0.05); border:1px solid #f1f5f9; display:flex; flex-direction:column; min-height:280px; scroll-snap-align:start;';
+                                                    newRow.innerHTML = `
+                                                        <div style="display:flex; align-items:center; gap:12px; margin-bottom:24px;">
+                                                            <img data-var-src="${prefix}logo" src="${logoSrc}" style="width:32px; height:32px; object-fit:contain; border-radius:50%;" />
+                                                            <span style="font-weight:700; font-size:18px; color:#334155; text-transform:uppercase;" data-var="${prefix}company">${company}</span>
+                                                        </div>
+                                                        <p style="font-size:15px; color:#475569; line-height:1.6; flex:1; margin:0 0 32px 0;" data-var="${prefix}desc">${desc}</p>
+                                                        <div style="display:flex; align-items:center; gap:16px;">
+                                                            <img data-var-src="${prefix}avatar" src="${avatarSrc}" style="width:48px; height:48px; border-radius:50%; object-fit:cover;" />
+                                                            <div>
+                                                                <div style="font-weight:700; font-size:15px; color:#1e293b;" data-var="${prefix}name">${name}</div>
+                                                                <div style="font-size:13px; color:#64748b;" data-var="${prefix}role">${role}</div>
+                                                            </div>
+                                                        </div>
+                                                    `;
+                                                    parentList.appendChild(newRow);
+                                                }
+                                            }
+                                        }
+                                    }
+                                    
+                                    nHtml = nDoc.body.innerHTML;
+                                    
+                                    const wrapper = document.createElement('div');
+                                    wrapper.className = ref.className || 'template-ref-placeholder';
+                                    wrapper.setAttribute('data-template-id', nId);
+                                    wrapper.innerHTML = await resolveNested(nHtml);
+                                    ref.replaceWith(wrapper);
+                                }
+                            } catch (e) {
+                                console.error('[templateRef] Failed to resolve nested template', e);
+                            }
+                        }
+                        return tempDoc.body.innerHTML;
+                    };
+
+                    htmlToRender = await resolveNested(htmlToRender);
 
                     // ── Light DOM Rendering ────────────────────────────────────
                     // NO Shadow DOM — inject directly so Tailwind & global CSS apply

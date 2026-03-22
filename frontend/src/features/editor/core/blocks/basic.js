@@ -14,6 +14,20 @@ export const loadBlocks = (editor) => {
     </section>`
     });
 
+    bm.add('raw-html', {
+        label: `
+            <svg class="w-8 h-8 mb-1 mx-auto text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path>
+            </svg>
+            <div class="gjs-block-label">Raw HTML Code</div>
+        `,
+        category: 'Basic',
+        content: {
+            type: 'custom-code',
+            components: '<div style="padding:10px; border:2px dashed #f97316; color:#f97316; text-align:center;">Double click to edit HTML</div>',
+        }
+    });
+
     // --- TYPOGRAPHY ---
     bm.add('h1', {
         label: 'Heading 1',
