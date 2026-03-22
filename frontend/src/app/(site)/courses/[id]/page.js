@@ -11,6 +11,7 @@ import {
 import Link from 'next/link';
 import { Button, Badge, Accordion, AccordionItem, AccordionTrigger, AccordionContent, CourseCard } from '@/components/ui';
 import { useCart } from '@/context/CartContext';
+import { coursesApi } from '@/services/courses.api';
 
 // --- MOCK DATA ---
 const COURSE_DATA = {
@@ -156,12 +157,127 @@ const RELATED_COURSES = [
     }
 ];
 
+const DEFAULT_COURSE_IMAGE = 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=1000&auto=format&fit=crop';
+
+function formatDiscount(price, originalPrice) {
+    if (!originalPrice || originalPrice <= price) return '';
+    const discountPercent = Math.round(((originalPrice - price) / originalPrice) * 100);
+    return `${discountPercent}% off`;
+}
+
+function mapCourseData(course) {
+    const price = Number(course?.price || 0);
+    const originalPrice = Number(course?.original_price || 0);
+
+    return {
+        id: course?._id || '',
+        title: course?.title || 'Untitled Course',
+        subtitle: course?.subtitle || '',
+        category: course?.category || 'Course',
+        subcategory: course?.sub_category || '',
+        topic: course?.topic || '',
+        rating: Number(course?.average_rating || 0),
+        ratingCount: Number(course?.rating_count || 0),
+        students: Number(course?.enrollment_count || 0),
+        lastUpdated: course?.last_updated || '',
+        language: course?.language || 'English',
+        image: course?.thumbnail || DEFAULT_COURSE_IMAGE,
+        price,
+        originalPrice,
+        discount: formatDiscount(price, originalPrice),
+        instructor: {
+            name: course?.instructor?.name || 'Unknown Instructor',
+            role: course?.instructor?.role || '',
+            image: course?.instructor?.image || DEFAULT_COURSE_IMAGE,
+            bio: course?.instructor?.bio || '',
+            courses: 0,
+            students: Number(course?.enrollment_count || 0),
+            reviews: Number(course?.review_count || 0),
+            rating: Number(course?.average_rating || 0),
+        },
+        level: course?.level || 'All Levels',
+        subtitles: course?.subtitle_language || '',
+        description: course?.descriptions || '',
+        whatYouWillLearn: course?.what_to_learn || [],
+        requirements: course?.requirements || [],
+        whoIsFor: course?.target_audience || [],
+        curriculum: {
+            sections: 0,
+            lectures: 0,
+            duration: course?.duration || '',
+            content: [],
+        },
+    };
+}
+
 export default function CourseDetailPage({ params }) {
     const { id } = use(params);
     const [activeTab, setActiveTab] = useState('overview');
+    const [data, setData] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
     const { addToCart } = useCart();
 
-    const data = COURSE_DATA;
+    useEffect(() => {
+        const fetchCourse = async () => {
+            try {
+                setLoading(true);
+                const response = await coursesApi.getCourse(id);
+                const course = response?.data;
+
+                if (!course) {
+                    setError('Course not found.');
+                    setData(null);
+                    return;
+                }
+
+                setData(mapCourseData(course));
+                setError('');
+            } catch (err) {
+                console.error('Failed to load course details:', err);
+                setError('Failed to load course details.');
+                setData(null);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        if (id) {
+            fetchCourse();
+        }
+    }, [id]);
+
+    if (loading) {
+        return (
+            <div className="bg-gray-50 min-h-screen py-8 font-sans">
+                <div className="container mx-auto px-4">
+                    <div className="flex items-center justify-center min-h-[400px]">
+                        <div className="text-center">
+                            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
+                            <p className="text-gray-600">Loading course...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    if (error || !data) {
+        return (
+            <div className="bg-gray-50 min-h-screen py-8 font-sans">
+                <div className="container mx-auto px-4">
+                    <div className="flex items-center justify-center min-h-[400px]">
+                        <div className="text-center">
+                            <p className="text-red-600 mb-4">{error || 'Course not found.'}</p>
+                            <Button href="/courses" variant="primary">
+                                Back to Courses
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="bg-gray-50 min-h-screen pb-20 font-sans">
@@ -432,7 +548,18 @@ export default function CourseDetailPage({ params }) {
                             <h3 className="text-2xl font-bold text-gray-900 mb-8">Related Courses</h3>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                                 {RELATED_COURSES.slice(0, 3).map((course) => (
-                                    <CourseCard key={course.id} course={course} />
+                                    <CourseCard
+                                        key={course.id}
+                                        id={course.id}
+                                        title={course.title}
+                                        category={course.category}
+                                        price={course.price}
+                                        oldPrice={course.originalPrice}
+                                        rating={course.rating}
+                                        students={course.students}
+                                        image={course.image}
+                                        instructor={course.instructor}
+                                    />
                                 ))}
                             </div>
                         </section>

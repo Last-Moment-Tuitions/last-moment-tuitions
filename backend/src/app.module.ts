@@ -16,6 +16,7 @@ import { TestimonialsModule } from './modules/testimonials/testimonials.module';
 import { EmailModule } from './email/email.module';
 import { CartModule } from './modules/cart/cart.module';
 import { UploadsModule } from './modules/uploads/uploads.module';
+import { WishlistModule } from './modules/wishlist/wishlist.module';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { UploadsModule } from './modules/uploads/uploads.module';
     TestimonialsModule,
     MenusModule,
     CartModule,
+    WishlistModule,
     UploadsModule,
   ],
 })

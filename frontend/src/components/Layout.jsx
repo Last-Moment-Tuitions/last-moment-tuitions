@@ -99,7 +99,7 @@ export function Header() {
                 </ul>
 
                 {/* Right Section: Auth Buttons */}
-                <div className="hidden md:flex items-center gap-3 xl:gap-4">
+                <div className="hidden lg:flex items-center gap-3 xl:gap-4">
                     {/* Shopping Cart Icon - ALWAYS Visible */}
                     <Link
                         href="/cart"
