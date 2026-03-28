@@ -204,6 +204,131 @@ const CURRICULUM_HTML = `
     </div>
 </section>`.trim();
 
+// ─── Hero Section 2 HTML (App Launch Style) ──────────────────────────────────
+const HERO_SECTION_2_HTML = `
+<section style="background:#424c5a; font-family: 'Inter', sans-serif; padding: 100px 0 160px 0; overflow: hidden; position: relative;">
+    <div style="max-width:1200px; margin:0 auto; padding:0 24px; display:flex; align-items:center; flex-wrap:wrap; gap:60px; position:relative; z-index:2;">
+        <!-- Left Content -->
+        <div style="flex:1; min-width:320px;">
+            <h1 style="font-size:clamp(42px,5vw,56px); font-weight:800; line-height:1.2; margin:0 0 24px 0;">
+                <div style="color:#ffffff;" data-var="hero2_headline_part1">Launch Your App</div>
+                <div style="color:#cbd5e1;" data-var="hero2_headline_part2">Grow Your Business</div>
+            </h1>
+            <p style="font-size:18px; color:#f1f5f9; line-height:1.6; margin:0 0 40px 0; max-width:480px;" data-var="hero2_subtext">
+                Amet nunc diam orci duis ut sit diam arcu, nec. Eleifend proin massa tincidunt viverra lectus pulvinar.
+            </p>
+            <div>
+                <a href="#" style="display:inline-block; border:2px solid #ffffff; color:#ffffff; padding:14px 36px; border-radius:999px; font-weight:700; font-size:16px; text-decoration:none; transition:all 0.3s;" data-var="hero2_cta_text" data-var-link="hero2_cta_link">Free Launch</a>
+            </div>
+        </div>
+        <!-- Right Image -->
+        <div style="flex:1; display:flex; justify-content:center; align-items:center; min-width:320px;">
+            <img data-var-src="hero2_illustration" src="https://placehold.co/600x500/transparent/ffffff?text=App+Mockup+Placeholder" alt="App Mockup" style="width:100%; max-width:560px; height:auto; object-fit:contain;" />
+        </div>
+    </div>
+    <!-- Slanted Bottom -->
+    <div style="position:absolute; bottom:-120px; left:-10%; width:120%; height:200px; background:#ffffff; transform:rotate(-4deg); z-index:1;"></div>
+</section>`.trim();
+
+// ─── Hero Section 3 HTML (Teach Worldwide Style) ─────────────────────────────
+const HERO_SECTION_3_HTML = `
+<section style="background:#ffffff; font-family: 'Inter', sans-serif; padding: 100px 0; overflow: hidden; position: relative;">
+    <div style="max-width:1200px; margin:0 auto; padding:0 24px; display:flex; align-items:center; flex-wrap:wrap; gap:60px;">
+        <!-- Left Content -->
+        <div style="flex:1; min-width:320px;">
+            <h1 style="font-size:clamp(46px,6vw,64px); font-weight:900; line-height:1.1; color:#0f172a; margin:0 0 24px 0;">
+                <span style="position:relative; display:inline-block; margin-right:12px;">
+                    <span data-var="hero3_headline_focus" style="position:relative; z-index:2;">Teach</span>
+                    <span style="position:absolute; bottom:6px; left:-5px; width:110%; height:14px; background:#ea580c; z-index:1; border-radius:4px; transform:rotate(-2deg);"></span>
+                </span>
+                <span data-var="hero3_headline_rest">students worldwide</span>
+            </h1>
+            <p style="font-size:18px; color:#475569; line-height:1.6; margin:0 0 40px 0; max-width:480px;" data-var="hero3_subtext">
+                Amet nunc diam orci duis ut sit diam arcu, nec. Eleifend proin massa tincidunt viverra lectus pulvinar. Nunc ipsum est pellentesque turpis ultricies.
+            </p>
+            
+            <div style="display:flex; flex-wrap:wrap; gap:24px; align-items:center; margin-bottom:60px;">
+                <a href="#" style="background:#ea580c; color:#ffffff; padding:14px 36px; border-radius:6px; font-weight:700; font-size:16px; text-decoration:none;" data-var="hero3_btn_1_text" data-var-link="hero3_btn_1_link">Sign Up Now</a>
+                <a href="#" style="display:flex; align-items:center; gap:8px; color:#2563eb; font-weight:600; font-size:16px; text-decoration:none;" data-var-link="hero3_btn_2_link">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M10 8l6 4-6 4V8z"/></svg>
+                    <span data-var="hero3_btn_2_text">View Demo</span>
+                </a>
+            </div>
+            
+            <div>
+                <p style="font-size:13px; font-weight:600; color:#64748b; margin:0 0 16px 0;" data-var="hero3_trusted_text">Trusted by leading companies</p>
+                <div style="display:flex; align-items:center; gap:24px; flex-wrap:wrap; opacity:0.6;">
+                    <img data-var-src="hero3_logo_1" src="https://placehold.co/100x30/transparent/475569?text=Logo+1" alt="Logo" style="height:24px; object-fit:contain;" />
+                    <img data-var-src="hero3_logo_2" src="https://placehold.co/100x30/transparent/475569?text=Logo+2" alt="Logo" style="height:24px; object-fit:contain;" />
+                    <img data-var-src="hero3_logo_3" src="https://placehold.co/100x30/transparent/475569?text=Logo+3" alt="Logo" style="height:24px; object-fit:contain;" />
+                    <img data-var-src="hero3_logo_4" src="https://placehold.co/100x30/transparent/475569?text=Logo+4" alt="Logo" style="height:24px; object-fit:contain;" />
+                </div>
+            </div>
+        </div>
+        <!-- Right Image -->
+        <div style="flex:1; display:flex; justify-content:center; align-items:center; min-width:320px;">
+            <img data-var-src="hero3_illustration" src="https://placehold.co/600x600/transparent/ea580c?text=Blob+Illustration+Placeholder" alt="Illustration" style="width:100%; max-width:600px; height:auto; object-fit:contain;" />
+        </div>
+    </div>
+</section>`.trim();
+
+// ─── Feature Section 2 HTML (Left Text, Right Video) ──────────────────────────
+const FEATURE_SECTION_2_HTML = `
+<section style="background:#f8fafc; font-family: 'Inter', sans-serif; padding: 100px 0; overflow: hidden;">
+    <div style="max-width:1200px; margin:0 auto; padding:0 24px; display:flex; align-items:center; flex-wrap:wrap; gap:60px;">
+        <!-- Left Content -->
+        <div style="flex:1; min-width:320px;">
+            <h2 style="font-size:clamp(32px,5vw,48px); font-weight:800; color:#0f172a; margin:0 0 24px 0;" data-var="feat1_heading">
+                Turpis risus facilisi
+            </h2>
+            <p style="font-size:18px; color:#475569; line-height:1.6; margin:0;" data-var="feat1_desc">
+                Augue feugiat mi, massa amet. Id purus aliquam bibendum purus dictum elementum nullam odio tellus. Imperdiet feugiat est odio fames magna orci. Augue purus aliquam, placerat vestibulum dictum pellentesque molestie. Facilisis pretium porta congue proin.
+            </p>
+        </div>
+        <!-- Right Image/Video Graphic -->
+        <div style="flex:1; min-width:320px; display:flex; justify-content:center; align-items:center;">
+            <img data-var-src="feat1_illustration" src="https://placehold.co/600x400/transparent/334155?text=Video+Thumbnail" alt="Feature Graphic" style="width:100%; max-width:600px; height:auto; object-fit:contain;" />
+        </div>
+    </div>
+</section>`.trim();
+
+// ─── Feature Section 3 HTML (Left Image, Right Text) ──────────────────────────
+const FEATURE_SECTION_3_HTML = `
+<section style="background:#f8fafc; font-family: 'Inter', sans-serif; padding: 100px 0; overflow: hidden;">
+    <div style="max-width:1200px; margin:0 auto; padding:0 24px; display:flex; align-items:center; flex-wrap:wrap-reverse; gap:60px;">
+        <!-- Left Image Graphic -->
+        <div style="flex:1; min-width:320px; display:flex; justify-content:center; align-items:center;">
+            <img data-var-src="feat2_illustration" src="https://placehold.co/600x500/transparent/334155?text=Phone+Composition" alt="Feature Graphic" style="width:100%; max-width:500px; height:auto; object-fit:contain;" />
+        </div>
+        <!-- Right Content -->
+        <div style="flex:1; min-width:320px;">
+            <h2 style="font-size:clamp(32px,5vw,48px); font-weight:800; color:#0f172a; margin:0 0 24px 0;" data-var="feat2_heading">
+                Sagittis sapien viverra
+            </h2>
+            <p style="font-size:18px; color:#475569; line-height:1.6; margin:0;" data-var="feat2_desc">
+                Id turpis ante nunc, id tempor. Diam, eros, eget suspendisse dolor tellus. Diam fringilla sed volutpat facilisi. Pulvinar vulputate facilisis vel eros. Auctor metus sed auctor tortor sed nulla. Urna massa eu vel blandit sed nisi gravida. Imperdiet parturient at purus bibendum risus auctor lacus tristique arcu. Arcu hac cursus faucibus id. Eu integer parturient risus magna eget massa. Risus molestie tempor, faucibus non ultricies. Nam vel mattis quis dui, condimentum mi volutpat ut aliquam.
+            </p>
+        </div>
+    </div>
+</section>`.trim();
+
+// ─── Feature Section 4 HTML (Gradient CTA) ────────────────────────────────────
+const CTA_SECTION_1_HTML = `
+<section style="font-family: 'Inter', sans-serif; padding: 60px 24px; display: flex; justify-content: center;">
+    <div style="background: linear-gradient(135deg, #1e40af 0%, #701a75 100%); border-radius: 24px; padding: 64px 24px; max-width: 1000px; width: 100%; text-align: center; color: #ffffff; box-shadow: 0 20px 40px rgba(0,0,0,0.1);">
+        <h2 style="font-size: clamp(32px, 5vw, 48px); font-weight: 800; margin: 0 0 20px 0; line-height: 1.2;" data-var="cta1_heading">
+            Join the community today
+        </h2>
+        <p style="font-size: 16px; color: #e2e8f0; line-height: 1.6; max-width: 600px; margin: 0 auto 32px auto;" data-var="cta1_desc">
+            Egestas fringilla aliquam leo, habitasse arcu varius lorem elit. Neque pellentesque donec et tellus ac varius tortor, bibendum. Nulla felis ac turpis at amet. Purus malesuada placerat arcu at enim elit in accumsan.
+        </p>
+        <a href="#" style="display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: #3b82f6; color: #ffffff; padding: 14px 32px; border-radius: 8px; font-weight: 700; font-size: 16px; text-decoration: none; transition: background 0.2s;" data-var-link="cta1_btn_link">
+            <span data-var="cta1_btn_text">Sign Up Free</span>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </a>
+    </div>
+</section>`.trim();
+
 // ─── Why Join Us HTML ────────────────────────────────────────────────────────
 const WHY_JOIN_US_HTML = `
 <section style="background-color:#FDFBF7; padding:100px 24px; font-family:'Inter', 'Segoe UI', sans-serif; display:flex; justify-content:center; overflow:hidden;">
@@ -444,6 +569,78 @@ const SECTIONS: SectionDefinition[] = [
             // Default props are dynamically injected inside templateRef.js automatically
             // via the loop `prop_test_t1_company`, so we don't strictly need to hardcode them all here,
             // but we can let templateRef.js auto-detect them from the DOM strings!
+        },
+    },
+    {
+        slug: 'lmt-hero-app-launch',
+        title: 'Hero: App Launch',
+        category: 'hero',
+        html: HERO_SECTION_2_HTML,
+        css: '',
+        defaultProps: {
+            hero2_headline_part1: 'Launch Your App',
+            hero2_headline_part2: 'Grow Your Business',
+            hero2_subtext: 'Amet nunc diam orci duis ut sit diam arcu, nec. Eleifend proin massa tincidunt viverra lectus pulvinar.',
+            hero2_cta_text: 'Free Launch',
+            hero2_cta_link: '#',
+            hero2_illustration: 'https://placehold.co/600x500/transparent/ffffff?text=App+Mockup+Placeholder',
+        },
+    },
+    {
+        slug: 'lmt-hero-teach',
+        title: 'Hero: Teach Worldwide',
+        category: 'hero',
+        html: HERO_SECTION_3_HTML,
+        css: '',
+        defaultProps: {
+            hero3_headline_focus: 'Teach',
+            hero3_headline_rest: 'students worldwide',
+            hero3_subtext: 'Amet nunc diam orci duis ut sit diam arcu, nec. Eleifend proin massa tincidunt viverra lectus pulvinar. Nunc ipsum est pellentesque turpis ultricies.',
+            hero3_btn_1_text: 'Sign Up Now',
+            hero3_btn_1_link: '#',
+            hero3_btn_2_text: 'View Demo',
+            hero3_btn_2_link: '#',
+            hero3_trusted_text: 'Trusted by leading companies',
+            hero3_logo_1: 'https://placehold.co/100x30/transparent/475569?text=Logo+1',
+            hero3_logo_2: 'https://placehold.co/100x30/transparent/475569?text=Logo+2',
+            hero3_logo_3: 'https://placehold.co/100x30/transparent/475569?text=Logo+3',
+        },
+    },
+    {
+        slug: 'lmt-feature-video',
+        title: 'Feature: Video Focus',
+        category: 'features',
+        html: FEATURE_SECTION_2_HTML,
+        css: '',
+        defaultProps: {
+            feat1_heading: 'Turpis risus facilisi',
+            feat1_desc: 'Augue feugiat mi, massa amet. Id purus aliquam bibendum purus dictum elementum nullam odio tellus. Imperdiet feugiat est odio fames magna orci. Augue purus aliquam, placerat vestibulum dictum pellentesque molestie. Facilisis pretium porta congue proin.',
+            feat1_illustration: 'https://placehold.co/600x400/transparent/334155?text=Video+Thumbnail',
+        },
+    },
+    {
+        slug: 'lmt-feature-composition',
+        title: 'Feature: Image Composition',
+        category: 'features',
+        html: FEATURE_SECTION_3_HTML,
+        css: '',
+        defaultProps: {
+            feat2_heading: 'Sagittis sapien viverra',
+            feat2_desc: 'Id turpis ante nunc, id tempor. Diam, eros, eget suspendisse dolor tellus. Diam fringilla sed volutpat facilisi. Pulvinar vulputate facilisis vel eros. Auctor metus sed auctor tortor sed nulla. Urna massa eu vel blandit sed nisi gravida. Imperdiet parturient at purus bibendum risus auctor lacus tristique arcu. Arcu hac cursus faucibus id. Eu integer parturient risus magna eget massa. Risus molestie tempor, faucibus non ultricies. Nam vel mattis quis dui, condimentum mi volutpat ut aliquam.',
+            feat2_illustration: 'https://placehold.co/600x500/transparent/334155?text=Image+Composition',
+        },
+    },
+    {
+        slug: 'lmt-feature-cta-join',
+        title: 'Feature: Gradient CTA',
+        category: 'features',
+        html: CTA_SECTION_1_HTML,
+        css: '',
+        defaultProps: {
+            cta1_heading: 'Join the community today',
+            cta1_desc: 'Egestas fringilla aliquam leo, habitasse arcu varius lorem elit. Neque pellentesque donec et tellus ac varius tortor, bibendum. Nulla felis ac turpis at amet. Purus malesuada placerat arcu at enim elit in accumsan.',
+            cta1_btn_text: 'Sign Up Free',
+            cta1_btn_link: '#',
         },
     },
 ];
