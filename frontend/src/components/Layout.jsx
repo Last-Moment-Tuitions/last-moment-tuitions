@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Home, BookOpen, Stethoscope, Cog, BriefcaseBusiness, GraduationCap, Loader2 } from 'lucide-react';
@@ -8,7 +8,7 @@ import { useToast } from '@/context/ToastContext';
 import contentService from '@/services/contentService';
 import menuService from '@/services/menuService';
 
-import { ChevronDown, Search, Menu, X, ArrowRight } from 'lucide-react';
+import { ChevronDown, Search, Menu, X, ArrowRight, User, Package, Settings, LogOut } from 'lucide-react';
 
 export function Header() {
     const pathname = usePathname();
@@ -17,6 +17,7 @@ export function Header() {
     const [navItems, setNavItems] = useState([]);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [loggingOut, setLoggingOut] = useState(false);
+    const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
 
     useEffect(() => {
         const fetchNav = async () => {
@@ -100,42 +101,17 @@ export function Header() {
                 <div className="hidden md:flex items-center gap-3 xl:gap-4">
                     {user ? (
                         <div className="flex items-center gap-4">
-                            {/* Profile */}
-                            <Link href="/profile" className="flex flex-col items-center cursor-pointer">
-                                <img
-                                    src={user?.profilePhoto || "/assets/default-avatar.svg"}
-                                    alt="Profile"
-                                    onError={(e) => {
-                                        e.currentTarget.src = "/assets/default-avatar.svg";
-                                    }}
-                                    className="w-10 h-10 rounded-full object-cover border border-gray-200 shadow-sm hover:scale-105 transition"
-                                />
-
-                                <span className="text-xs font-semibold text-gray-700 mt-1">
-                                    {user?.firstName || "User"}
-                                </span>
-                            </Link>
-
-                            {/* Logout Button */}
-                            <Button
-                                onClick={() => {
+                            {/* Profile Dropdown */}
+                            <UserDropdown
+                                user={user}
+                                isOpen={isProfileDropdownOpen}
+                                setIsOpen={setIsProfileDropdownOpen}
+                                loggingOut={loggingOut}
+                                onLogout={() => {
                                     setLoggingOut(true);
                                     logout(() => toast.success("Logged out successfully"));
                                 }}
-                                disabled={loggingOut}
-                                variant="outline"
-                                className="rounded-full px-5 py-2 text-sm font-bold shadow-sm whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                {loggingOut ? (
-                                    <>
-                                        <Loader2 className="w-4 h-4 animate-spin inline mr-2" />
-                                        Logging out...
-                                    </>
-                                ) : (
-                                    "Logout"
-                                )}
-                            </Button>
-
+                            />
                         </div>
                     ) : (
                         <>
@@ -231,23 +207,22 @@ export function Header() {
                     <div className="border-t border-gray-100 pt-4 flex flex-col gap-3">
                         {user ? (
                             <>
-                                <Link
-                                    href="/profile"
-                                    onClick={() => setIsMobileMenuOpen(false)}
-                                    className="flex items-center gap-3 px-4 py-3 hover:bg-primary-50 rounded-lg transition-colors border border-gray-100 bg-white shadow-sm ring-1 ring-black/5"
-                                >
-                                    <img
-                                        src={user?.profilePhoto || "/assets/default-avatar.svg"}
-                                        alt="Profile"
-                                        onError={(e) => { e.currentTarget.src = "/assets/default-avatar.svg"; }}
-                                        className="w-10 h-10 rounded-full object-cover border border-gray-200"
-                                    />
-                                    <div className="flex-1 min-w-0">
-                                        <div className="text-sm font-bold text-gray-900 truncate">{user.firstName} {user.lastName || ''}</div>
-                                        <div className="text-xs text-primary-600 font-medium">View Profile</div>
+                                {/* Mobile: Profile Card */}
+                                <Link href="/profile" onClick={() => setIsMobileMenuOpen(false)}>
+                                    <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-primary-50 to-accent-50 border border-primary-100">
+                                        <img
+                                            src={user?.profilePhoto || "/assets/default-avatar.svg"}
+                                            alt="Profile"
+                                            onError={(e) => { e.currentTarget.src = "/assets/default-avatar.svg"; }}
+                                            className="w-11 h-11 rounded-full object-cover border-2 border-white shadow-md"
+                                        />
+                                        <div className="flex-1 min-w-0">
+                                            <div className="text-sm font-bold text-gray-900 truncate">{user.firstName} {user.lastName || ''}</div>
+                                            <div className="text-xs text-gray-500 truncate">{user.email}</div>
+                                        </div>
                                     </div>
-                                    <ArrowRight size={16} className="text-gray-400" />
                                 </Link>
+
                                 <Button
                                     onClick={() => {
                                         setLoggingOut(true);
@@ -257,9 +232,13 @@ export function Header() {
                                         });
                                     }}
                                     variant="outline"
-                                    className="w-full justify-center py-2.5 text-sm font-bold"
+                                    className="w-full justify-center py-2.5 text-sm font-bold text-red-600 border-red-200 hover:bg-red-50"
                                 >
-                                    Logout
+                                    {loggingOut ? (
+                                        <><Loader2 className="w-4 h-4 animate-spin inline mr-2" />Logging out...</>
+                                    ) : (
+                                        <><LogOut className="w-4 h-4 inline mr-2" />Logout</>
+                                    )}
                                 </Button>
                             </>
                         ) : (
@@ -276,6 +255,112 @@ export function Header() {
                 </div>
             )}
         </header>
+    );
+}
+
+/* ─── Profile Dropdown Component ─────────────────────────────────────── */
+function UserDropdown({ user, isOpen, setIsOpen, loggingOut, onLogout }) {
+    const dropdownRef = useRef(null);
+
+    // Close on outside click
+    useEffect(() => {
+        function handleClickOutside(e) {
+            if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+                setIsOpen(false);
+            }
+        }
+        if (isOpen) document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [isOpen, setIsOpen]);
+
+    const menuItems = [
+        { href: '/profile?tab=Dashboard', icon: <User size={16} />, label: 'Profile' },
+        { href: '/profile?tab=Courses', icon: <BookOpen size={16} />, label: 'My Courses' },
+        { href: '/profile?tab=Purchase History', icon: <Package size={16} />, label: 'Orders' },
+        { href: '/profile?tab=Settings', icon: <Settings size={16} />, label: 'Settings' },
+    ];
+
+    return (
+        <div className="relative" ref={dropdownRef}>
+            {/* Avatar trigger */}
+            <button
+                id="profile-dropdown-trigger"
+                onClick={() => setIsOpen(!isOpen)}
+                aria-haspopup="true"
+                aria-expanded={isOpen}
+                className="focus:outline-none"
+            >
+                <img
+                    src={user?.profilePhoto || "/assets/default-avatar.svg"}
+                    alt="Profile"
+                    onError={(e) => { e.currentTarget.src = "/assets/default-avatar.svg"; }}
+                    className="w-10 h-10 rounded-full object-cover border-2 border-white shadow-md hover:scale-105 hover:shadow-lg transition-all duration-200 cursor-pointer"
+                />
+            </button>
+
+            {/* Dropdown Panel */}
+            <div
+                className="absolute right-0 mt-3 w-72 z-50"
+                style={{
+                    transformOrigin: 'top right',
+                    opacity: isOpen ? 1 : 0,
+                    transform: isOpen ? 'translateY(0) scale(1)' : 'translateY(-8px) scale(0.97)',
+                    pointerEvents: isOpen ? 'auto' : 'none',
+                    transition: 'opacity 0.2s ease, transform 0.2s ease',
+                }}
+            >
+                <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden">
+
+                    {/* User Info Header */}
+                    <div className="px-5 py-4 bg-gradient-to-br from-primary-50 via-white to-accent-50 border-b border-gray-100">
+                        <div className="flex items-center gap-3">
+                            <img
+                                src={user?.profilePhoto || "/assets/default-avatar.svg"}
+                                alt="Profile"
+                                onError={(e) => { e.currentTarget.src = "/assets/default-avatar.svg"; }}
+                                className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-md"
+                            />
+                            <div className="flex-1 min-w-0">
+                                <p className="text-[15px] font-semibold text-gray-900 truncate">
+                                    {user.firstName} {user.lastName || ''}
+                                </p>
+                                <p className="text-[12px] text-gray-500 truncate mt-0.5">{user.email}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Menu Items */}
+                    <div className="py-2">
+                        {menuItems.map(({ href, icon, label }) => (
+                            <Link
+                                key={href}
+                                href={href}
+                                onClick={() => setIsOpen(false)}
+                                className="flex items-center gap-3 px-5 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-primary-600 transition-colors duration-150 group"
+                            >
+                                <span className="text-gray-400 group-hover:text-primary-500 transition-colors">{icon}</span>
+                                {label}
+                            </Link>
+                        ))}
+                    </div>
+
+                    {/* Logout */}
+                    <div className="border-t border-gray-100 px-3 py-3">
+                        <button
+                            onClick={() => { setIsOpen(false); onLogout(); }}
+                            disabled={loggingOut}
+                            className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-semibold text-red-500 hover:bg-red-50 transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {loggingOut ? (
+                                <><Loader2 size={16} className="animate-spin" />Logging out...</>
+                            ) : (
+                                <><LogOut size={16} />Logout</>
+                            )}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
     );
 }
 

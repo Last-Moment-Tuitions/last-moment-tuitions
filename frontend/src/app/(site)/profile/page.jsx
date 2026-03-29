@@ -2,18 +2,27 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Upload, Eye, EyeOff, ArrowRight, Loader2, PlayCircle, MonitorPlay, Trophy, Users, ArrowLeft, ShoppingBag, Clock, CheckCircle2, XCircle, ChevronRight, FileText, Mail, Instagram, Linkedin, X } from 'lucide-react';
 import { Button, Input, Label } from '@/components/ui';
 import API_BASE_URL from '@/lib/config';
 
 export default function ProfilePage() {
-    const { user, loading, checkUser } = useAuth();
+    const { user, loading, checkUser, logout } = useAuth();
     const { toast } = useToast();
     const router = useRouter();
 
     const [activeTab, setActiveTab] = useState('Dashboard');
     const tabs = ['Dashboard', 'Courses', 'Wishlist', 'Purchase History', 'Settings'];
+
+    // Sync active tab with ?tab= query param
+    const searchParams = useSearchParams();
+    useEffect(() => {
+        const tabParam = searchParams.get('tab');
+        if (tabParam && tabs.includes(tabParam)) {
+            setActiveTab(tabParam);
+        }
+    }, [searchParams]);
 
     // Password State
     const [showCurrentPassword, setShowCurrentPassword] = useState(false);
@@ -256,10 +265,12 @@ export default function ProfilePage() {
                 throw new Error(data.message || 'Failed to change password');
             }
 
-            toast.success('Password changed successfully');
+            toast.success('Password changed! Please sign in again.');
             setCurrentPassword('');
             setNewPassword('');
             setConfirmPassword('');
+            // Log out and redirect to sign-in
+            logout(() => router.push('/signin'));
         } catch (error) {
             toast.error(error.message);
         } finally {
@@ -300,6 +311,25 @@ export default function ProfilePage() {
                         </Button>
                     </div>
 
+                    <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6 mb-12 px-4 md:px-0">
+                        {[
+                            { icon: <PlayCircle className="text-[#063f78]" size={22} />, value: '957', label: 'Enrolled Courses' },
+                            { icon: <MonitorPlay className="text-[#063f78]" size={22} />, value: '6', label: 'Active Courses' },
+                            { icon: <Trophy className="text-[#063f78]" size={22} />, value: '951', label: 'Completed' },
+                            { icon: <Users className="text-[#063f78]" size={22} />, value: '241', label: 'Instructors' },
+                        ].map(({ icon, value, label }) => (
+                            <div key={label} className="bg-[#ecfeff] rounded-sm p-3 md:p-6 flex flex-col md:flex-row items-center md:items-center gap-2 md:gap-4 text-center md:text-left">
+                                <div className="bg-white p-2 md:p-3 rounded-sm flex items-center justify-center h-10 w-10 md:h-14 md:w-14 shadow-sm flex-shrink-0">
+                                    {icon}
+                                </div>
+                                <div>
+                                    <h3 className="text-xl md:text-2xl font-bold text-gray-900 leading-tight">{value}</h3>
+                                    <p className="text-xs md:text-sm text-gray-600 leading-snug">{label}</p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
                     {/* Tabs */}
                     <div className="px-8 overflow-x-auto hide-scrollbar">
                         <div className="flex gap-8 border-t border-gray-100 min-w-max">
@@ -327,20 +357,26 @@ export default function ProfilePage() {
                     {activeTab === 'Courses' ? (
                         <div className="w-full">
                             {/* My Courses Section */}
-                            {myCourses.length > 0 && (
-                                <div className="mb-12">
+                            {coursesLoading ? (
+                                <div className="flex flex-col items-center justify-center py-20">
+                                    <Loader2 className="w-10 h-10 text-[#063f78] animate-spin mb-4" />
+                                    <p className="text-gray-500 font-medium font-sans">Loading your courses...</p>
+                                </div>
+                            ) : myCourses.length > 0 ? (
+                                <div>
                                     <div className="flex items-center gap-2 mb-6">
                                         <div className="p-2 bg-[#eff6ff] rounded-sm">
                                             <MonitorPlay className="text-[#063f78]" size={20} />
                                         </div>
                                         <h2 className="text-2xl font-bold text-gray-900">My Courses</h2>
+                                        <span className="ml-2 text-xs font-bold text-[#063f78] bg-[#eff6ff] px-3 py-1 rounded-sm">{myCourses.length} ENROLLED</span>
                                     </div>
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                         {myCourses.map((course) => (
                                             <div key={course._id} className="border border-gray-100 rounded-sm overflow-hidden flex flex-col group hover:shadow-md transition-shadow">
                                                 <div className="h-44 w-full relative">
                                                     <img src={course.featuredImage || "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=500&q=80"} alt={course.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                                                    <div className="absolute top-3 left-3 bg-green-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-sm uppercase">Purchased</div>
+                                                    <div className="absolute top-3 left-3 bg-green-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-sm uppercase">Enrolled</div>
                                                 </div>
                                                 <div className="p-5 flex-1 flex flex-col justify-between bg-white">
                                                     <div>
@@ -359,130 +395,30 @@ export default function ProfilePage() {
                                             </div>
                                         ))}
                                     </div>
-                                    <hr className="mt-12 border-gray-100" />
+                                </div>
+                            ) : (
+                                <div className="text-center py-20 bg-gray-50/50 rounded-sm border border-dashed border-gray-200">
+                                    <div className="bg-white w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm border border-gray-100">
+                                        <MonitorPlay className="text-gray-300" size={32} />
+                                    </div>
+                                    <h3 className="text-lg font-bold text-gray-900 mb-2">No courses yet</h3>
+                                    <p className="text-gray-500 max-w-sm mx-auto mb-8 text-sm">
+                                        You haven't enrolled in any courses yet. Explore our catalog to start your learning journey.
+                                    </p>
+                                    <Button
+                                        onClick={() => router.push('/courses')}
+                                        className="bg-[#063f78] text-white hover:bg-[#053260] font-bold px-8 py-3 h-auto"
+                                    >
+                                        Explore Courses
+                                    </Button>
                                 </div>
                             )}
-
-                            {/* All Courses / Catalog Section */}
-                            <div className="mb-8">
-                                <div className="flex items-center justify-between mb-8">
-                                    <div className="flex items-center gap-2">
-                                        <div className="p-2 bg-[#eff6ff] rounded-sm">
-                                            <ShoppingBag className="text-[#063f78]" size={20} />
-                                        </div>
-                                        <h2 className="text-2xl font-bold text-gray-900">
-                                            {myCourses.length > 0 ? 'All Courses' : 'All Courses'}
-                                        </h2>
-                                    </div>
-                                    <div className="text-xs font-bold text-[#063f78] bg-[#eff6ff] px-3 py-1.5 rounded-sm">
-                                        {allCourses.length} COURSES
-                                    </div>
-                                </div>
-
-                                {coursesLoading ? (
-                                    <div className="flex flex-col items-center justify-center py-20">
-                                        <Loader2 className="w-10 h-10 text-[#063f78] animate-spin mb-4" />
-                                        <p className="text-gray-500 font-medium font-sans">Wait a moment, Loading Catalog...</p>
-                                    </div>
-                                ) : (
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                        {allCourses.map((course) => {
-                                            const isPurchased = myCourses.some(mc => mc._id === course._id);
-                                            return (
-                                                <div key={course._id} className="border border-gray-100 rounded-sm overflow-hidden flex flex-col group bg-gray-50/30">
-                                                    <div className="h-44 w-full relative">
-                                                        <img src={course.featuredImage || "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=500&q=80"} alt={course.title} className="w-full h-full object-cover" />
-                                                        <div className="absolute inset-0 bg-black/5 group-hover:bg-transparent transition-colors"></div>
-                                                    </div>
-                                                    <div className="p-5 flex-1 flex flex-col justify-between bg-white border-t border-gray-50">
-                                                        <div>
-                                                            <div className="flex items-center justify-between mb-2">
-                                                                <span className="text-[10px] font-bold text-gray-400 capitalize bg-gray-50 px-2 py-0.5 rounded-sm">{course.level || 'Beginner'}</span>
-                                                                <span className="text-sm font-bold text-[#063f78]">₹{course.price?.toLocaleString() || '499'}</span>
-                                                            </div>
-                                                            <h4 className="text-base font-bold text-gray-900 mb-2 line-clamp-2 min-h-[3rem] group-hover:text-[#063f78] transition-colors">{course.title}</h4>
-                                                        </div>
-                                                        <div className="mt-4">
-                                                            {isPurchased ? (
-                                                                <button
-                                                                    onClick={() => router.push(`/courses/${course._id}/learn`)}
-                                                                    className="w-full py-2.5 bg-[#eff6ff] text-[#063f78] font-bold text-sm rounded-sm hover:bg-[#ffdfd4] transition-colors flex items-center justify-center gap-2"
-                                                                >
-                                                                    Start Learning <ChevronRight size={16} />
-                                                                </button>
-                                                            ) : (
-                                                                <button
-                                                                    onClick={() => router.push(`/courses/${course._id}`)}
-                                                                    className="w-full py-2.5 bg-gray-900 text-white font-bold text-sm rounded-sm hover:bg-black transition-colors flex items-center justify-center gap-2"
-                                                                >
-                                                                    Enroll Now <ArrowRight size={16} />
-                                                                </button>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                )}
-                            </div>
                         </div>
                     ) : activeTab === 'Dashboard' ? (
                         <div className="w-full">
-                            <h2 className="text-xl font-bold text-gray-900 mb-6">Dashboard</h2>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-                                {/* Enrolled Courses */}
-                                <div className="bg-[#ecfeff] rounded-sm p-6 flex items-center gap-4">
-                                    <div className="bg-white p-3 rounded-sm flex items-center justify-center h-14 w-14 shadow-sm">
-                                        <PlayCircle className="text-[#063f78]" size={28} />
-                                    </div>
-                                    <div>
-                                        <h3 className="text-2xl font-bold text-gray-900">957</h3>
-                                        <p className="text-sm text-gray-600">Enrolled Courses</p>
-                                    </div>
-                                </div>
-                                {/* Active Courses */}
-                                <div className="bg-[#ecfeff] rounded-sm p-6 flex items-center gap-4">
-                                    <div className="bg-white p-3 rounded-sm flex items-center justify-center h-14 w-14 shadow-sm">
-                                        <MonitorPlay className="text-[#063f78]" size={28} />
-                                    </div>
-                                    <div>
-                                        <h3 className="text-2xl font-bold text-gray-900">6</h3>
-                                        <p className="text-sm text-gray-600">Active Courses</p>
-                                    </div>
-                                </div>
-                                {/* Completed Courses */}
-                                <div className="bg-[#ecfeff] rounded-sm p-6 flex items-center gap-4">
-                                    <div className="bg-white p-3 rounded-sm flex items-center justify-center h-14 w-14 shadow-sm">
-                                        <Trophy className="text-[#063f78]" size={28} />
-                                    </div>
-                                    <div>
-                                        <h3 className="text-2xl font-bold text-gray-900">951</h3>
-                                        <p className="text-sm text-gray-600">Completed Courses</p>
-                                    </div>
-                                </div>
-                                {/* Course Instructors */}
-                                <div className="bg-[#ecfeff] rounded-sm p-6 flex items-center gap-4">
-                                    <div className="bg-white p-3 rounded-sm flex items-center justify-center h-14 w-14 shadow-sm">
-                                        <Users className="text-[#063f78]" size={28} />
-                                    </div>
-                                    <div>
-                                        <h3 className="text-2xl font-bold text-gray-900">241</h3>
-                                        <p className="text-sm text-gray-600">Course Instructors</p>
-                                    </div>
-                                </div>
-                            </div>
 
                             <div className="flex items-center justify-between mb-6">
                                 <h2 className="text-xl font-bold text-gray-900">Let's start learning, {user?.firstName}</h2>
-                                <div className="flex gap-2">
-                                    <button className="bg-[#eff6ff] p-2 hover:bg-[#ffe4da] rounded-sm transition-colors">
-                                        <ArrowLeft className="text-[#063f78]" size={20} />
-                                    </button>
-                                    <button className="bg-[#eff6ff] p-2 hover:bg-[#ffe4da] rounded-sm transition-colors">
-                                        <ArrowRight className="text-[#063f78]" size={20} />
-                                    </button>
-                                </div>
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -856,14 +792,14 @@ export default function ProfilePage() {
                                 <h3 className="text-xl font-bold">Contact Support</h3>
                                 <p className="text-[#eff6ff]/80 text-xs mt-1">We're here to help you</p>
                             </div>
-                            <button 
+                            <button
                                 onClick={() => setShowSupport(false)}
                                 className="p-2 hover:bg-white/10 rounded-full transition-colors"
                             >
                                 <X size={20} />
                             </button>
                         </div>
-                        
+
                         {/* Body */}
                         <div className="p-8 space-y-6">
                             <div className="flex items-center gap-4 group cursor-pointer" onClick={() => window.open('mailto:lastmomenttuitions@gmail.com')}>
@@ -903,7 +839,7 @@ export default function ProfilePage() {
 
                         {/* Footer */}
                         <div className="bg-gray-50 p-6 flex justify-center">
-                            <button 
+                            <button
                                 onClick={() => setShowSupport(false)}
                                 className="px-8 py-2.5 bg-gray-900 text-white font-bold text-sm rounded-sm hover:bg-black transition-colors"
                             >
