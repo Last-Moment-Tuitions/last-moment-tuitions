@@ -10,16 +10,14 @@ export default function SessionMonitor() {
     const lastServerInteraction = useRef(Date.now());
     const router = useRouter();
 
-    // 60 Minutes Total Session
-    // We check every 15 minutes.
-    // Logic: If user is in the last 15 minutes (>= 45 mins elapsed), check if they were active in the last 15 mins.
-    const CHECK_INTERVAL = 15 * 60 * 1000; // Check every 15 minutes
-    const SESSION_TIMEOUT = 60 * 60 * 1000; // 60 minutes
-    const REFRESH_THRESHOLD = 45 * 60 * 1000; // Start checking for refresh after 45 mins
-    const ACTIVITY_WINDOW = 15 * 60 * 1000; // User must have been active in last 15 mins
-
     useEffect(() => {
         if (!user) return;
+
+        const isAdmin = user?.roles?.includes('admin');
+        const SESSION_TIMEOUT = isAdmin ? 3 * 60 * 60 * 1000 : 60 * 60 * 1000;
+        const CHECK_INTERVAL = 15 * 60 * 1000; 
+        const REFRESH_THRESHOLD = SESSION_TIMEOUT - (15 * 60 * 1000); 
+        const ACTIVITY_WINDOW = 15 * 60 * 1000;
 
         const Events = ['mousemove', 'keydown', 'click', 'scroll'];
 
@@ -46,7 +44,6 @@ export default function SessionMonitor() {
 
                 // If user was active recently (within the last 15 mins)
                 if (timeSinceLastActivity < ACTIVITY_WINDOW) {
-                    console.log('[SessionMonitor] User active in last 15m. Refreshing session...');
                     try {
                         await checkUser(); // This calls /auth/me which refreshes the Redis TTL
                         lastServerInteraction.current = Date.now(); // Reset server timer
