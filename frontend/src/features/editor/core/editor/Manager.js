@@ -2,7 +2,46 @@ import grapesjs from 'grapesjs';
 import { gjsConfig } from './config';
 import API_BASE_URL from '@/lib/config';
 import gjsCustomCode from 'grapesjs-custom-code';
+import gjsCkeditor from 'grapesjs-plugin-ckeditor';
 // Import 'grapesjs/dist/css/grapes.min.css'; // This normally needs to be imported in global CSS or locally
+
+const ensureCodeMirror = () => {
+    return new Promise((resolve) => {
+        if (window.CodeMirror) return resolve(window.CodeMirror);
+        
+        const cssLink = document.createElement('link');
+        cssLink.rel = 'stylesheet';
+        cssLink.href = 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css';
+        document.head.appendChild(cssLink);
+        
+        const themeLink = document.createElement('link');
+        themeLink.rel = 'stylesheet';
+        themeLink.href = 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/material-ocean.min.css';
+        document.head.appendChild(themeLink);
+
+        const jsScript = document.createElement('script');
+        jsScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js';
+        jsScript.onload = () => {
+            let loaded = 0;
+            const scripts = [
+                'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/xml/xml.min.js',
+                'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js',
+                'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/css/css.min.js',
+                'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/htmlmixed/htmlmixed.min.js'
+            ];
+            scripts.forEach(src => {
+                const s = document.createElement('script');
+                s.src = src;
+                s.onload = () => {
+                    loaded++;
+                    if (loaded === scripts.length) resolve(window.CodeMirror);
+                };
+                document.head.appendChild(s);
+            });
+        };
+        document.head.appendChild(jsScript);
+    });
+};
 
 export const initEditor = (pageId) => {
     // Clone config to avoid mutation
@@ -26,6 +65,32 @@ export const initEditor = (pageId) => {
     // Register plugins
     if (!config.plugins) config.plugins = [];
     config.plugins.push(gjsCustomCode);
+    config.plugins.push(gjsCkeditor);
+
+    // CKEditor plugin options
+    if (!config.pluginsOpts) config.pluginsOpts = {};
+    config.pluginsOpts[gjsCkeditor] = {
+        position: 'center',
+        options: {
+            startupFocus: true,
+            extraAllowedContent: '*(*);*{*}',  // Allow all classes and inline styles
+            allowedContent: true,
+            toolbar: [
+                { name: 'styles', items: ['Format', 'Font', 'FontSize'] },
+                { name: 'basicstyles', items: ['Bold', 'Italic', 'Underline', 'Strike', 'Subscript', 'Superscript'] },
+                { name: 'colors', items: ['TextColor', 'BGColor'] },
+                { name: 'paragraph', items: ['NumberedList', 'BulletedList', '-', 'Outdent', 'Indent', '-', 'JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock'] },
+                { name: 'links', items: ['Link', 'Unlink'] },
+                { name: 'insert', items: ['Table', 'HorizontalRule', 'SpecialChar'] },
+                { name: 'tools', items: ['Maximize', 'Source'] },
+            ],
+            // Remove element path at the bottom
+            removePlugins: 'elementspath',
+        },
+        onToolbar: (el) => {
+            el.style.minWidth = '400px';
+        },
+    };
 
     const editor = grapesjs.init(config);
 
@@ -105,11 +170,28 @@ export const initEditor = (pageId) => {
                 const formattedOriginalHtml = formatHTML(actualHtml);
                 textarea.value = formattedOriginalHtml;
 
+                let cmProps;
+                ensureCodeMirror().then((CM) => {
+                    if (!document.body.contains(textarea)) return;
+                    cmProps = CM.fromTextArea(textarea, {
+                         mode: 'htmlmixed',
+                         theme: 'material-ocean',
+                         lineNumbers: true,
+                         lineWrapping: true
+                    });
+                    cmProps.setSize('100%', '100%');
+                    cmProps.getWrapperElement().style.flex = "1";
+                    cmProps.getWrapperElement().style.fontFamily = "ui-monospace, SFMono-Regular, Consolas, monospace";
+                    cmProps.getWrapperElement().style.fontSize = "13px";
+                    cmProps.getWrapperElement().style.borderRadius = "6px";
+                    cmProps.getWrapperElement().style.marginTop = "10px";
+                });
+
                 cancelBtn.onclick = () => editor.Modal.close();
 
                 // Unlink completely
                 unlinkLocalBtn.onclick = () => {
-                    const newHtml = textarea.value;
+                    const newHtml = cmProps ? cmProps.getValue() : textarea.value;
                     const parent = selected.parent();
                     const index = selected.index();
                     selected.remove();
@@ -126,7 +208,7 @@ export const initEditor = (pageId) => {
                 saveLocalBtn.onclick = () => {
                     errorBox.style.display = 'none';
                     try {
-                        const newHtml = textarea.value;
+                        const newHtml = cmProps ? cmProps.getValue() : textarea.value;
                         
                         if (newHtml === formattedOriginalHtml) {
                             editor.Modal.close();
@@ -226,31 +308,105 @@ export const initEditor = (pageId) => {
             }
 
             // ── NORMAL UI FOR REGULAR COMPONENTS ─────────────────────────────
-            // Get component HTML
-            const html = selected.toHTML();
+            // Get component HTML (without GrapesJS script wrapper)
+            const fullHtml = selected.toHTML();
+            // Strip any GrapesJS-generated script IIFE wrappers from the HTML display
+            const htmlOnly = fullHtml.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, '').trim();
+
+            // Read the component's script property directly (GrapesJS stores it here)
+            let componentScript = selected.get('script') || '';
             
+            // In GrapesJS, scripts can be stored as literal functions or strings 
+            // representing functions (e.g., "function() { ... }").
+            // We need to unwrap them so the user just sees the raw code.
+            const unwrapScript = (scriptStr) => {
+                const str = scriptStr.trim();
+                const match = str.match(/^(?:function\s*\([^)]*\)\s*\{|(?:\(\)\s*=>\s*\{(?:\s*)))([\s\S]*)\s*\}$/);
+                if (match) {
+                    return match[1].trim();
+                }
+                return str;
+            };
+
+            if (typeof componentScript === 'function') {
+                componentScript = unwrapScript(componentScript.toString());
+            } else if (typeof componentScript === 'string' && componentScript.trim() !== '') {
+                componentScript = unwrapScript(componentScript);
+            } else {
+                componentScript = '';
+            }
+
+            const tabBaseStyle = 'padding:7px 18px; font-size:13px; font-weight:700; cursor:pointer; border:none; border-radius:6px 6px 0 0; transition:all 0.15s; letter-spacing:0.3px;';
+            const activeTabStyle = 'background:#0f172a; border:1px solid #334155; border-bottom:1px solid #0f172a;';
+            const inactiveTabStyle = 'background:#1e293b; border:1px solid transparent; border-bottom:1px solid #334155;';
+
             content.innerHTML = `
-                <div style="font-size: 13px; color: #94a3b8; margin-bottom: 5px;">Edit the HTML for this component directly:</div>
-                <textarea id="gjs-edit-code-textarea" style="flex: 1; width: 100%; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 14px; padding: 15px; background: #0f172a; color: #e2e8f0; border: 1px solid #334155; border-radius: 6px; outline: none; resize: none;" spellcheck="false"></textarea>
-                <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px;">
-                    <button id="gjs-edit-code-cancel" style="padding: 8px 16px; background: #334155; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Cancel</button>
-                    <button id="gjs-edit-code-save" style="padding: 8px 16px; background: #2563eb; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Save Changes</button>
+                <div style="display:flex; align-items:flex-end; gap:2px; margin-bottom:-1px; position:relative; z-index:1;">
+                    <button id="gjs-tab-html" style="${tabBaseStyle} ${activeTabStyle} color:#60a5fa;">
+                        &lt;/&gt; HTML
+                    </button>
+                    <button id="gjs-tab-css" style="${tabBaseStyle} ${inactiveTabStyle} color:#c084fc;">
+                        # CSS
+                    </button>
+                    <button id="gjs-tab-js" style="${tabBaseStyle} ${inactiveTabStyle} color:#fbbf24;">
+                        ƒ JavaScript
+                    </button>
+                </div>
+                <textarea id="gjs-edit-code-textarea" style="flex:1; width:100%; font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size:14px; padding:15px; background:#0f172a; color:#e2e8f0; border:1px solid #334155; border-radius:0 6px 6px 6px; outline:none; resize:none; line-height:1.6;" spellcheck="false"></textarea>
+                <textarea id="gjs-edit-css-textarea" style="flex:1; width:100%; font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size:14px; padding:15px; background:#0f172a; color:#c084fc; border:1px solid #334155; border-radius:0 6px 6px 6px; outline:none; resize:none; display:none; line-height:1.6;" spellcheck="false" placeholder="/* Append custom CSS rules here */"></textarea>
+                <textarea id="gjs-edit-js-textarea" style="flex:1; width:100%; font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size:14px; padding:15px; background:#0f172a; color:#fbbf24; border:1px solid #334155; border-radius:0 6px 6px 6px; outline:none; resize:none; display:none; line-height:1.6;" spellcheck="false" placeholder="// Write your JavaScript here...&#10;// 'this' refers to the component's DOM element.&#10;// The script runs when the page renders."></textarea>
+                <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:10px;">
+                    <button id="gjs-edit-code-cancel" style="padding:8px 16px; background:#334155; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold;">Cancel</button>
+                    <button id="gjs-edit-code-save" style="padding:8px 16px; background:#2563eb; color:#fff; border:none; border-radius:4px; cursor:pointer; font-weight:bold;">Save Changes</button>
                 </div>
             `;
+
+            const htmlTextarea = content.querySelector('#gjs-edit-code-textarea');
+            const cssTextarea = content.querySelector('#gjs-edit-css-textarea');
+            const jsTextarea = content.querySelector('#gjs-edit-js-textarea');
             
-            const textarea = content.querySelector('#gjs-edit-code-textarea');
+            const tabHtmlBtn = content.querySelector('#gjs-tab-html');
+            const tabCssBtn = content.querySelector('#gjs-tab-css');
+            const tabJsBtn = content.querySelector('#gjs-tab-js');
+
+            let activeTabName = 'html';
+            const switchTab = (tab) => {
+                activeTabName = tab;
+                const setDisplay = (el, val) => { if (el) el.style.display = val; };
+                
+                if (window.cmHtml && window.cmCss && window.cmJs && document.body.contains(window.cmHtml.getWrapperElement())) {
+                    setDisplay(window.cmHtml.getWrapperElement(), tab === 'html' ? 'block' : 'none');
+                    setDisplay(window.cmCss.getWrapperElement(), tab === 'css' ? 'block' : 'none');
+                    setDisplay(window.cmJs.getWrapperElement(), tab === 'js' ? 'block' : 'none');
+                    if (tab === 'html') window.cmHtml.refresh();
+                    if (tab === 'css') window.cmCss.refresh();
+                    if (tab === 'js') window.cmJs.refresh();
+                } else {
+                    setDisplay(htmlTextarea, tab === 'html' ? 'block' : 'none');
+                    setDisplay(cssTextarea, tab === 'css' ? 'block' : 'none');
+                    setDisplay(jsTextarea, tab === 'js' ? 'block' : 'none');
+                }
+                
+                [tabHtmlBtn, tabCssBtn, tabJsBtn].forEach(btn => btn && (btn.style.cssText = `${tabBaseStyle} ${inactiveTabStyle}`));
+                if (tab === 'html') tabHtmlBtn.style.cssText = `${tabBaseStyle} ${activeTabStyle} color:#60a5fa;`;
+                if (tab === 'css') tabCssBtn.style.cssText = `${tabBaseStyle} ${activeTabStyle} color:#c084fc;`;
+                if (tab === 'js') tabJsBtn.style.cssText = `${tabBaseStyle} ${activeTabStyle} color:#fbbf24;`;
+            };
+            tabHtmlBtn.onclick = () => switchTab('html');
+            tabCssBtn.onclick = () => switchTab('css');
+            tabJsBtn.onclick = () => switchTab('js');
 
             // Format HTML helper
             const formatHTML = (htmlStr) => {
                 let formatted = '';
                 let indent = '';
                 const tab = '  ';
-                let processHtml = htmlStr.replace(/>/g, '>\n').replace(/</g, '\n<');
-                let lines = processHtml.split('\n').filter(line => line.trim() !== '');
+                const lines = htmlStr.split(/>\s*</);
                 for (let i = 0; i < lines.length; i++) {
-                    let line = lines[i].trim();
-                    if (!line) continue;
-                    if (line.match(/^<\//)) {
+                    let line = lines[i];
+                    if (i !== 0) line = '<' + line;
+                    if (i !== lines.length - 1) line = line + '>';
+                    if (line.match(/^<\/[^>]+>$/)) {
                         indent = indent.substring(tab.length);
                     }
                     formatted += indent + line + '\n';
@@ -261,39 +417,116 @@ export const initEditor = (pageId) => {
                 return formatted.trim();
             };
 
-            textarea.value = formatHTML(html);
+            htmlTextarea.value = formatHTML(htmlOnly);
+            
+            let componentCss = '';
+            try { componentCss = editor.CodeManager.getCode(selected, 'css', { cssc: editor.CssComposer }) || ''; } catch(e) {}
+            cssTextarea.value = componentCss;
+            
+            if (componentScript && componentScript !== '') {
+                jsTextarea.value = componentScript;
+            }
 
             content.querySelector('#gjs-edit-code-cancel').onclick = () => {
                 editor.Modal.close();
             };
 
             content.querySelector('#gjs-edit-code-save').onclick = () => {
-                const newHtml = textarea.value;
-                const parent = selected.parent();
-                const index = selected.index();
+                const isCmReady = window.cmHtml && document.body.contains(window.cmHtml.getWrapperElement());
+                const newHtml = isCmReady ? window.cmHtml.getValue() : htmlTextarea.value;
+                const newCss = isCmReady ? window.cmCss.getValue() : cssTextarea.value;
+                const newJs = (isCmReady ? window.cmJs.getValue() : jsTextarea.value).trim();
                 
-                // Keep classes if possible? For now, replacing removes old and parses new
-                selected.remove();
-                if (parent) {
-                    const newEl = parent.components().add(newHtml, { at: index });
-                    editor.select(newEl);
-                } else {
-                    editor.setComponents(newHtml);
+                if (!newHtml) return;
+
+                const wrapperHtml = newCss.trim() ? `${newHtml}\n<style>\n${newCss}\n</style>` : newHtml;
+                const newComps = selected.replaceWith(wrapperHtml);
+                const newComp = Array.isArray(newComps) ? newComps[0] : newComps;
+                
+                if (newComp) {
+                    if (newJs) {
+                        try {
+                            // GrapesJS expects pure code for the script property when provided as a string
+                            newComp.set('script', newJs);
+                        } catch (e) {
+                            console.error("Error setting script", e);
+                            newComp.set('script', newJs);
+                        }
+                    } else {
+                        newComp.set('script', '');
+                    }
+                    editor.select(newComp);
                 }
+                
+                setTimeout(() => editor.trigger('change:canvasOffset'), 100);
                 editor.Modal.close();
             };
 
             editor.Modal.setTitle('</> Edit Component Code');
             editor.Modal.setContent(content);
             editor.Modal.open();
-            
+
+            // Setup CodeMirror instances
+            ensureCodeMirror().then((CM) => {
+                if (!document.body.contains(htmlTextarea)) return;
+                
+                window.cmHtml = CM.fromTextArea(htmlTextarea, {
+                     mode: 'htmlmixed',
+                     theme: 'material-ocean',
+                     lineNumbers: true,
+                     lineWrapping: true
+                });
+                window.cmCss = CM.fromTextArea(cssTextarea, {
+                     mode: 'css',
+                     theme: 'material-ocean',
+                     lineNumbers: true,
+                     lineWrapping: true
+                });
+                window.cmJs = CM.fromTextArea(jsTextarea, {
+                     mode: 'javascript',
+                     theme: 'material-ocean',
+                     lineNumbers: true,
+                     lineWrapping: true
+                });
+
+                window.cmHtml.setSize('100%', '100%');
+                window.cmCss.setSize('100%', '100%');
+                window.cmJs.setSize('100%', '100%');
+                
+                const styleWrapper = (wrap) => {
+                    wrap.style.flex = "1";
+                    wrap.style.borderRadius = "0 6px 6px 6px";
+                    wrap.style.fontFamily = "ui-monospace, SFMono-Regular, Consolas, monospace";
+                    wrap.style.fontSize = "14px";
+                    wrap.style.height = "100%";
+                };
+                
+                styleWrapper(window.cmHtml.getWrapperElement());
+                styleWrapper(window.cmCss.getWrapperElement());
+                styleWrapper(window.cmJs.getWrapperElement());
+
+                switchTab(activeTabName);
+            });
+
             // Widen modal
             setTimeout(() => {
                 const modalDialog = editor.Modal.getModel().get('dEl');
                 if (modalDialog) {
                     modalDialog.style.width = '80%';
                     modalDialog.style.maxWidth = '1000px';
+                    modalDialog.style.height = '80vh';
+                    modalDialog.style.display = 'flex';
+                    modalDialog.style.flexDirection = 'column';
+                    
+                    const modalContent = modalDialog.querySelector('.gjs-mdl-content');
+                    if (modalContent) {
+                        modalContent.style.flex = '1';
+                        modalContent.style.display = 'flex';
+                        modalContent.style.height = '100%';
+                    }
                 }
+                
+                content.style.height = '100%';
             }, 0);
         }
     });
@@ -317,6 +550,127 @@ export const initEditor = (pageId) => {
                 model.set('toolbar', newToolbar);
             }
         }
+    });
+
+    // Synchronize canvas highlighting and securely clean up corrupted database icons
+    const updateCanvasHighlights = (model) => {
+        if (!model || model.is('wrapper')) return;
+
+        // Cleanup corrupted icons globally so they get saved cleanly
+        let iconStr = model.get('icon');
+        if (typeof iconStr === 'string' && (iconStr.includes('<span') || iconStr.includes('<div'))) {
+            let s = iconStr;
+            s = s.replace(/<span style="background:#(?:fbbf24|c084fc)[^>]+>(?:JS|CSS)<\/span>\s*/gi, '');
+            s = s.replace(/<div title="Has[^>]*>[^<]*<\/div>/gi, '');
+            s = s.replace(/<div style="width:14px;height:14px[^>]*>[^<]*<\/div>/gi, '');
+            s = s.replace(/<div style="display:flex;\s*align-items:center;">(.*?)<\/div>/gi, '$1');
+            const newIcon = s.trim();
+            if (newIcon !== iconStr) {
+                model.set('__orig_icon', undefined);
+                model.set('icon', newIcon);
+            }
+        }
+        
+        const hasJs = model.get('script') && model.get('script').trim() !== '';
+        
+        let hasCss = false;
+        try {
+            const rules = editor.CssComposer.getAll().models;
+            const selStr = `#${model.getId()}`;
+            for (let i = 0; i < rules.length; i++) {
+                if (rules[i].getSelectorsString() === selStr) {
+                    hasCss = true; break;
+                }
+            }
+        } catch(e) {}
+
+        // Set ephemeral DOM attribute for in-canvas visual highlight
+        if (model.view && model.view.el && model.view.el.setAttribute) {
+            const el = model.view.el;
+            if (hasJs && hasCss) el.setAttribute('data-gjs-has-custom', 'both');
+            else if (hasJs) el.setAttribute('data-gjs-has-custom', 'js');
+            else if (hasCss) el.setAttribute('data-gjs-has-custom', 'css');
+            else el.removeAttribute('data-gjs-has-custom');
+        }
+    };
+
+    editor.on('load', () => {
+
+        // Add visual highlighting CSS directly to the Canvas frame
+        const canvasDoc = editor.Canvas.getDocument();
+        if (canvasDoc && !canvasDoc.getElementById('gjs-canvas-custom-highlights')) {
+            const style = canvasDoc.createElement('style');
+            style.id = 'gjs-canvas-custom-highlights';
+            style.innerHTML = `
+                [data-gjs-has-custom] { position: relative; }
+                [data-gjs-has-custom]::after {
+                    content: '';
+                    position: absolute;
+                    top: 0; left: 0; right: 0; bottom: 0;
+                    pointer-events: none;
+                    z-index: 10;
+                    outline-offset: -2px;
+                }
+                [data-gjs-has-custom="js"]::after { outline: 2px dashed rgba(251, 191, 36, 0.4) !important; }
+                [data-gjs-has-custom="css"]::after { outline: 2px dashed rgba(192, 132, 252, 0.4) !important; }
+                [data-gjs-has-custom="both"]::after { outline: 2px dashed rgba(236, 72, 153, 0.4) !important; }
+            `;
+            canvasDoc.head.appendChild(style);
+        }
+
+        let updateTimeout;
+        const triggerUpdate = () => {
+            clearTimeout(updateTimeout);
+            updateTimeout = setTimeout(() => {
+                const walk = (cmp) => { updateCanvasHighlights(cmp); cmp.components().forEach(walk); };
+                const wrapper = editor.getWrapper();
+                if (wrapper) walk(wrapper);
+                
+                if (editor.Layers && editor.Layers.render) {
+                    editor.Layers.render();
+                }
+            }, 500);
+        };
+
+        triggerUpdate();
+        
+        editor.on('component:add component:update:script', (model) => {
+            updateCanvasHighlights(model);
+        });
+
+        editor.CssComposer.getAll().on('add remove change', triggerUpdate);
+    });
+
+    // Layer UI native API extension
+    editor.on('layer:customize', ({ el, model }) => {
+        let badgeContainer = el.querySelector('.gjs-custom-code-badges');
+        if (!badgeContainer) {
+            badgeContainer = document.createElement('div');
+            badgeContainer.className = 'gjs-custom-code-badges';
+            badgeContainer.style.cssText = 'position:absolute; right:35px; top:50%; transform:translateY(-50%); display:flex; gap:3px; align-items:center; pointer-events:none; z-index:10;';
+            el.appendChild(badgeContainer);
+        }
+        
+        const hasJs = model.get('script') && model.get('script').trim() !== '';
+        let hasCss = false;
+        try {
+            const rules = editor.CssComposer.getAll().models;
+            const selStr = `#${model.getId()}`;
+            for (let i = 0; i < rules.length; i++) {
+                if (rules[i].getSelectorsString() === selStr) {
+                    hasCss = true; break;
+                }
+            }
+        } catch(e) {}
+
+        const mkBadge = (bg, color, label) => `<div style="background:${bg};border-radius:3px;display:flex;align-items:center;justify-content:center;color:${color};font-size:8px;font-weight:900;line-height:1;padding:3px 5px;box-shadow:0 1px 3px rgba(0,0,0,0.2);">${label}</div>`;
+
+        let html = '';
+        if (hasJs && hasCss) html = mkBadge('linear-gradient(135deg, #fbbf24 45%, #c084fc 55%)', '#fff', '&lt;/&gt;');
+        else if (hasJs) html = mkBadge('#fbbf24', '#000', 'JS');
+        else if (hasCss) html = mkBadge('#c084fc', '#fff', 'CSS');
+        
+        badgeContainer.innerHTML = html;
     });
 
     return editor;

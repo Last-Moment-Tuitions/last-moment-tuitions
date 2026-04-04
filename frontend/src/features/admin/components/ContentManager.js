@@ -340,7 +340,7 @@ export default function ContentManager({ view = 'page' }) {
                                     item.status === 'published' ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />
                                 )}
                             </button>
-                            <Link href={`/editor/${item._id}`}>
+                            <Link href={`/admin/editor/${item._id}`}>
                                 <button className="p-1.5 bg-white/90 backdrop-blur text-gray-600 hover:text-blue-600 rounded-md shadow-sm border border-gray-100">
                                     <Edit className="w-3.5 h-3.5" />
                                 </button>

@@ -51,6 +51,11 @@ export default function AdminLayout({ children }) {
         </div>;
     }
 
+    // Editor has its own full-screen layout, skip the admin shell
+    if (pathname.startsWith('/admin/editor')) {
+        return children;
+    }
+
     return (
         <div className="flex min-h-screen bg-[#F5F7FA] font-sans text-gray-900">
             {/* Sidebar - Figma Width 280px */}

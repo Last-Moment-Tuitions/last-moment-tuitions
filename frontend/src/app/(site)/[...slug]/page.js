@@ -70,109 +70,135 @@ async function getTemplateContent(id) {
     }
 }
 
-// Recursive function to resolve <template-ref> tags
-async function resolveTemplateRefs(html) {
-    if (!html) return html;
+function parseDataProps(raw) {
+    if (!raw) return {};
+    try {
+        const decoded = raw
+            .replace(/&quot;/g, '"')
+            .replace(/&#34;/g, '"')
+            .replace(/&apos;/g, "'")
+            .replace(/&#39;/g, "'");
+        const parsed = JSON.parse(decoded);
+        return parsed && typeof parsed === 'object' ? parsed : {};
+    } catch {
+        return {};
+    }
+}
 
-    // Find all <template-ref> tags, optionally matching data-props="..."
-    // The previous regex was: /<template-ref[^>]*data-template-id="([^"]+)"[^>]*>([\s\S]*?)<\/template-ref>/gi;
-    // We update it to optionally capture data-props if present:
-    const regex = /<template-ref[^>]*(?:data-template-id="([^"]+)"[^>]*data-props='([^']+)'|data-props='([^']+)'[^>]*data-template-id="([^"]+)"|data-template-id="([^"]+)")[^>]*>([\s\S]*?)<\/template-ref>/gi;
+function applyTemplateProps(templateHtml, propsObj) {
+    if (!templateHtml) return '';
+    if (!propsObj || Object.keys(propsObj).length === 0) return templateHtml;
 
-    let match;
-    let resolvedHtml = html;
+    let hydratedHtml = templateHtml;
 
-    // We need to process matches sequentially to avoid issues with string replacement
-    const replacements = [];
-
-    while ((match = regex.exec(html)) !== null) {
-        const fullTag = match[0];
-
-        // Due to the regex having optional attribute capture groups in different orders,
-        // we extract the values safely.
-        // It's safer to extract attributes via local regex match against the full tag 
-        // to avoid complex numbered capture group offsets.
-        const idMatch = fullTag.match(/data-template-id="([^"]+)"/i);
-        const propsMatch = fullTag.match(/data-props=(['"])(.*?)\1/i); // Matches ' or " quotes
-
-        const templateId = idMatch ? idMatch[1] : null;
-        let propsObj = {};
-
-        if (propsMatch) {
-            try {
-                // Decode HTML entities if stored as such, e.g. &quot; to "
-                const decodedProps = propsMatch[2].replace(/&quot;/g, '"');
-                propsObj = JSON.parse(decodedProps);
-            } catch (e) {
-                console.error("Failed to parse data-props JSON for template:", templateId, e);
-            }
-        }
-
-        if (templateId) {
-            replacements.push({ fullTag, templateId, propsObj });
-        }
+    for (const [key, rawValue] of Object.entries(propsObj)) {
+        if (rawValue === undefined || rawValue === null) continue;
+        const value = String(rawValue);
+        const safeKey = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const propRegex = new RegExp(`{{\\s*${safeKey}\\s*}}`, 'g');
+        hydratedHtml = hydratedHtml.replace(propRegex, value);
     }
 
-    // Fetch and replace
-    for (const { fullTag, templateId, propsObj } of replacements) {
-        try {
-            // Fetch the template content
-            const res = await fetch(`${API_BASE_URL}/pages/id/${templateId}`, {
-                cache: 'no-store' // Ensure dynamic components are always fresh based on ID
-            });
+    for (const [key, rawValue] of Object.entries(propsObj)) {
+        if (rawValue === undefined || rawValue === null) continue;
+        const value = String(rawValue);
+        const safeKey = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-            if (res.ok) {
-                const data = await res.json();
-                if (data.success && data.data) {
-                    // Start with the raw template HTML
-                    let templateHtml = data.data.gjsHtml;
+        const textRegex = new RegExp(`(<[^>]+data-var=["']${safeKey}["'][^>]*>)([\\s\\S]*?)(<\\/[a-z0-9-]+>)`, 'gi');
+        hydratedHtml = hydratedHtml.replace(textRegex, (_m, openTag, _inner, closeTag) => `${openTag}${value}${closeTag}`);
 
-                    // Interpolate props inside the template HTML
-                    if (propsObj && Object.keys(propsObj).length > 0) {
-                        for (const [key, value] of Object.entries(propsObj)) {
-                            // Escape key for safety
-                            const safeKey = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-
-                            // Replace {{ key }} or {{key}} with the value string
-                            const propRegex = new RegExp(`{{\\s*${safeKey}\\s*}}`, 'g');
-                            templateHtml = templateHtml.replace(propRegex, value);
-
-                            // Replace text inside data-var="key"
-                            // Match: open tag -> content -> close tag
-                            const textRegex = new RegExp(`(<[^>]+data-var=["']${safeKey}["'][^>]*>)([\\s\\S]*?)(<\\/[a-z0-9]+>)`, 'gi');
-                            templateHtml = templateHtml.replace(textRegex, (match, openTag, innerContent, closeTag) => {
-                                return `${openTag}${value}${closeTag}`;
-                            });
-
-                            // Replace src for data-var-src="key"
-                            templateHtml = templateHtml.replace(new RegExp(`(<[^>]+data-var-src=["']${safeKey}["'][^>]*>)`, 'gi'), (tag) => {
-                                return tag.replace(/(src=["'])([^"']*)(["'])/i, (m, p1, p2, p3) => `${p1}${value}${p3}`);
-                            });
-
-                            // Replace href for data-var-link="key"
-                            templateHtml = templateHtml.replace(new RegExp(`(<[^>]+data-var-link=["']${safeKey}["'][^>]*>)`, 'gi'), (tag) => {
-                                return tag.replace(/(href=["'])([^"']*)(["'])/i, (m, p1, p2, p3) => `${p1}${value}${p3}`);
-                            });
-
-                            // Replace src for data-var-video="key"
-                            templateHtml = templateHtml.replace(new RegExp(`(<[^>]+data-var-video=["']${safeKey}["'][^>]*>)`, 'gi'), (tag) => {
-                                return tag.replace(/(src=["'])([^"']*)(["'])/i, (m, p1, p2, p3) => `${p1}${value}${p3}`);
-                            });
-                        }
-                    }
-
-                    // Recursively resolve references in the resolved template itself
-                    const innerContent = await resolveTemplateRefs(templateHtml);
-
-                    // Include the CSS of the template
-                    const innerCss = data.data.gjsCss ? `<style>${data.data.gjsCss}</style>` : '';
-                    resolvedHtml = resolvedHtml.replace(fullTag, innerCss + (innerContent || ''));
-                } else {
-                    resolvedHtml = resolvedHtml.replace(fullTag, '');
-                }
-            } else {
-                resolvedHtml = resolvedHtml.replace(fullTag, '');
+        const srcRegex = new RegExp(`(<[^>]+data-var-src=["']${safeKey}["'][^>]*>)`, 'gi');
+        hydratedHtml = hydratedHtml.replace(srcRegex, (tag) => {
+            if (/(src=["'][^"']*["'])/i.test(tag)) {
+                return tag.replace(/src=["'][^"']*["']/i, `src="${value}"`);
             }
+            return tag.replace(/>$/, ` src="${value}">`);
+        });
+
+        const videoRegex = new RegExp(`(<[^>]+data-var-video=["']${safeKey}["'][^>]*>)`, 'gi');
+        hydratedHtml = hydratedHtml.replace(videoRegex, (tag) => {
+            if (/(src=["'][^"']*["'])/i.test(tag)) {
+                return tag.replace(/src=["'][^"']*["']/i, `src="${value}"`);
+            }
+            return tag.replace(/>$/, ` src="${value}">`);
+        });
+
+        const linkRegex = new RegExp(`(<[^>]+data-var-link=["']${safeKey}["'][^>]*>)`, 'gi');
+        hydratedHtml = hydratedHtml.replace(linkRegex, (tag) => {
+            if (/(href=["'][^"']*["'])/i.test(tag)) {
+                return tag.replace(/href=["'][^"']*["']/i, `href="${value}"`);
+            }
+            return tag.replace(/>$/, ` href="${value}">`);
+        });
+    }
+
+    return hydratedHtml;
+}
+
+function parseAttributesFromTag(tag) {
+    const attrs = {};
+    const attrRegex = /([a-zA-Z_:][-a-zA-Z0-9_:.]*)\s*=\s*("([^"]*)"|'([^']*)')/g;
+    let match;
+    while ((match = attrRegex.exec(tag)) !== null) {
+        const key = match[1];
+        const value = match[3] ?? match[4] ?? '';
+        attrs[key] = value;
+    }
+    return attrs;
+}
+
+// Recursive function to resolve <template-ref> tags
+async function resolveTemplateRefs(html, templateCache = new Map(), seenIds = new Set()) {
+    if (!html) return html;
+
+    const tagRegex = /<template-ref\b[^>]*?(?:\/>|>[\s\S]*?<\/template-ref>)/gi;
+    const refs = [...html.matchAll(tagRegex)];
+    if (refs.length === 0) return html;
+
+    let resolvedHtml = html;
+
+    for (const refMatch of refs) {
+        const fullTag = refMatch[0];
+        const attrs = parseAttributesFromTag(fullTag);
+        const templateId = attrs['data-template-id'] || attrs.id;
+        if (!templateId) {
+            resolvedHtml = resolvedHtml.replace(fullTag, '');
+            continue;
+        }
+
+        if (seenIds.has(templateId)) {
+            console.warn('[template-resolver] Circular template reference detected:', templateId);
+            resolvedHtml = resolvedHtml.replace(fullTag, '');
+            continue;
+        }
+
+        try {
+            let templateData = templateCache.get(templateId);
+            if (!templateData) {
+                templateData = await getTemplateContent(templateId);
+                templateCache.set(templateId, templateData || null);
+            }
+
+            if (!templateData) {
+                resolvedHtml = resolvedHtml.replace(fullTag, '');
+                continue;
+            }
+
+            const overrideProps = parseDataProps(attrs['data-props'] || '');
+            const mergedProps = {
+                ...(templateData.defaultProps || {}),
+                ...overrideProps,
+            };
+
+            const hydratedHtml = applyTemplateProps(templateData.gjsHtml || '', mergedProps);
+            const resolvedNestedHtml = await resolveTemplateRefs(
+                hydratedHtml,
+                templateCache,
+                new Set([...seenIds, templateId])
+            );
+
+            const css = templateData.gjsCss ? `<style>${templateData.gjsCss}</style>` : '';
+            resolvedHtml = resolvedHtml.replace(fullTag, `${css}${resolvedNestedHtml || ''}`);
         } catch (e) {
             console.error(`Failed to resolve template ${templateId}`, e);
             resolvedHtml = resolvedHtml.replace(fullTag, '');

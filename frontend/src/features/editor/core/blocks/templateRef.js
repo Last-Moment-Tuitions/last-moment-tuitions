@@ -227,6 +227,10 @@ export const loadTemplateRefBlock = (editor) => {
             },
 
             onRender() {
+                // Enforce block formatting immediately upon element creation 
+                // (before template loading) to prevent newly dragged empty templates
+                // from overlapping with existing ones since custom tags default to 'inline'
+                this.el.style.cssText = 'display: block; width: 100%; clear: both; position: relative; contain: content;';
                 this.renderTemplate();
             },
 
@@ -995,9 +999,10 @@ export const loadTemplateRefBlock = (editor) => {
                     // user-select:none prevents text selection (better than pointer-events:none
                     // which blocks ALL clicks — including accordion/tabs inside the section).
                     // GrapeJS won't select inner elements because they're raw DOM, not GrapeJS models.
-                    contentDiv.style.cssText = 'user-select: none;';
+                    // IMPORTANT: display: flow-root prevents inner floats/margins from breaking the container boundaries
+                    contentDiv.style.cssText = 'user-select: none; display: flow-root; width: 100%;';
                     wrapper.appendChild(contentDiv);
-                    wrapper.style.cssText = 'position:relative; display:block;';
+                    wrapper.style.cssText = 'position:relative; display:block; width: 100%;';
 
                     // ── Section Interactivity ──────────────────────────────────
                     // Tabs + accordion work natively now that pointer-events:none is gone.
@@ -1011,7 +1016,9 @@ export const loadTemplateRefBlock = (editor) => {
                     wrapper.appendChild(badge);
 
                     this.el.appendChild(wrapper);
-                    this.el.style.position = 'relative';
+                    
+                    // CRITICAL: CSS layout constraints are applied in onRender
+                    // to ensure both empty and loaded templates are properly isolated.
 
                 } catch (err) {
                     console.error('[templateRef] Render error:', err);

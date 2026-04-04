@@ -11,6 +11,23 @@ export default function GenericSectionInteractivity() {
     useEffect(() => {
         // Run once on mount
 
+        // 0. Execute any <script> tags injected via dangerouslySetInnerHTML
+        //    React doesn't execute them, so we re-create them as real DOM <script> elements.
+        const pageContainer = document.querySelector('main');
+        if (pageContainer) {
+            const inlineScripts = pageContainer.querySelectorAll('script');
+            inlineScripts.forEach(oldScript => {
+                const newScript = document.createElement('script');
+                // Copy all attributes (src, type, async, etc.)
+                Array.from(oldScript.attributes).forEach(attr => {
+                    newScript.setAttribute(attr.name, attr.value);
+                });
+                // Copy inline script content
+                newScript.textContent = oldScript.textContent;
+                oldScript.parentNode.replaceChild(newScript, oldScript);
+            });
+        }
+
         // 1. Tab Switcher (e.g. Course Curriculum)
         // Group by closest section or main container
         const allTabs = document.querySelectorAll('[data-tab]');

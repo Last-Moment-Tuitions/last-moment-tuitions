@@ -21,6 +21,52 @@ export function Editor({ pageId }) {
     const [isPreview, setIsPreview] = useState(false);
     const [rightSidebarOpen, setRightSidebarOpen] = useState(true); // Default open on desktop
 
+    const isPlainObject = (value) => {
+        if (!value || typeof value !== 'object') return false;
+        const proto = Object.getPrototypeOf(value);
+        return proto === Object.prototype || proto === null;
+    };
+
+    const stripScriptTags = (html = '') => {
+        if (typeof html !== 'string' || !html) return html;
+        return html.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+    };
+
+    const sanitizeComponentsForCanvas = (input) => {
+        if (Array.isArray(input)) {
+            return input.map(item => sanitizeComponentsForCanvas(item));
+        }
+
+        if (isPlainObject(input)) {
+            const clone = { ...input };
+
+            if (typeof clone.content === 'string') {
+                clone.content = stripScriptTags(clone.content);
+            }
+
+            if (typeof clone.components === 'string') {
+                clone.components = stripScriptTags(clone.components);
+            } else if (Array.isArray(clone.components) || (clone.components && typeof clone.components === 'object')) {
+                clone.components = sanitizeComponentsForCanvas(clone.components);
+            }
+
+            return clone;
+        }
+
+        return input;
+    };
+
+    const toSafeJson = (value) => {
+        const seen = new WeakSet();
+        return JSON.parse(JSON.stringify(value, (_key, val) => {
+            if (typeof val === 'object' && val !== null) {
+                if (seen.has(val)) return undefined;
+                seen.add(val);
+            }
+            return val;
+        }));
+    };
+
     useEffect(() => {
         if (!pageId) return;
 
@@ -47,11 +93,12 @@ export function Editor({ pageId }) {
                 setPageDetails(page);
 
                 if (page.gjsComponents && (!Array.isArray(page.gjsComponents) || page.gjsComponents.length > 0)) {
-                    editor.setComponents(page.gjsComponents);
+                    const safeComponents = sanitizeComponentsForCanvas(page.gjsComponents);
+                    editor.setComponents(safeComponents);
                 } else if (page.gjsHtml) {
                     // Fallback: Parse raw HTML back into editor blocks (handles seeded data)
                     const tempDiv = document.createElement('div');
-                    tempDiv.innerHTML = page.gjsHtml;
+                    tempDiv.innerHTML = stripScriptTags(page.gjsHtml);
                     if (page.gjsCss) { tempDiv.innerHTML += `<style>${page.gjsCss}</style>`; }
                     editor.setComponents(tempDiv.innerHTML);
                 }
@@ -90,13 +137,21 @@ export function Editor({ pageId }) {
         setSaving(true);
         try {
             // Correctly serialize GrapesJS data to avoid circular references and massive objects
-            const data = {
-                gjsComponents: editor.getComponents().toJSON(),
-                gjsStyles: editor.getStyle().toJSON(),
-                gjsHtml: editor.getHtml(),
+            const rawComponents = editor.getComponents().toJSON();
+            const rawStyles = typeof editor.getStyle()?.toJSON === 'function'
+                ? editor.getStyle().toJSON()
+                : editor.getStyle();
+            const rawAssets = typeof editor.Assets?.getAll()?.toJSON === 'function'
+                ? editor.Assets.getAll().toJSON()
+                : [];
+
+            const data = toSafeJson({
+                gjsComponents: sanitizeComponentsForCanvas(rawComponents),
+                gjsStyles: rawStyles,
+                gjsHtml: editor.getJs() ? `${editor.getHtml()}\n<script>\n${editor.getJs()}\n</script>` : editor.getHtml(),
                 gjsCss: editor.getCss(),
-                gjsAssets: editor.Assets.getAll().toJSON(),
-            };
+                gjsAssets: rawAssets,
+            });
 
             await adminService.updatePage(pageId, data);
             showToast('Page saved successfully!', 'success');
@@ -186,10 +241,23 @@ export function Editor({ pageId }) {
 
             {/* Editor Area */}
             <div className="flex flex-1 overflow-hidden relative">
-                {/* Blocks Sidebar */}
+                {/* Blocks + Layers Sidebar */}
                 <div className={`w-64 bg-gray-800 border-r border-gray-700 flex flex-col text-white z-40 ${isPreview ? 'hidden' : 'block'}`}>
-                    <div className="p-3 font-bold text-xs uppercase text-gray-400">Blocks</div>
-                    <div id="blocks" className="flex-1 overflow-y-auto p-2"></div>
+                    {/* Blocks Section */}
+                    <div className="p-3 font-bold text-xs uppercase text-gray-400 border-b border-gray-700 cursor-pointer flex items-center justify-between"
+                        onClick={() => document.getElementById('blocks').classList.toggle('hidden')}>
+                        <span>Blocks</span>
+                        <span className="text-gray-500">▾</span>
+                    </div>
+                    <div id="blocks" className="overflow-y-auto p-2" style={{ maxHeight: '50%' }}></div>
+
+                    {/* Layers Section */}
+                    <div className="p-3 font-bold text-xs uppercase text-gray-400 border-b border-t border-gray-700 cursor-pointer flex items-center justify-between bg-gray-900"
+                        onClick={() => document.getElementById('layers-container').classList.toggle('hidden')}>
+                        <span>🗂 Layers</span>
+                        <span className="text-gray-500">▾</span>
+                    </div>
+                    <div id="layers-container" className="flex-1 overflow-y-auto"></div>
                 </div>
 
                 {/* Canvas */}

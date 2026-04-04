@@ -79,9 +79,8 @@ function CreatePageContent() {
             if (data && data._id) {
                 const newPageId = data._id;
                 toast.success('Page created successfully!');
-                // Keep loading state active during redirect
                 setTimeout(() => {
-                    router.push(`/editor/${newPageId}`);
+                    router.push(`/admin/editor/${newPageId}`);
                 }, 300);
             }
         } catch (error) {
