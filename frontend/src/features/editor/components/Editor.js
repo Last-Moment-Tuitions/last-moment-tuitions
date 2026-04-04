@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { adminService } from '@/services/adminService';
 import { initEditor } from '@/features/editor/core/editor/Manager';
 import { loadBlocks } from '@/features/editor/core/blocks/basic';
@@ -20,6 +20,40 @@ export function Editor({ pageId }) {
     const [toast, setToast] = useState(null); // { message, type }
     const [isPreview, setIsPreview] = useState(false);
     const [rightSidebarOpen, setRightSidebarOpen] = useState(true); // Default open on desktop
+    const [sidebarWidth, setSidebarWidth] = useState(320); // Default 320px width
+
+    // Resizing logic for right sidebar
+    const isResizing = useRef(false);
+
+    const startResizing = useCallback((e) => {
+        isResizing.current = true;
+        document.body.style.cursor = 'ew-resize';
+        e.preventDefault();
+    }, []);
+
+    const stopResizing = useCallback(() => {
+        isResizing.current = false;
+        document.body.style.cursor = 'default';
+    }, []);
+
+    const resize = useCallback((e) => {
+        if (isResizing.current) {
+            const newWidth = window.innerWidth - e.clientX;
+            // Constrain between 250px and 800px
+            if (newWidth >= 250 && newWidth <= 800) {
+                setSidebarWidth(newWidth);
+            }
+        }
+    }, []);
+
+    useEffect(() => {
+        window.addEventListener('mousemove', resize);
+        window.addEventListener('mouseup', stopResizing);
+        return () => {
+            window.removeEventListener('mousemove', resize);
+            window.removeEventListener('mouseup', stopResizing);
+        };
+    }, [resize, stopResizing]);
 
     const isPlainObject = (value) => {
         if (!value || typeof value !== 'object') return false;
@@ -89,7 +123,7 @@ export function Editor({ pageId }) {
                 const page = await adminService.getPage(pageId);
 
                 if (!isMounted) return;
-                
+
                 setPageDetails(page);
 
                 if (page.gjsComponents && (!Array.isArray(page.gjsComponents) || page.gjsComponents.length > 0)) {
@@ -268,12 +302,18 @@ export function Editor({ pageId }) {
                 {/* Properties Sidebar (Right) */}
                 <div
                     className={`
-                        absolute lg:relative right-0 top-0 h-full w-64 bg-gray-800 border-l border-gray-700 flex flex-col text-white z-40 transition-transform duration-300 ease-in-out overflow-hidden
+                        absolute lg:relative right-0 top-0 h-full bg-gray-800 border-l border-gray-700 flex flex-col text-white z-40 transition-transform duration-300 ease-in-out
                         ${isPreview ? 'hidden' : 'flex'}
                         ${rightSidebarOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'}
-                        lg:w-64 lg:flex
                     `}
+                    style={{ width: rightSidebarOpen ? `${sidebarWidth}px` : '0px', flexShrink: 0 }}
                 >
+                    {/* Resizer Handle */}
+                    <div
+                        onMouseDown={startResizing}
+                        className="absolute left-0 top-0 bottom-0 w-2 cursor-ew-resize hover:bg-gray-400 z-50 transition-colors bg-transparent opacity-50"
+                    />
+
                     <div className="p-3 font-bold text-xs uppercase text-gray-400 border-b border-gray-700 bg-gray-900 flex justify-between items-center flex-shrink-0">
                         <span>Properties</span>
                         {/* Close button for mobile */}
@@ -282,7 +322,7 @@ export function Editor({ pageId }) {
                         </button>
                     </div>
 
-                    <div className="flex-1 overflow-y-auto overflow-x-hidden min-h-0 pb-12">
+                    <div className="flex-1 overflow-y-auto overflow-x-auto min-h-0 pb-12">
                         <div className="p-3 font-bold text-xs uppercase text-gray-400 border-b border-gray-700 bg-gray-800">
                             Settings
                         </div>
