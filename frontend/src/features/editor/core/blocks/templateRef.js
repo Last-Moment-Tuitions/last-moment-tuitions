@@ -387,6 +387,30 @@ export const loadTemplateRefBlock = (editor) => {
                         this.updateDataProps();
                     }
                 });
+
+                // Handle sidebar duplication (Cloning items in the canvas)
+                const em = this.model.opt.em;
+                if (em) {
+                    em.on('component:clone', (cloned) => {
+                        const el = cloned.getEl ? cloned.getEl() : null;
+                        if (!el) return;
+
+                        // If it's a sidebar item, auto-index it
+                        if (el.hasAttribute('data-sidebar-item')) {
+                            const items = el.closest('[data-sidebar-nav]')?.querySelectorAll('[data-sidebar-item]') || [];
+                            const nextIdx = items.length;
+                            cloned.addAttributes({ 'data-sidebar-item': String(nextIdx) });
+
+                            // Set default content for the new slot
+                            const contentKey = `prop_nav${nextIdx}_content`;
+                            if (!this.model.get(contentKey)) {
+                                this.model.set(contentKey, `<h2>New Section ${nextIdx}</h2><p>Click to edit this content.</p>`, { silent: true });
+                                this.model.set(`prop_nav${nextIdx}_label`, `New Item ${nextIdx}`, { silent: true });
+                            }
+                            this.trigger('change:templateContent');
+                        }
+                    });
+                }
             },
 
             updateDataProps() {
@@ -569,6 +593,11 @@ export const loadTemplateRefBlock = (editor) => {
                             e.stopPropagation(); // Prevent GrapeJS from selecting inner text nodes
                             e.preventDefault();
                             activateSidebarItem(i + 1);
+
+                            // Sync tab highlighting if it's the "Placement Papers" (Section 1)
+                            if (String(i + 1) === '1') {
+                                this.model.set('prop_active_tab', '1', { silent: true });
+                            }
 
                             // Process UI change sequentially so GrapeJS can finish bubbling first
                             setTimeout(() => {
@@ -1053,28 +1082,30 @@ export const loadTemplateRefBlock = (editor) => {
                     // ── Apply Variable Values to HTML ───────────────────────────
                     const renderDoc = parser.parseFromString(html, 'text/html');
 
-                    // Apply active styles to the buttons to prevent them from reverting to Seeded HTML state
-                    renderDoc.querySelectorAll('[data-tab]').forEach(btn => {
-                        if (btn.getAttribute('data-tab') === activeTab) {
-                            btn.style.background = '#111827';
-                            btn.style.color = '#fff';
-                            btn.style.borderColor = '#111827';
+                    // Sync Content Tab Highlighting (Overview, Syllabus, etc.)
+                    activeTab = this.model.get('prop_active_tab') || '1';
+                    renderDoc.querySelectorAll('[data-content-tab], [data-tab]').forEach(btn => {
+                        const tabIdx = btn.getAttribute('data-content-tab') || btn.getAttribute('data-tab');
+                        const isActive = String(tabIdx) === String(activeTab);
+
+                        // Vibrant Highlight for the selected tab
+                        if (isActive) {
+                            btn.style.borderBottom = '2px solid #f97316';
+                            btn.style.color = '#0f172a';
                             btn.style.fontWeight = '700';
+                            btn.style.background = '#fff';
                         } else {
-                            btn.style.background = 'transparent';
-                            btn.style.color = '#374151';
-                            btn.style.borderColor = 'transparent';
+                            btn.style.borderBottom = '1px solid transparent';
+                            btn.style.color = '#64748b';
                             btn.style.fontWeight = '600';
+                            btn.style.background = 'transparent';
                         }
                     });
 
-                    // Make sure renderDoc hides/shows the right tab panes for final output
-                    renderDoc.querySelectorAll('[data-tab-pane]').forEach(pane => {
-                        if (pane.getAttribute('data-tab-pane') === activeTab) {
-                            pane.style.display = 'block';
-                        } else {
-                            pane.style.display = 'none';
-                        }
+                    // Sync Section Visibility (Exclusively show only the active tab's section)
+                    renderDoc.querySelectorAll('[data-content-section], [data-tab-pane]').forEach(section => {
+                        const sectionIdx = section.getAttribute('data-content-section') || section.getAttribute('data-tab-pane');
+                        section.style.display = (String(sectionIdx) === String(activeTab)) ? 'block' : 'none';
                     });
 
                     // ── Course Detail Sidebar Visibility ───────────────────────
@@ -1165,6 +1196,23 @@ export const loadTemplateRefBlock = (editor) => {
                         el.setAttribute('href', value);
                     });
 
+                    // ── Inject Editor-Only CSS (Hide distracting outlines) ──────────────────
+                    const style = renderDoc.createElement('style');
+                    style.textContent = `
+                        /* Remove purple dashed outlines for nav icons and text to reduce distraction */
+                        .gjs-dashed [data-sidebar-nav] *, 
+                        .gjs-dashed [style*="border-bottom"] *,
+                        .gjs-dashed [data-var] { 
+                            outline: none !important; 
+                        }
+                        /* But keep a subtle focus for the whole item */
+                        .gjs-dashed [data-sidebar-item],
+                        .gjs-dashed [data-content-tab] {
+                            outline: 1px dashed rgba(249, 115, 22, 0.3) !important;
+                        }
+                    `;
+                    renderDoc.head.appendChild(style);
+
                     // Apply auto-image overrides by index
                     let autoIdx = 0;
                     renderDoc.querySelectorAll('img').forEach(img => {
@@ -1210,13 +1258,13 @@ export const loadTemplateRefBlock = (editor) => {
                                     newRow.setAttribute('data-module', '');
                                     newRow.style.cssText = 'margin-bottom:8px; border:1px solid #e5e7eb; border-radius:8px; overflow:hidden;';
                                     newRow.innerHTML = `
-                                        <summary style="display:flex; align-items:center; gap:12px; padding:14px 16px; cursor:pointer; background:#fff; list-style:none; font-weight:600; font-size:14px; color:#111827;">
-                                            <span style="width:26px; height:26px; background:#e5e7eb; color:#374151; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; flex-shrink:0;">${i}</span>
-                                            <span style="flex:1;" data-module-title>${title}</span>
-                                            <span class="mod-chevron">›</span>
-                                        </summary>
-                                        ${desc ? `<div style="padding:12px 16px 16px 54px; background:#fff; border-top:1px solid #f3f4f6;"><p style="font-size:13px; color:#6b7280; margin:0; line-height:1.6;">${desc}</p></div>` : ''}
-                                    `;
+                                    <summary style="display:flex; align-items:center; gap:12px; padding:14px 16px; cursor:pointer; background:#fff; list-style:none; font-weight:600; font-size:14px; color:#111827;">
+                                        <span style="width:26px; height:26px; background:#e5e7eb; color:#374151; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; flex-shrink:0;">${i}</span>
+                                        <span style="flex:1;" data-module-title>${title}</span>
+                                        <span class="mod-chevron">›</span>
+                                    </summary>
+                                    ${desc ? `<div style="padding:12px 16px 16px 54px; background:#fff; border-top:1px solid #f3f4f6;"><p style="font-size:13px; color:#6b7280; margin:0; line-height:1.6;">${desc}</p></div>` : ''}
+                                `;
                                     parentList.appendChild(newRow);
                                 }
                             }
@@ -1245,19 +1293,19 @@ export const loadTemplateRefBlock = (editor) => {
                                     newRow.setAttribute('data-testimonial', '');
                                     newRow.style.cssText = 'flex:0 0 320px; background:#fff; border-radius:16px; padding:32px; box-shadow:0 10px 25px rgba(0,0,0,0.05); border:1px solid #f1f5f9; display:flex; flex-direction:column; min-height:280px; scroll-snap-align:start;';
                                     newRow.innerHTML = `
-                                        <div style="display:flex; align-items:center; gap:12px; margin-bottom:24px;">
-                                            <img data-var-src="test_t${i}_logo" src="${logoSrc}" style="width:32px; height:32px; object-fit:contain; border-radius:50%;" />
-                                            <span style="font-weight:700; font-size:18px; color:#334155; text-transform:uppercase;" data-var="test_t${i}_company">${company}</span>
+                                    <div style="display:flex; align-items:center; gap:12px; margin-bottom:24px;">
+                                        <img data-var-src="test_t${i}_logo" src="${logoSrc}" style="width:32px; height:32px; object-fit:contain; border-radius:50%;" />
+                                        <span style="font-weight:700; font-size:18px; color:#334155; text-transform:uppercase;" data-var="test_t${i}_company">${company}</span>
+                                    </div>
+                                    <p style="font-size:15px; color:#475569; line-height:1.6; flex:1; margin:0 0 32px 0;" data-var="test_t${i}_desc">${desc}</p>
+                                    <div style="display:flex; align-items:center; gap:16px;">
+                                        <img data-var-src="test_t${i}_avatar" src="${avatarSrc}" style="width:48px; height:48px; border-radius:50%; object-fit:cover;" />
+                                        <div>
+                                            <div style="font-weight:700; font-size:15px; color:#1e293b;" data-var="test_t${i}_name">${name}</div>
+                                            <div style="font-size:13px; color:#64748b;" data-var="test_t${i}_role">${role}</div>
                                         </div>
-                                        <p style="font-size:15px; color:#475569; line-height:1.6; flex:1; margin:0 0 32px 0;" data-var="test_t${i}_desc">${desc}</p>
-                                        <div style="display:flex; align-items:center; gap:16px;">
-                                            <img data-var-src="test_t${i}_avatar" src="${avatarSrc}" style="width:48px; height:48px; border-radius:50%; object-fit:cover;" />
-                                            <div>
-                                                <div style="font-weight:700; font-size:15px; color:#1e293b;" data-var="test_t${i}_name">${name}</div>
-                                                <div style="font-size:13px; color:#64748b;" data-var="test_t${i}_role">${role}</div>
-                                            </div>
-                                        </div>
-                                    `;
+                                    </div>
+                                `;
                                     parentList.appendChild(newRow);
                                 }
                             }
@@ -1418,13 +1466,13 @@ export const loadTemplateRefBlock = (editor) => {
                                                     newRow.setAttribute('data-module', '');
                                                     newRow.style.cssText = 'margin-bottom:8px; border:1px solid #e5e7eb; border-radius:8px; overflow:hidden;';
                                                     newRow.innerHTML = `
-                                                        <summary style="display:flex; align-items:center; gap:12px; padding:14px 16px; cursor:pointer; background:#fff; list-style:none; font-weight:600; font-size:14px; color:#111827;">
-                                                            <span style="width:26px; height:26px; background:#e5e7eb; color:#374151; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; flex-shrink:0;">${i}</span>
-                                                            <span style="flex:1;" data-module-title>${title}</span>
-                                                            <span class="mod-chevron">›</span>
-                                                        </summary>
-                                                        ${desc ? `<div style="padding:12px 16px 16px 54px; background:#fff; border-top:1px solid #f3f4f6;"><p style="font-size:13px; color:#6b7280; margin:0; line-height:1.6;">${desc}</p></div>` : ''}
-                                                    `;
+                                                    <summary style="display:flex; align-items:center; gap:12px; padding:14px 16px; cursor:pointer; background:#fff; list-style:none; font-weight:600; font-size:14px; color:#111827;">
+                                                        <span style="width:26px; height:26px; background:#e5e7eb; color:#374151; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; flex-shrink:0;">${i}</span>
+                                                        <span style="flex:1;" data-module-title>${title}</span>
+                                                        <span class="mod-chevron">›</span>
+                                                    </summary>
+                                                    ${desc ? `<div style="padding:12px 16px 16px 54px; background:#fff; border-top:1px solid #f3f4f6;"><p style="font-size:13px; color:#6b7280; margin:0; line-height:1.6;">${desc}</p></div>` : ''}
+                                                `;
                                                     parentList.appendChild(newRow);
                                                 }
                                             }
@@ -1453,19 +1501,19 @@ export const loadTemplateRefBlock = (editor) => {
                                                     newRow.setAttribute('data-testimonial', '');
                                                     newRow.style.cssText = 'flex:0 0 320px; background:#fff; border-radius:16px; padding:32px; box-shadow:0 10px 25px rgba(0,0,0,0.05); border:1px solid #f1f5f9; display:flex; flex-direction:column; min-height:280px; scroll-snap-align:start;';
                                                     newRow.innerHTML = `
-                                                        <div style="display:flex; align-items:center; gap:12px; margin-bottom:24px;">
-                                                            <img data-var-src="${prefix}logo" src="${logoSrc}" style="width:32px; height:32px; object-fit:contain; border-radius:50%;" />
-                                                            <span style="font-weight:700; font-size:18px; color:#334155; text-transform:uppercase;" data-var="${prefix}company">${company}</span>
+                                                    <div style="display:flex; align-items:center; gap:12px; margin-bottom:24px;">
+                                                        <img data-var-src="${prefix}logo" src="${logoSrc}" style="width:32px; height:32px; object-fit:contain; border-radius:50%;" />
+                                                        <span style="font-weight:700; font-size:18px; color:#334155; text-transform:uppercase;" data-var="${prefix}company">${company}</span>
+                                                    </div>
+                                                    <p style="font-size:15px; color:#475569; line-height:1.6; flex:1; margin:0 0 32px 0;" data-var="${prefix}desc">${desc}</p>
+                                                    <div style="display:flex; align-items:center; gap:16px;">
+                                                        <img data-var-src="${prefix}avatar" src="${avatarSrc}" style="width:48px; height:48px; border-radius:50%; object-fit:cover;" />
+                                                        <div>
+                                                            <div style="font-weight:700; font-size:15px; color:#1e293b;" data-var="${prefix}name">${name}</div>
+                                                            <div style="font-size:13px; color:#64748b;" data-var="${prefix}role">${role}</div>
                                                         </div>
-                                                        <p style="font-size:15px; color:#475569; line-height:1.6; flex:1; margin:0 0 32px 0;" data-var="${prefix}desc">${desc}</p>
-                                                        <div style="display:flex; align-items:center; gap:16px;">
-                                                            <img data-var-src="${prefix}avatar" src="${avatarSrc}" style="width:48px; height:48px; border-radius:50%; object-fit:cover;" />
-                                                            <div>
-                                                                <div style="font-weight:700; font-size:15px; color:#1e293b;" data-var="${prefix}name">${name}</div>
-                                                                <div style="font-size:13px; color:#64748b;" data-var="${prefix}role">${role}</div>
-                                                            </div>
-                                                        </div>
-                                                    `;
+                                                    </div>
+                                                `;
                                                     parentList.appendChild(newRow);
                                                 }
                                             }
@@ -1534,12 +1582,15 @@ export const loadTemplateRefBlock = (editor) => {
                 } catch (err) {
                     console.error('[templateRef] Render error:', err);
                     this.el.innerHTML = `
-                        <div style="padding:20px; border:2px dashed #f87171; background:#fef2f2; text-align:center; color:#991b1b; font-family:sans-serif; border-radius:8px;">
-                            <strong>Failed to load section</strong>
-                            <p style="font-size:12px; margin-top:4px; color:#dc2626;">ID: ${templateId}</p>
-                            <p style="font-size:11px; color:#9ca3af;">${err.message}</p>
-                        </div>`;
+                    <div style="padding:20px; border:2px dashed #f87171; background:#fef2f2; text-align:center; color:#991b1b; font-family:sans-serif; border-radius:8px;">
+                        <strong>Failed to load section</strong>
+                        <p style="font-size:12px; margin-top:4px; color:#dc2626;">ID: ${templateId}</p>
+                        <p style="font-size:11px; color:#9ca3af;">${err.message}</p>
+                    </div>`;
                 }
+            },
+            onDuplicate() {
+                this.model.set('_force_trait_reset', true, { silent: true });
             }
         }
     });

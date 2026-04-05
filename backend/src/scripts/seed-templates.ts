@@ -218,7 +218,7 @@ const HERO_SECTION_2_HTML = `
                 Amet nunc diam orci duis ut sit diam arcu, nec. Eleifend proin massa tincidunt viverra lectus pulvinar.
             </p>
             <div>
-                <a href="#" style="display:inline-block; border:2px solid #ffffff; color:#ffffff; padding:14px 36px; border-radius:999px; font-weight:700; font-size:16px; text-decoration:none; transition:all 0.3s;" data-var="hero2_cta_text" data-var-link="hero2_cta_link">Free Launch</a>
+                <a href="#get-started" style="display:inline-block; border:2px solid #ffffff; color:#ffffff; padding:14px 36px; border-radius:999px; font-weight:700; font-size:16px; text-decoration:none; transition:all 0.3s;" data-var="hero2_cta_text" data-var-link="hero2_cta_link">Free Launch</a>
             </div>
         </div>
         <!-- Right Image -->
@@ -248,8 +248,8 @@ const HERO_SECTION_3_HTML = `
             </p>
             
             <div style="display:flex; flex-wrap:wrap; gap:24px; align-items:center; margin-bottom:60px;">
-                <a href="#" style="background:#ea580c; color:#ffffff; padding:14px 36px; border-radius:6px; font-weight:700; font-size:16px; text-decoration:none;" data-var="hero3_btn_1_text" data-var-link="hero3_btn_1_link">Sign Up Now</a>
-                <a href="#" style="display:flex; align-items:center; gap:8px; color:#2563eb; font-weight:600; font-size:16px; text-decoration:none;" data-var-link="hero3_btn_2_link">
+                <a href="#signup" style="background:#ea580c; color:#ffffff; padding:14px 36px; border-radius:6px; font-weight:700; font-size:16px; text-decoration:none;" data-var="hero3_btn_1_text" data-var-link="hero3_btn_1_link">Sign Up Now</a>
+                <a href="#demo" style="display:flex; align-items:center; gap:8px; color:#2563eb; font-weight:600; font-size:16px; text-decoration:none;" data-var-link="hero3_btn_2_link">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M10 8l6 4-6 4V8z"/></svg>
                     <span data-var="hero3_btn_2_text">View Demo</span>
                 </a>
@@ -322,7 +322,7 @@ const CTA_SECTION_1_HTML = `
         <p style="font-size: 16px; color: #e2e8f0; line-height: 1.6; max-width: 600px; margin: 0 auto 32px auto;" data-var="cta1_desc">
             Egestas fringilla aliquam leo, habitasse arcu varius lorem elit. Neque pellentesque donec et tellus ac varius tortor, bibendum. Nulla felis ac turpis at amet. Purus malesuada placerat arcu at enim elit in accumsan.
         </p>
-        <a href="#" style="display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: #3b82f6; color: #ffffff; padding: 14px 32px; border-radius: 8px; font-weight: 700; font-size: 16px; text-decoration: none; transition: background 0.2s;" data-var-link="cta1_btn_link">
+        <a href="#signup" style="display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: #3b82f6; color: #ffffff; padding: 14px 32px; border-radius: 8px; font-weight: 700; font-size: 16px; text-decoration: none; transition: background 0.2s;" data-var-link="cta1_btn_link">
             <span data-var="cta1_btn_text">Sign Up Free</span>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
         </a>
@@ -360,7 +360,7 @@ const WHY_JOIN_US_HTML = `
             </ul>
 
             <div>
-                <a href="#" data-var-link="why_btn_link" style="display:inline-block; border:2px solid #047857; background:#047857; color:#fff; font-weight:700; font-size:16px; padding:12px 32px; border-radius:8px; text-decoration:none; transition:all 0.2s;" data-var="why_btn_text">Sign up now</a>
+                <a href="#signup" data-var-link="why_btn_link" style="display:inline-block; border:2px solid #047857; background:#047857; color:#fff; font-weight:700; font-size:16px; padding:12px 32px; border-radius:8px; text-decoration:none; transition:all 0.2s;" data-var="why_btn_text">Sign up now</a>
             </div>
         </div>
 
@@ -485,7 +485,7 @@ const buildCurriculumProps = () => {
         benefit_11: '— Progress tracking + completion certificate',
         curriculum_banner_image: 'https://placehold.co/300x160/6B3FA0/white?text=Course+2025',
         enroll_button_text: 'Enroll Now',
-        enroll_button_link: '#',
+        enroll_button_link: '#enroll',
     };
 
     const tracks = [
@@ -554,7 +554,7 @@ const SECTIONS: SectionDefinition[] = [
             why_bullet_2: 'Tellus arcu sed consequat ac velit ut eu blandit.',
             why_bullet_3: 'Ullamcorper ornare in et egestas dolor orci.',
             why_btn_text: 'Sign up now',
-            why_btn_link: '#',
+            why_btn_link: '#signup',
             why_video_url: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
         },
     },
@@ -582,7 +582,7 @@ const SECTIONS: SectionDefinition[] = [
             hero2_headline_part2: 'Grow Your Business',
             hero2_subtext: 'Amet nunc diam orci duis ut sit diam arcu, nec. Eleifend proin massa tincidunt viverra lectus pulvinar.',
             hero2_cta_text: 'Free Launch',
-            hero2_cta_link: '#',
+            hero2_cta_link: '#get-started',
             hero2_illustration: 'https://placehold.co/600x500/transparent/ffffff?text=App+Mockup+Placeholder',
         },
     },
@@ -597,7 +597,7 @@ const SECTIONS: SectionDefinition[] = [
             hero3_headline_rest: 'students worldwide',
             hero3_subtext: 'Amet nunc diam orci duis ut sit diam arcu, nec. Eleifend proin massa tincidunt viverra lectus pulvinar. Nunc ipsum est pellentesque turpis ultricies.',
             hero3_btn_1_text: 'Sign Up Now',
-            hero3_btn_1_link: '#',
+            hero3_btn_1_link: '#signup',
             hero3_btn_2_text: 'View Demo',
             hero3_btn_2_link: '#',
             hero3_trusted_text: 'Trusted by leading companies',
@@ -656,27 +656,27 @@ const COURSE_DETAIL_HTML = `
         <aside style="width:240px; flex-shrink:0; background:#fff; border:1px solid #e2e8f0; border-radius:10px; padding:12px 0; position:sticky; top:24px; max-height:calc(100vh - 48px); overflow-y:auto; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
             <div style="padding:10px 16px 6px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:#94a3b8;" data-var="course_sidebar_heading">TCS NQT MENU</div>
             <nav data-sidebar-nav style="display:flex; flex-direction:column; margin-top:4px;">
-                <a data-sidebar-item="1" href="#" style="display:flex; align-items:center; gap:8px; padding:12px 16px; text-decoration:none; color:#ea580c; font-size:14px; font-weight:600; border-left:3px solid #f97316; background:#fff7ed; transition:all 0.2s;">
+                <a data-sidebar-item="1" href="#section-1" style="display:flex; align-items:center; gap:8px; padding:12px 16px; text-decoration:none; color:#ea580c; font-size:14px; font-weight:600; border-left:3px solid #f97316; background:#fff7ed; transition:all 0.2s;">
                     <svg width="15" height="15" fill="none" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" stroke="#f97316" stroke-width="2"/><path d="M7 7h10M7 12h10M7 17h6" stroke="#f97316" stroke-width="2" stroke-linecap="round"/></svg>
                     <span data-var="course_nav1_label">Placement Papers</span>
                 </a>
-                <a data-sidebar-item="2" href="#" style="display:flex; align-items:center; gap:8px; padding:12px 16px; text-decoration:none; color:#374151; font-size:14px; font-weight:500; border-left:3px solid transparent; transition:all 0.2s;">
+                <a data-sidebar-item="2" href="#section-2" style="display:flex; align-items:center; gap:8px; padding:12px 16px; text-decoration:none; color:#374151; font-size:14px; font-weight:500; border-left:3px solid transparent; transition:all 0.2s;">
                     <svg width="15" height="15" fill="none" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" stroke="#64748b" stroke-width="2" stroke-linecap="round"/></svg>
                     <span data-var="course_nav2_label">What Is TCS NQT?</span>
                 </a>
-                <a data-sidebar-item="3" href="#" style="display:flex; align-items:center; gap:8px; padding:12px 16px; text-decoration:none; color:#374151; font-size:14px; font-weight:500; border-left:3px solid transparent; transition:all 0.2s;">
+                <a data-sidebar-item="3" href="#section-3" style="display:flex; align-items:center; gap:8px; padding:12px 16px; text-decoration:none; color:#374151; font-size:14px; font-weight:500; border-left:3px solid transparent; transition:all 0.2s;">
                     <svg width="15" height="15" fill="none" viewBox="0 0 24 24"><path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke="#64748b" stroke-width="2" stroke-linecap="round"/></svg>
                     <span data-var="course_nav3_label">How To Apply</span>
                 </a>
-                <a data-sidebar-item="4" href="#" style="display:none; align-items:center; gap:8px; padding:12px 16px; text-decoration:none; color:#374151; font-size:14px; font-weight:500; border-left:3px solid transparent; transition:all 0.2s;">
+                <a data-sidebar-item="4" href="#section-4" style="display:none; align-items:center; gap:8px; padding:12px 16px; text-decoration:none; color:#374151; font-size:14px; font-weight:500; border-left:3px solid transparent; transition:all 0.2s;">
                     <svg width="15" height="15" fill="none" viewBox="0 0 24 24"><path d="M12 6v6m0 0v6m0-6h6m-6 0H6" stroke="#64748b" stroke-width="2" stroke-linecap="round"/></svg>
                     <span data-var="course_nav4_label">Extra Section 1</span>
                 </a>
-                <a data-sidebar-item="5" href="#" style="display:none; align-items:center; gap:8px; padding:12px 16px; text-decoration:none; color:#374151; font-size:14px; font-weight:500; border-left:3px solid transparent; transition:all 0.2s;">
+                <a data-sidebar-item="5" href="#section-5" style="display:none; align-items:center; gap:8px; padding:12px 16px; text-decoration:none; color:#374151; font-size:14px; font-weight:500; border-left:3px solid transparent; transition:all 0.2s;">
                     <svg width="15" height="15" fill="none" viewBox="0 0 24 24"><path d="M12 6v6m0 0v6m0-6h6m-6 0H6" stroke="#64748b" stroke-width="2" stroke-linecap="round"/></svg>
                     <span data-var="course_nav5_label">Extra Section 2</span>
                 </a>
-                <a data-sidebar-item="6" href="#" style="display:none; align-items:center; gap:8px; padding:12px 16px; text-decoration:none; color:#374151; font-size:14px; font-weight:500; border-left:3px solid transparent; transition:all 0.2s;">
+                <a data-sidebar-item="6" href="#section-6" style="display:none; align-items:center; gap:8px; padding:12px 16px; text-decoration:none; color:#374151; font-size:14px; font-weight:500; border-left:3px solid transparent; transition:all 0.2s;">
                     <svg width="15" height="15" fill="none" viewBox="0 0 24 24"><path d="M12 6v6m0 0v6m0-6h6m-6 0H6" stroke="#64748b" stroke-width="2" stroke-linecap="round"/></svg>
                     <span data-var="course_nav6_label">Extra Section 3</span>
                 </a>
@@ -688,11 +688,11 @@ const COURSE_DETAIL_HTML = `
 
             <!-- Breadcrumb (Shared above active section) -->
             <div style="font-size:13px; color:#64748b; margin-bottom:12px; display:flex; align-items:center; flex-wrap:wrap; gap:4px;">
-                <a href="#" style="color:#64748b; text-decoration:none;" data-var="course_breadcrumb_home">Home</a>
+                <a href="/home" style="color:#64748b; text-decoration:none;" data-var="course_breadcrumb_home">Home</a>
                 <span>›</span>
-                <a href="#" style="color:#64748b; text-decoration:none;" data-var="course_breadcrumb_parent">TCS NQT</a>
+                <a href="/courses" style="color:#64748b; text-decoration:none;" data-var="course_breadcrumb_parent">TCS NQT</a>
                 <span>›</span>
-                <a href="#" style="color:#0369a1; text-decoration:none;" data-var="course_breadcrumb_current">TCS NQT Placement Papers and Questions 2026</a>
+                <a href="/tcs-nqt-papers" style="color:#0369a1; text-decoration:none;" data-var="course_breadcrumb_current">TCS NQT Placement Papers and Questions 2026</a>
             </div>
 
             <h1 style="font-size:clamp(24px,3.5vw,36px); font-weight:800; color:#0f172a; margin:0 0 24px 0; line-height:1.2;" data-var="course_page_title">TCS NQT Placement Papers and Questions 2026</h1>
@@ -831,6 +831,45 @@ const COURSE_DETAIL_HTML = `
         </main>
     </div>
 </div>
+<script>
+(function() {
+    // ── Self-Initializing Interactivity for Course Detail ────────────────────
+    const root = document.currentScript ? document.currentScript.parentElement : document;
+    
+    function init() {
+        const sidebarItems = root.querySelectorAll('[data-sidebar-item]');
+        const sections = root.querySelectorAll('[data-sidebar-section]');
+        if (!sidebarItems.length) return;
+
+        const activate = (idx) => {
+            sidebarItems.forEach((item, i) => {
+                const isActive = (i + 1) == idx;
+                item.style.borderLeftColor = isActive ? '#f97316' : 'transparent';
+                item.style.background = isActive ? '#fff7ed' : 'transparent';
+                item.style.color = isActive ? '#ea580c' : '#374151';
+                item.style.fontWeight = isActive ? '600' : '500';
+            });
+            sections.forEach(s => {
+                s.style.display = s.getAttribute('data-sidebar-section') == idx ? 'block' : 'none';
+            });
+        };
+
+        sidebarItems.forEach((item, i) => {
+            item.onclick = (e) => {
+                if (item.getAttribute('href').startsWith('#')) e.preventDefault();
+                activate(i + 1);
+            };
+        });
+    }
+
+    // Run after a short delay to ensure DOM is ready if injected dynamically
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        setTimeout(init, 100);
+    }
+})();
+</script>
 `;
 
 
@@ -858,31 +897,28 @@ const EXTRA_SECTIONS: SectionDefinition[] = [
 `,
         defaultProps: {
             course_sidebar_heading: 'TCS NQT MENU',
-            course_nav1_label: 'Placement Papers',
-            course_nav2_label: 'What Is TCS NQT?',
-            course_nav3_label: 'How To Apply',
             course_breadcrumb_home: 'Home',
             course_breadcrumb_parent: 'TCS NQT',
             course_breadcrumb_current: 'TCS NQT Placement Papers and Questions 2026',
             course_page_title: 'TCS NQT Placement Papers and Questions 2026',
-            course_tab1_label: 'Overview',
-            course_tab2_label: 'Syllabus',
-            course_tab3_label: 'Prepare',
-            course_tab4_label: 'Interview',
-            course_tab5_label: 'Video',
-            course_section1_content: '<h2 style="font-size:20px;font-weight:700;color:#0f172a;margin:0 0 16px 0;">TCS NQT Placement Papers and Questions 2026</h2><p style="font-size:15px;color:#374151;line-height:1.8;margin:0 0 14px 0;">TCS NQT Written Test Questions and pattern based practice problems are available on this page. <strong>Test Pattern</strong> has been updated for the latest exam cycle.</p><ul style="padding-left:20px;color:#475569;font-size:15px;line-height:2;"><li>Pattern-based questions with detailed solutions</li><li>Previous year question papers included</li><li>Topic-wise practice sets</li></ul>',
-            course_section2_content: '<h2 style="font-size:20px;font-weight:700;color:#0f172a;margin:0 0 16px 0;">Syllabus</h2><p style="font-size:15px;color:#374151;line-height:1.8;">The complete syllabus covers quantitative aptitude, verbal ability, reasoning, and programming logic.</p>',
-            course_section3_content: '<h2 style="font-size:20px;font-weight:700;color:#0f172a;margin:0 0 16px 0;">How to Prepare</h2><p style="font-size:15px;color:#374151;line-height:1.8;">Follow this step-by-step preparation guide to maximize your score.</p>',
-            course_section4_content: '<h2 style="font-size:20px;font-weight:700;color:#0f172a;margin:0 0 16px 0;">Interview Preparation</h2><p style="font-size:15px;color:#374151;line-height:1.8;">After clearing the written test, you face HR and Technical interviews. This section covers the most common questions.</p>',
-            course_section5_content: '<h2 style="font-size:20px;font-weight:700;color:#0f172a;margin:0 0 16px 0;">Video Tutorials</h2><p style="font-size:15px;color:#374151;line-height:1.8;">Watch our curated video tutorials to understand complex topics with ease.</p>',
-            course_nav2_content: '<h2 style="font-size:18px;font-weight:700;color:#0f172a;margin:0 0 12px 0;">About TCS NQT</h2><p style="font-size:15px;color:#374151;line-height:1.8;margin:0 0 12px 0;">TCS National Qualifier Test (NQT) is a standardized assessment conducted by Tata Consultancy Services to evaluate candidates for entry-level technology roles.</p><ul style="padding-left:20px;color:#475569;font-size:15px;line-height:2;"><li>Open to all graduates from any stream</li><li>Held multiple times a year</li><li>Score valid for 2 years</li></ul>',
-            course_nav3_content: '<h2 style="font-size:18px;font-weight:700;color:#0f172a;margin:0 0 12px 0;">Application Process</h2><p style="font-size:15px;color:#374151;line-height:1.8;margin:0 0 12px 0;">Follow these steps to apply for the TCS NQT examination.</p><ol style="padding-left:20px;color:#475569;font-size:15px;line-height:2;"><li>Register on the TCS NextStep portal</li><li>Complete your profile</li><li>Apply for the NQT exam slot</li><li>Prepare with mock tests</li></ol>',
+            course_nav1_label: 'Placement Papers',
+            course_nav2_label: 'What Is TCS NQT?',
+            course_nav3_label: 'How To Apply',
             course_nav4_label: 'Extra Section 1',
             course_nav5_label: 'Extra Section 2',
             course_nav6_label: 'Extra Section 3',
-            course_nav4_content: '<h2 style="font-size:18px;font-weight:700;color:#0f172a;margin:0 0 12px 0;">Extra Section 1</h2><p style="font-size:15px;color:#374151;line-height:1.8;margin:0 0 12px 0;">This is an extra section for your content.</p>',
-            course_nav5_content: '<h2 style="font-size:18px;font-weight:700;color:#0f172a;margin:0 0 12px 0;">Extra Section 2</h2><p style="font-size:15px;color:#374151;line-height:1.8;margin:0 0 12px 0;">This is an extra section for your content.</p>',
-            course_nav6_content: '<h2 style="font-size:18px;font-weight:700;color:#0f172a;margin:0 0 12px 0;">Extra Section 3</h2><p style="font-size:15px;color:#374151;line-height:1.8;margin:0 0 12px 0;">This is an extra section for your content.</p>',
+            course_section1_content: '<h2 style="font-size:20px;font-weight:700;color:#0f172a;margin:0 0 16px 0;">TCS NQT Placement Papers and Questions 2026</h2><p style="font-size:15px;color:#374151;line-height:1.8;margin:0 0 14px 0;">TCS NQT Written Test Questions and pattern based practice problems are available on this page. <strong>Test Pattern</strong> has been updated for the latest exam cycle.</p><ul style="padding-left:20px;color:#475569;font-size:15px;line-height:2;"><li>Pattern-based questions with detailed solutions</li><li>Previous year question papers included</li><li>Topic-wise practice sets</li></ul>',
+            course_section2_content: '<h2 style="font-size:20px;font-weight:700;color:#0f172a;margin:0 0 16px 0;">Syllabus</h2><p style="font-size:15px;color:#374151;line-height:1.8;">The complete syllabus covers quantitative aptitude, verbal ability, reasoning, and programming logic.</p>',
+            course_section3_content: '<h2 style="font-size:20px;font-weight:700;color:#0f172a;margin:0 0 16px 0;">How to Prepare</h2><p style="font-size:15px;color:#374151;line-height:1.8;">Follow this step-by-step preparation guide to maximize your score.</p>',
+            course_section4_content: '<h2 style="font-size:20px;font-weight:700;color:#0f172a;margin:0 0 16px 0;">Interview Prep</h2><p style="font-size:15px;color:#374151;line-height:1.8;">Key interview questions and strategies for NQT.</p>',
+            course_section5_content: '<h2 style="font-size:20px;font-weight:700;color:#0f172a;margin:0 0 16px 0;">Video Tutorials</h2><p style="font-size:15px;color:#374151;line-height:1.8;">Watch our curated video tutorials.</p>',
+            course_nav2_content: '<h2 style="font-size:18px;font-weight:700;color:#0f172a;margin:0 0 12px 0;">About TCS NQT</h2><p style="font-size:15px;color:#374151;line-height:1.8;margin:0 0 12px 0;">The NQT is a standardized assessment to evaluate candidates for technology roles.</p>',
+            course_nav3_content: '<h2 style="font-size:18px;font-weight:700;color:#0f172a;margin:0 0 12px 0;">How to Apply</h2><p style="font-size:15px;color:#374151;line-height:1.8;margin:0 0 12px 0;">Register on the official portal and select your slot.</p>',
+            course_nav4_content: '<h2>Extra Section 1 Content</h2><p>Default content for nav 4.</p>',
+            course_nav5_content: '<h2>Extra Section 2 Content</h2><p>Default content for nav 5.</p>',
+            course_nav6_content: '<h2>Extra Section 3 Content</h2><p>Default content for nav 6.</p>',
+            prop_active_sidebar: '1',
+            prop_active_tab: '1',
         },
     },
 ];
