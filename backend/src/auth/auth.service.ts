@@ -131,9 +131,9 @@ export class AuthService {
             user.activeSessions = validSessions;
             await user.save(); // Clean up Mongo
 
-            if (expiredFound) {
-                throw new UnauthorizedException('Session expired. Please log in again.');
-            }
+            // if (expiredFound) {
+            //     throw new UnauthorizedException('Session expired. Please log in again.');
+            // }
         }
     }
 
