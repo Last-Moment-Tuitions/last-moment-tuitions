@@ -467,14 +467,56 @@ export const initEditor = (pageId) => {
 
                 if (!newHtml) return;
 
-                const wrapperHtml = newCss.trim() ? `${newHtml}\n<style>\n${newCss}\n</style>` : newHtml;
-                const newComps = selected.replaceWith(wrapperHtml);
+                const oldId = selected.getId(); 
+
+                // VERY IMPORTANT: Change the old component's ID temporarily so GrapeJS's parser 
+                // doesn't see a duplicate ID collision when parsing `id="oldId"` in the new HTML string!
+                selected.setId(oldId + '-deprecated');
+
+                // We inject the original ID back into the raw HTML string so it natively retains the ID
+                let injectedHtml = newHtml;
+                if (oldId && !newHtml.includes(`id="${oldId}"`) && !newHtml.includes(`id='${oldId}'`)) {
+                    injectedHtml = newHtml.replace(/^\s*<([a-zA-Z0-9\-]+)/, `<$1 id="${oldId}"`);
+                }
+
+                // Use native replaceWith ONLY for the HTML. 
+                const newComps = selected.replaceWith(injectedHtml);
                 const newComp = Array.isArray(newComps) ? newComps[0] : newComps;
 
                 if (newComp) {
+                    // Safe guard: Always assert the ID bounds matching the CSS rule
+                    if (oldId) newComp.setId(oldId);
+
+                    // 1. Wipe existing CSS specifically targeting oldId to avoid stacking ghosts
+                    if (oldId) {
+                        try {
+                            const cssc = editor.CssComposer;
+                            const rules = cssc.getAll();
+                            // Safely remove all rules targeting this exact ID backwards
+                            for (let i = rules.length - 1; i >= 0; i--) {
+                                const r = rules.at(i);
+                                if (r && r.getSelectorsString() === `#${oldId}`) {
+                                    rules.remove(r);
+                                }
+                            }
+                        } catch (e) {
+                            console.error("Error clearing old CSS", e);
+                        }
+                    }
+
+                    // 2. Push the new CSS via the dedicated parser directly into the Composer database
+                    // This is the 100% official GrapesJS way to map strings to rules natively
+                    if (newCss.trim()) {
+                        try {
+                            const parsedCss = editor.Parser.parseCss(newCss);
+                            editor.CssComposer.getAll().add(parsedCss);
+                        } catch (e) {
+                            console.error("GrapesJS CSS parsing error", e);
+                        }
+                    }
+
                     if (newJs) {
                         try {
-                            // GrapesJS expects pure code for the script property when provided as a string
                             newComp.set('script', newJs);
                         } catch (e) {
                             console.error("Error setting script", e);
