@@ -4,6 +4,36 @@ import { useEffect, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 
+/**
+ * SessionMonitor Component
+ * 
+ * A renderless React component that monitors user session activity and automatically
+ * extends or terminates sessions based on inactivity and user role.
+ * 
+ * Features:
+ * - Tracks user activity through mouse, keyboard, click, and scroll events
+ * - Monitors time since last server interaction and last user activity
+ * - Automatically refreshes session when approaching expiration (if user is active)
+ * - Logs out inactive users after session timeout
+ * - Provides different timeout thresholds for admin vs regular users:
+ *   - Admin: 3 hours session timeout, 2 hour check interval, 15 minute activity window
+ *   - Regular: 1 hour session timeout, 15 minute check interval, 15 minute activity window
+ * 
+ * Dependencies:
+ * - useAuth: Hook providing user, checkUser(), and logout() functions
+ * - useRouter: Next.js router for navigation
+ * - useRef: React hook for maintaining mutable references
+ * - useEffect: React hook for managing listeners and intervals
+ * 
+ * Behavior:
+ * - When session approaches expiration (within last 15 minutes):
+ *   - If user was recently active: calls checkUser() to refresh Redis TTL
+ *   - If user is idle: logs out after session timeout
+ * - Cleans up event listeners and intervals on unmount
+ * 
+ * @component
+ * @returns {null} Renderless component (monitoring only, no UI output)
+ */
 export default function SessionMonitor() {
     const { user, checkUser, logout } = useAuth();
     const lastActivity = useRef(Date.now());
@@ -15,9 +45,9 @@ export default function SessionMonitor() {
 
         const isAdmin = user?.roles?.includes('admin');
         const SESSION_TIMEOUT = isAdmin ? 3 * 60 * 60 * 1000 : 60 * 60 * 1000;
-        const CHECK_INTERVAL = 15 * 60 * 1000; 
-        const REFRESH_THRESHOLD = SESSION_TIMEOUT - (15 * 60 * 1000); 
-        const ACTIVITY_WINDOW = 15 * 60 * 1000;
+        const CHECK_INTERVAL = isAdmin ?  2 * 60 * 60 * 1000 : 15 * 60 * 1000; 
+        const REFRESH_THRESHOLD = isAdmin ? 3 * 60 * 60 * 1000 - (15 * 60 * 1000) : SESSION_TIMEOUT - (15 * 60 * 1000); 
+        const ACTIVITY_WINDOW = isAdmin ? 3 * 60 * 60 * 1000 : 15 * 60 * 1000;
 
         const Events = ['mousemove', 'keydown', 'click', 'scroll'];
 
