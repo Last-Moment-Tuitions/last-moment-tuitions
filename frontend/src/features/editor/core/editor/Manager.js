@@ -80,7 +80,11 @@ export const initEditor = (pageId) => {
                         console.warn(`CKEditor blocked on <${el.tagName.toLowerCase()}> to prevent crash. Falling back to native contentEditable.`);
                         el.contentEditable = true;
                         if (rte && rte.focus) rte.focus();
-                        return { focus: () => el.focus() };
+                        return { 
+                            focus: () => el.focus(),
+                            getData: () => el.innerHTML,
+                            destroy: () => { el.contentEditable = false; }
+                        };
                     }
                     return originalEnable.apply(this, arguments);
                 };
@@ -96,6 +100,7 @@ export const initEditor = (pageId) => {
         position: 'center',
         options: {
             startupFocus: true,
+            versionCheck: false,
             extraAllowedContent: '*(*);*{*}',  // Allow all classes and inline styles
             allowedContent: true,
             toolbar: [
@@ -658,6 +663,87 @@ export const initEditor = (pageId) => {
     editor.on('load', () => {
         // Disable dashed borders (outline) everywhere by default to clean up the UI
         editor.Commands.stop('sw-visibility');
+        editor.Commands.stop('core:component-outline');
+
+        // Forcefully hide CKEditor upgrade warnings that ignore the versionCheck option
+        if (!document.getElementById('gjs-cke-warning-fix')) {
+            const style = document.createElement('style');
+            style.id = 'gjs-cke-warning-fix';
+            style.innerHTML = `
+                .cke_notifications_area,
+                .cke_notification_warning, 
+                .cke_notification_info { 
+                    display: none !important; 
+                    opacity: 0 !important; 
+                    visibility: hidden !important; 
+                    height: 0 !important; 
+                    pointer-events: none !important;
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
+        // --- Floating Toggle Button for Component Highlights ---
+        const gjsContainer = editor.getContainer();
+        if (gjsContainer && !document.getElementById('gjs-toggle-borders')) {
+            const toggleBtn = document.createElement('div');
+            toggleBtn.id = 'gjs-toggle-borders';
+            toggleBtn.innerHTML = `
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" stroke-dasharray="4 4"></rect>
+                </svg>
+            `;
+            toggleBtn.title = "Toggle Block Highlights (Borders)";
+            toggleBtn.style.cssText = `
+                position: absolute;
+                bottom: 20px;
+                right: 320px; /* Offset from the traits panel */
+                width: 44px;
+                height: 44px;
+                background: #1e293b;
+                color: #cbd5e1;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                z-index: 100 !important;
+                box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3);
+                transition: all 0.2s ease;
+                border: 2px solid rgba(255,255,255,0.1);
+            `;
+            
+            const updateState = () => {
+                if (editor.Commands.isActive('sw-visibility')) {
+                    toggleBtn.style.background = '#3b82f6';
+                    toggleBtn.style.color = '#fff';
+                    toggleBtn.style.borderColor = '#60a5fa';
+                } else {
+                    toggleBtn.style.background = '#1e293b';
+                    toggleBtn.style.color = '#cbd5e1';
+                    toggleBtn.style.borderColor = 'rgba(255,255,255,0.1)';
+                }
+            };
+
+            toggleBtn.addEventListener('mouseenter', () => toggleBtn.style.transform = 'scale(1.1)');
+            toggleBtn.addEventListener('mouseleave', () => toggleBtn.style.transform = 'scale(1)');
+            
+            toggleBtn.addEventListener('click', () => {
+                if (editor.Commands.isActive('sw-visibility')) {
+                    editor.Commands.stop('sw-visibility');
+                } else {
+                    editor.Commands.run('sw-visibility');
+                }
+                updateState();
+            });
+
+            gjsContainer.style.position = 'relative';
+            gjsContainer.appendChild(toggleBtn);
+            
+            // Sync initial state
+            updateState();
+            editor.on('run:sw-visibility stop:sw-visibility', updateState);
+        }
 
         // Add visual highlighting CSS directly to the Canvas frame
         const canvasDoc = editor.Canvas.getDocument();
@@ -665,8 +751,8 @@ export const initEditor = (pageId) => {
             const style = canvasDoc.createElement('style');
             style.id = 'gjs-canvas-custom-highlights';
             style.innerHTML = `
-                [data-gjs-has-custom] { position: relative; }
-                [data-gjs-has-custom]::after {
+                .gjs-dashed [data-gjs-has-custom] { position: relative; }
+                .gjs-dashed [data-gjs-has-custom]::after {
                     content: '';
                     position: absolute;
                     top: 0; left: 0; right: 0; bottom: 0;
@@ -674,9 +760,9 @@ export const initEditor = (pageId) => {
                     z-index: 10;
                     outline-offset: -2px;
                 }
-                [data-gjs-has-custom="js"]::after { outline: 2px dashed rgba(251, 191, 36, 0.4) !important; }
-                [data-gjs-has-custom="css"]::after { outline: 2px dashed rgba(192, 132, 252, 0.4) !important; }
-                [data-gjs-has-custom="both"]::after { outline: 2px dashed rgba(236, 72, 153, 0.4) !important; }
+                .gjs-dashed [data-gjs-has-custom="js"]::after { outline: 2px dashed rgba(251, 191, 36, 0.4) !important; }
+                .gjs-dashed [data-gjs-has-custom="css"]::after { outline: 2px dashed rgba(192, 132, 252, 0.4) !important; }
+                .gjs-dashed [data-gjs-has-custom="both"]::after { outline: 2px dashed rgba(236, 72, 153, 0.4) !important; }
             `;
             canvasDoc.head.appendChild(style);
         }

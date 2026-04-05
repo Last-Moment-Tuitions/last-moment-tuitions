@@ -19,6 +19,7 @@ export function Editor({ pageId }) {
     const [pageDetails, setPageDetails] = useState(null);
     const [toast, setToast] = useState(null); // { message, type }
     const [isPreview, setIsPreview] = useState(false);
+    const [bordersActive, setBordersActive] = useState(false);
     const [rightSidebarOpen, setRightSidebarOpen] = useState(true); // Default open on desktop
     const [sidebarWidth, setSidebarWidth] = useState(320); // Default 320px width
 
@@ -214,6 +215,21 @@ export function Editor({ pageId }) {
         setIsPreview(!isPreview);
     };
 
+    const toggleBorders = () => {
+        const editor = editorRef.current;
+        if (!editor) return;
+
+        if (bordersActive) {
+            editor.Commands.stop('sw-visibility');
+            editor.Commands.stop('core:component-outline');
+            setBordersActive(false);
+        } else {
+            editor.Commands.run('sw-visibility');
+            editor.Commands.run('core:component-outline');
+            setBordersActive(true);
+        }
+    };
+
     return (
         <div className="h-screen flex flex-col overflow-hidden relative">
             {/* Toast Notification */}
@@ -240,6 +256,12 @@ export function Editor({ pageId }) {
                     </div>
                 </div>
                 <div className="flex gap-2">
+                    <Button onClick={toggleBorders} variant="outline" size="sm" className={`gap-2 ${bordersActive ? 'bg-primary-900 border-primary-500 text-primary-200' : 'bg-transparent border-gray-700 text-gray-300 hover:text-white'}`}>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2" strokeDasharray="4 4" />
+                        </svg>
+                        Borders
+                    </Button>
                     <Button onClick={togglePreview} variant="outline" size="sm" className="bg-transparent border-gray-700 text-gray-300 hover:text-white gap-2">
                         {isPreview ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                         Preview
