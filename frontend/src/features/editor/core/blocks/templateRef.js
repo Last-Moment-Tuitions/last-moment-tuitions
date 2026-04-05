@@ -623,12 +623,15 @@ export const loadTemplateRefBlock = (editor) => {
                     return;
                 }
 
-                this.el.innerHTML = `
-                    <div style="padding:20px; border:2px dashed #d1d5db; background:#f9fafb; text-align:center; color:#6b7280; font-family:sans-serif; border-radius:8px;">
-                        <div style="display:inline-block; width:20px; height:20px; border:2px solid #9ca3af; border-top-color:#f97316; border-radius:50%; animation:spin 0.8s linear infinite; margin-bottom:8px;"></div>
-                        <div style="font-size:13px;">Loading section...</div>
-                    </div>
-                    <style>@keyframes spin{100%{transform:rotate(360deg)}}</style>`;
+                // If not in cache, show loading
+                if (!_templateCache.has(templateId)) {
+                    this.el.innerHTML = `
+                        <div style="padding:20px; border:2px dashed #d1d5db; background:#f9fafb; text-align:center; color:#6b7280; font-family:sans-serif; border-radius:8px;">
+                            <div style="display:inline-block; width:20px; height:20px; border:2px solid #9ca3af; border-top-color:#f97316; border-radius:50%; animation:spin 0.8s linear infinite; margin-bottom:8px;"></div>
+                            <div style="font-size:13px;">Loading section...</div>
+                        </div>
+                        <style>@keyframes spin{100%{transform:rotate(360deg)}}</style>`;
+                }
 
                 try {
                     // ── Fetch with cache / timestamp ───────────────────────────
@@ -1066,13 +1069,31 @@ export const loadTemplateRefBlock = (editor) => {
                     });
 
                     // Make sure renderDoc hides/shows the right tab panes for final output
-                    // Note: activeTab was already extracted at the beginning of the function
                     renderDoc.querySelectorAll('[data-tab-pane]').forEach(pane => {
                         if (pane.getAttribute('data-tab-pane') === activeTab) {
                             pane.style.display = 'block';
                         } else {
                             pane.style.display = 'none';
                         }
+                    });
+
+                    // ── Course Detail Sidebar Visibility ───────────────────────
+                    activeSidebar = this.model.get('prop_active_sidebar') || '1';
+                    renderDoc.querySelectorAll('[data-sidebar-section]').forEach(section => {
+                        if (section.getAttribute('data-sidebar-section') === activeSidebar) {
+                            section.style.display = 'block';
+                        } else {
+                            section.style.display = 'none';
+                        }
+                    });
+
+                    renderDoc.querySelectorAll('[data-sidebar-item]').forEach((item, i) => {
+                        const targetIdx = item.getAttribute('data-sidebar-item') || String(i + 1);
+                        const isActive = String(targetIdx) === String(activeSidebar);
+                        item.style.borderLeftColor = isActive ? '#f97316' : 'transparent';
+                        item.style.background = isActive ? '#fff7ed' : 'transparent';
+                        item.style.color = isActive ? '#ea580c' : '#374151';
+                        item.style.fontWeight = isActive ? '600' : '500';
                     });
 
                     // Apply data-var text overrides

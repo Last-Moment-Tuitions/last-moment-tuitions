@@ -8,12 +8,12 @@ import gjsCkeditor from 'grapesjs-plugin-ckeditor';
 const ensureCodeMirror = () => {
     return new Promise((resolve) => {
         if (window.CodeMirror) return resolve(window.CodeMirror);
-        
+
         const cssLink = document.createElement('link');
         cssLink.rel = 'stylesheet';
         cssLink.href = 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css';
         document.head.appendChild(cssLink);
-        
+
         const themeLink = document.createElement('link');
         themeLink.rel = 'stylesheet';
         themeLink.href = 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/material-ocean.min.css';
@@ -65,7 +65,30 @@ export const initEditor = (pageId) => {
     // Register plugins
     if (!config.plugins) config.plugins = [];
     config.plugins.push(gjsCustomCode);
-    config.plugins.push(gjsCkeditor);
+
+    // We wrap gjsCkeditor to intercept GrapeJS's setCustomRte and prevent crashes on inline tags
+    config.plugins.push((editorInstance, opts) => {
+        const originalSetCustomRte = editorInstance.setCustomRte.bind(editorInstance);
+        editorInstance.setCustomRte = (rteConfig) => {
+            if (rteConfig && rteConfig.enable) {
+                const originalEnable = rteConfig.enable;
+                rteConfig.enable = function (el, rte) {
+                    // CKEditor 4 does not support inline editing on span, b, i, a, etc.
+                    // If we pass an unsupported element, CKEditor throws an error and breaks the editor.
+                    const unsupported = ['span', 'a', 'b', 'i', 'strong', 'em', 'small', 'code'];
+                    if (el.tagName && unsupported.includes(el.tagName.toLowerCase())) {
+                        console.warn(`CKEditor blocked on <${el.tagName.toLowerCase()}> to prevent crash. Falling back to native contentEditable.`);
+                        el.contentEditable = true;
+                        if (rte && rte.focus) rte.focus();
+                        return { focus: () => el.focus() };
+                    }
+                    return originalEnable.apply(this, arguments);
+                };
+            }
+            return originalSetCustomRte(rteConfig);
+        };
+        gjsCkeditor(editorInstance, opts);
+    });
 
     // CKEditor plugin options
     if (!config.pluginsOpts) config.pluginsOpts = {};
@@ -174,10 +197,10 @@ export const initEditor = (pageId) => {
                 ensureCodeMirror().then((CM) => {
                     if (!document.body.contains(textarea)) return;
                     cmProps = CM.fromTextArea(textarea, {
-                         mode: 'htmlmixed',
-                         theme: 'material-ocean',
-                         lineNumbers: true,
-                         lineWrapping: true
+                        mode: 'htmlmixed',
+                        theme: 'material-ocean',
+                        lineNumbers: true,
+                        lineWrapping: true
                     });
                     cmProps.setSize('100%', '100%');
                     cmProps.getWrapperElement().style.flex = "1";
@@ -209,22 +232,22 @@ export const initEditor = (pageId) => {
                     errorBox.style.display = 'none';
                     try {
                         const newHtml = cmProps ? cmProps.getValue() : textarea.value;
-                        
+
                         if (newHtml === formattedOriginalHtml) {
                             editor.Modal.close();
                             return;
                         }
-                        
+
                         // Create a DOM tree from the user's edited HTML
                         const parser = new DOMParser();
                         const doc = parser.parseFromString(newHtml, 'text/html');
-                        
+
                         // Check if they mutated text or styles that don't have a data-var!
                         const origDoc = parser.parseFromString(formattedOriginalHtml, 'text/html');
                         origDoc.querySelectorAll('[data-var], [data-var-src]').forEach(el => { el.innerHTML = ''; el.removeAttribute('src'); });
                         const newDocCheck = parser.parseFromString(newHtml, 'text/html');
                         newDocCheck.querySelectorAll('[data-var], [data-var-src]').forEach(el => { el.innerHTML = ''; el.removeAttribute('src'); });
-                        
+
                         // If they changed static tags or CSS styles, trigger a Confirm dialog
                         if (origDoc.body.innerHTML !== newDocCheck.body.innerHTML) {
                             const wantsToUnlink = confirm(
@@ -233,7 +256,7 @@ export const initEditor = (pageId) => {
                                 "👉 Click 'OK' to DETACH this section from the Main Template and save your custom CSS for this page only.\n\n" +
                                 "👉 Click 'Cancel' to keep the link and ONLY save the text/image variables."
                             );
-                            
+
                             if (wantsToUnlink) {
                                 // Execute the exact same logic as Unlink Button
                                 const parent = selected.parent();
@@ -250,14 +273,14 @@ export const initEditor = (pageId) => {
                             }
                             // If they clicked Cancel, it proceeds to only extract text variables below!
                         }
-                        
+
                         // Get current props
                         const rawPropsStr = selected.getAttributes()['data-props'] || '{}';
                         let props = {};
-                        try { 
-                            props = JSON.parse(rawPropsStr.replace(/&quot;/g, '"')); 
-                        } catch(e) {}
-                        
+                        try {
+                            props = JSON.parse(rawPropsStr.replace(/&quot;/g, '"'));
+                        } catch (e) { }
+
                         // 1. Extract mapped Text variables (innerHTML updates)
                         const varEls = doc.querySelectorAll('[data-var]');
                         let foundTexts = 0;
@@ -268,7 +291,7 @@ export const initEditor = (pageId) => {
                                 foundTexts++;
                             }
                         });
-                        
+
                         // 2. Extract mapped Image variables (src updates)
                         const srcEls = doc.querySelectorAll('[data-var-src]');
                         let foundImgs = 0;
@@ -291,16 +314,16 @@ export const initEditor = (pageId) => {
                                 selected.set(`prop_${key}`, props[key]);
                             }
                         }
-                        
+
                         // Force a re-render
                         selected.trigger('change:templateContent');
                         editor.Modal.close();
-                        
+
                     } catch (err) {
                         alert("An error occurred while saving your changes. Please check the code for any missing brackets or syntax errors. Error: " + err.message);
                     }
                 };
-                
+
                 editor.Modal.setTitle('</> Smart Variable Editor');
                 editor.Modal.setContent(content);
                 editor.Modal.open();
@@ -315,7 +338,7 @@ export const initEditor = (pageId) => {
 
             // Read the component's script property directly (GrapesJS stores it here)
             let componentScript = selected.get('script') || '';
-            
+
             // In GrapesJS, scripts can be stored as literal functions or strings 
             // representing functions (e.g., "function() { ... }").
             // We need to unwrap them so the user just sees the raw code.
@@ -364,7 +387,7 @@ export const initEditor = (pageId) => {
             const htmlTextarea = content.querySelector('#gjs-edit-code-textarea');
             const cssTextarea = content.querySelector('#gjs-edit-css-textarea');
             const jsTextarea = content.querySelector('#gjs-edit-js-textarea');
-            
+
             const tabHtmlBtn = content.querySelector('#gjs-tab-html');
             const tabCssBtn = content.querySelector('#gjs-tab-css');
             const tabJsBtn = content.querySelector('#gjs-tab-js');
@@ -373,7 +396,7 @@ export const initEditor = (pageId) => {
             const switchTab = (tab) => {
                 activeTabName = tab;
                 const setDisplay = (el, val) => { if (el) el.style.display = val; };
-                
+
                 if (window.cmHtml && window.cmCss && window.cmJs && document.body.contains(window.cmHtml.getWrapperElement())) {
                     setDisplay(window.cmHtml.getWrapperElement(), tab === 'html' ? 'block' : 'none');
                     setDisplay(window.cmCss.getWrapperElement(), tab === 'css' ? 'block' : 'none');
@@ -386,7 +409,7 @@ export const initEditor = (pageId) => {
                     setDisplay(cssTextarea, tab === 'css' ? 'block' : 'none');
                     setDisplay(jsTextarea, tab === 'js' ? 'block' : 'none');
                 }
-                
+
                 [tabHtmlBtn, tabCssBtn, tabJsBtn].forEach(btn => btn && (btn.style.cssText = `${tabBaseStyle} ${inactiveTabStyle}`));
                 if (tab === 'html') tabHtmlBtn.style.cssText = `${tabBaseStyle} ${activeTabStyle} color:#60a5fa;`;
                 if (tab === 'css') tabCssBtn.style.cssText = `${tabBaseStyle} ${activeTabStyle} color:#c084fc;`;
@@ -418,11 +441,11 @@ export const initEditor = (pageId) => {
             };
 
             htmlTextarea.value = formatHTML(htmlOnly);
-            
+
             let componentCss = '';
-            try { componentCss = editor.CodeManager.getCode(selected, 'css', { cssc: editor.CssComposer }) || ''; } catch(e) {}
+            try { componentCss = editor.CodeManager.getCode(selected, 'css', { cssc: editor.CssComposer }) || ''; } catch (e) { }
             cssTextarea.value = componentCss;
-            
+
             if (componentScript && componentScript !== '') {
                 jsTextarea.value = componentScript;
             }
@@ -436,13 +459,13 @@ export const initEditor = (pageId) => {
                 const newHtml = isCmReady ? window.cmHtml.getValue() : htmlTextarea.value;
                 const newCss = isCmReady ? window.cmCss.getValue() : cssTextarea.value;
                 const newJs = (isCmReady ? window.cmJs.getValue() : jsTextarea.value).trim();
-                
+
                 if (!newHtml) return;
 
                 const wrapperHtml = newCss.trim() ? `${newHtml}\n<style>\n${newCss}\n</style>` : newHtml;
                 const newComps = selected.replaceWith(wrapperHtml);
                 const newComp = Array.isArray(newComps) ? newComps[0] : newComps;
-                
+
                 if (newComp) {
                     if (newJs) {
                         try {
@@ -457,7 +480,7 @@ export const initEditor = (pageId) => {
                     }
                     editor.select(newComp);
                 }
-                
+
                 setTimeout(() => editor.trigger('change:canvasOffset'), 100);
                 editor.Modal.close();
             };
@@ -469,30 +492,30 @@ export const initEditor = (pageId) => {
             // Setup CodeMirror instances
             ensureCodeMirror().then((CM) => {
                 if (!document.body.contains(htmlTextarea)) return;
-                
+
                 window.cmHtml = CM.fromTextArea(htmlTextarea, {
-                     mode: 'htmlmixed',
-                     theme: 'material-ocean',
-                     lineNumbers: true,
-                     lineWrapping: true
+                    mode: 'htmlmixed',
+                    theme: 'material-ocean',
+                    lineNumbers: true,
+                    lineWrapping: true
                 });
                 window.cmCss = CM.fromTextArea(cssTextarea, {
-                     mode: 'css',
-                     theme: 'material-ocean',
-                     lineNumbers: true,
-                     lineWrapping: true
+                    mode: 'css',
+                    theme: 'material-ocean',
+                    lineNumbers: true,
+                    lineWrapping: true
                 });
                 window.cmJs = CM.fromTextArea(jsTextarea, {
-                     mode: 'javascript',
-                     theme: 'material-ocean',
-                     lineNumbers: true,
-                     lineWrapping: true
+                    mode: 'javascript',
+                    theme: 'material-ocean',
+                    lineNumbers: true,
+                    lineWrapping: true
                 });
 
                 window.cmHtml.setSize('100%', '100%');
                 window.cmCss.setSize('100%', '100%');
                 window.cmJs.setSize('100%', '100%');
-                
+
                 const styleWrapper = (wrap) => {
                     wrap.style.flex = "1";
                     wrap.style.borderRadius = "0 6px 6px 6px";
@@ -500,7 +523,7 @@ export const initEditor = (pageId) => {
                     wrap.style.fontSize = "14px";
                     wrap.style.height = "100%";
                 };
-                
+
                 styleWrapper(window.cmHtml.getWrapperElement());
                 styleWrapper(window.cmCss.getWrapperElement());
                 styleWrapper(window.cmJs.getWrapperElement());
@@ -517,7 +540,7 @@ export const initEditor = (pageId) => {
                     modalDialog.style.height = '80vh';
                     modalDialog.style.display = 'flex';
                     modalDialog.style.flexDirection = 'column';
-                    
+
                     const modalContent = modalDialog.querySelector('.gjs-mdl-content');
                     if (modalContent) {
                         modalContent.style.flex = '1';
@@ -525,7 +548,7 @@ export const initEditor = (pageId) => {
                         modalContent.style.height = '100%';
                     }
                 }
-                
+
                 content.style.height = '100%';
             }, 0);
         }
@@ -570,9 +593,9 @@ export const initEditor = (pageId) => {
                 model.set('icon', newIcon);
             }
         }
-        
+
         const hasJs = model.get('script') && model.get('script').trim() !== '';
-        
+
         let hasCss = false;
         try {
             const rules = editor.CssComposer.getAll().models;
@@ -582,7 +605,7 @@ export const initEditor = (pageId) => {
                     hasCss = true; break;
                 }
             }
-        } catch(e) {}
+        } catch (e) { }
 
         // Set ephemeral DOM attribute for in-canvas visual highlight
         if (model.view && model.view.el && model.view.el.setAttribute) {
@@ -595,6 +618,8 @@ export const initEditor = (pageId) => {
     };
 
     editor.on('load', () => {
+        // Disable dashed borders (outline) everywhere by default to clean up the UI
+        editor.Commands.stop('sw-visibility');
 
         // Add visual highlighting CSS directly to the Canvas frame
         const canvasDoc = editor.Canvas.getDocument();
@@ -622,10 +647,12 @@ export const initEditor = (pageId) => {
         const triggerUpdate = () => {
             clearTimeout(updateTimeout);
             updateTimeout = setTimeout(() => {
+                if (!editor || typeof editor.getWrapper !== 'function') return;
+
                 const walk = (cmp) => { updateCanvasHighlights(cmp); cmp.components().forEach(walk); };
                 const wrapper = editor.getWrapper();
                 if (wrapper) walk(wrapper);
-                
+
                 if (editor.Layers && editor.Layers.render) {
                     editor.Layers.render();
                 }
@@ -633,7 +660,7 @@ export const initEditor = (pageId) => {
         };
 
         triggerUpdate();
-        
+
         editor.on('component:add component:update:script', (model) => {
             updateCanvasHighlights(model);
         });
@@ -650,7 +677,7 @@ export const initEditor = (pageId) => {
             badgeContainer.style.cssText = 'position:absolute; right:35px; top:50%; transform:translateY(-50%); display:flex; gap:3px; align-items:center; pointer-events:none; z-index:10;';
             el.appendChild(badgeContainer);
         }
-        
+
         const hasJs = model.get('script') && model.get('script').trim() !== '';
         let hasCss = false;
         try {
@@ -661,7 +688,7 @@ export const initEditor = (pageId) => {
                     hasCss = true; break;
                 }
             }
-        } catch(e) {}
+        } catch (e) { }
 
         const mkBadge = (bg, color, label) => `<div style="background:${bg};border-radius:3px;display:flex;align-items:center;justify-content:center;color:${color};font-size:8px;font-weight:900;line-height:1;padding:3px 5px;box-shadow:0 1px 3px rgba(0,0,0,0.2);">${label}</div>`;
 
@@ -669,7 +696,7 @@ export const initEditor = (pageId) => {
         if (hasJs && hasCss) html = mkBadge('linear-gradient(135deg, #fbbf24 45%, #c084fc 55%)', '#fff', '&lt;/&gt;');
         else if (hasJs) html = mkBadge('#fbbf24', '#000', 'JS');
         else if (hasCss) html = mkBadge('#c084fc', '#fff', 'CSS');
-        
+
         badgeContainer.innerHTML = html;
     });
 
