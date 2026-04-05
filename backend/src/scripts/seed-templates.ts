@@ -650,14 +650,14 @@ const COURSE_DETAIL_HTML = `
 <div style="font-family:'Inter','Segoe UI',sans-serif; background:#f8fafc; min-height:100vh;">
 
     <!-- Main Layout: Left Sidebar + Right Content -->
-    <div style="max-width:1200px; margin:0 auto; padding:24px; display:flex; gap:28px; align-items:flex-start;">
-
+    <div style="max-width:1400px; margin:0 auto; padding:24px 16px; display:flex; gap:32px; align-items:flex-start;">
+ 
         <!-- Left Sidebar Nav -->
-        <aside style="width:240px; flex-shrink:0; background:#fff; border:1px solid #e2e8f0; border-radius:10px; padding:12px 0; position:sticky; top:24px; max-height:calc(100vh - 48px); overflow-y:auto; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+        <aside style="width:260px; flex-shrink:0; background:#fff; border:1px solid #e2e8f0; border-radius:10px; padding:12px 0; position:sticky; top:100px; max-height:calc(100vh - 120px); overflow-y:auto; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
             <div style="padding:10px 16px 6px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:#94a3b8;" data-var="course_sidebar_heading">TCS NQT MENU</div>
             <nav data-sidebar-nav style="display:flex; flex-direction:column; margin-top:4px;">
-                <a data-sidebar-item="1" href="#section-1" style="display:flex; align-items:center; gap:8px; padding:12px 16px; text-decoration:none; color:#ea580c; font-size:14px; font-weight:600; border-left:3px solid #f97316; background:#fff7ed; transition:all 0.2s;">
-                    <svg width="15" height="15" fill="none" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" stroke="#f97316" stroke-width="2"/><path d="M7 7h10M7 12h10M7 17h6" stroke="#f97316" stroke-width="2" stroke-linecap="round"/></svg>
+                <a data-sidebar-item="1" href="#section-1" style="display:flex; align-items:center; gap:8px; padding:12px 16px; text-decoration:none; color:#063f78; font-size:14px; font-weight:600; border-left:3px solid #063f78; background:#f0f9ff; transition:all 0.2s;">
+                    <svg width="15" height="15" fill="none" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" stroke="#063f78" stroke-width="2"/><path d="M7 7h10M7 12h10M7 17h6" stroke="#063f78" stroke-width="2" stroke-linecap="round"/></svg>
                     <span data-var="course_nav1_label">Placement Papers</span>
                 </a>
                 <a data-sidebar-item="2" href="#section-2" style="display:flex; align-items:center; gap:8px; padding:12px 16px; text-decoration:none; color:#374151; font-size:14px; font-weight:500; border-left:3px solid transparent; transition:all 0.2s;">
@@ -692,7 +692,7 @@ const COURSE_DETAIL_HTML = `
                 <span>›</span>
                 <a href="/courses" style="color:#64748b; text-decoration:none;" data-var="course_breadcrumb_parent">TCS NQT</a>
                 <span>›</span>
-                <a href="/tcs-nqt-papers" style="color:#0369a1; text-decoration:none;" data-var="course_breadcrumb_current">TCS NQT Placement Papers and Questions 2026</a>
+                <a href="/tcs-nqt-papers" style="color:#063f78; text-decoration:none; font-weight:600;" data-var="course_breadcrumb_current">TCS NQT Placement Papers and Questions 2026</a>
             </div>
 
             <h1 style="font-size:clamp(24px,3.5vw,36px); font-weight:800; color:#0f172a; margin:0 0 24px 0; line-height:1.2;" data-var="course_page_title">TCS NQT Placement Papers and Questions 2026</h1>
@@ -701,8 +701,8 @@ const COURSE_DETAIL_HTML = `
             <div data-sidebar-section="1" style="display:block;">
 
                 <!-- Inner Content Tabs (for scrolling to sections) -->
-                <nav style="display:flex; align-items:center; overflow-x:auto; margin-bottom:24px; border-bottom:1px solid #e2e8f0; -ms-overflow-style:none; scrollbar-width:none;" data-content-tabs-bar>
-                    <a data-content-tab="1" href="#ct-1" style="padding:10px 16px; text-decoration:none; color:#0f172a; font-size:14px; font-weight:700; border-bottom:2px solid #f97316; white-space:nowrap; flex-shrink:0;" data-var="course_tab1_label">Overview</a>
+                <nav style="display:flex; align-items:center; overflow-x:auto; margin-bottom:24px; border-bottom:1px solid #e2e8f0; -ms-overflow-style:none; scrollbar-width:none; position:sticky; top:100px; background:#fff; z-index:10; padding-top:4px;" data-content-tabs-bar>
+                    <a data-content-tab="1" href="#ct-1" style="padding:10px 16px; text-decoration:none; color:#063f78; font-size:14px; font-weight:700; border-bottom:2px solid #063f78; background:#f0f9ff; white-space:nowrap; flex-shrink:0;" data-var="course_tab1_label">Overview</a>
                     <a data-content-tab="2" href="#ct-2" style="padding:10px 16px; text-decoration:none; color:#64748b; font-size:14px; font-weight:600; border-bottom:2px solid transparent; white-space:nowrap; flex-shrink:0;" data-var="course_tab2_label">Syllabus</a>
                     <a data-content-tab="3" href="#ct-3" style="padding:10px 16px; text-decoration:none; color:#64748b; font-size:14px; font-weight:600; border-bottom:2px solid transparent; white-space:nowrap; flex-shrink:0;" data-var="course_tab3_label">Prepare</a>
                     <a data-content-tab="4" href="#ct-4" style="padding:10px 16px; text-decoration:none; color:#64748b; font-size:14px; font-weight:600; border-bottom:2px solid transparent; white-space:nowrap; flex-shrink:0;" data-var="course_tab4_label">Interview</a>
@@ -838,35 +838,111 @@ const COURSE_DETAIL_HTML = `
     
     function init() {
         const sidebarItems = root.querySelectorAll('[data-sidebar-item]');
-        const sections = root.querySelectorAll('[data-sidebar-section]');
+        const sidebarSections = root.querySelectorAll('[data-sidebar-section]');
+        const tabBtns = root.querySelectorAll('[data-content-tab]');
+        const contentSections = root.querySelectorAll('[data-content-section]');
+        
         if (!sidebarItems.length) return;
 
-        const activate = (idx) => {
+        const BRAND_BLUE = '#063f78';
+        const LIGHT_BLUE = '#f0f9ff';
+        const TEXT_DARK = '#0f172a';
+        const TEXT_MUTED = '#64748b';
+        const TEXT_REGULAR = '#374151';
+
+        // ── Highlight Sidebar ────────────────────────────────────────────────
+        const activateSidebar = (idx) => {
             sidebarItems.forEach((item, i) => {
                 const isActive = (i + 1) == idx;
-                item.style.borderLeftColor = isActive ? '#f97316' : 'transparent';
-                item.style.background = isActive ? '#fff7ed' : 'transparent';
-                item.style.color = isActive ? '#ea580c' : '#374151';
+                item.style.borderLeftColor = isActive ? BRAND_BLUE : 'transparent';
+                item.style.background = isActive ? LIGHT_BLUE : 'transparent';
+                item.style.color = isActive ? BRAND_BLUE : TEXT_REGULAR;
                 item.style.fontWeight = isActive ? '600' : '500';
+                
+                const svg = item.querySelector('svg');
+                if (svg) {
+                    svg.childNodes.forEach(node => {
+                        if (node.setAttribute) node.setAttribute('stroke', isActive ? BRAND_BLUE : TEXT_MUTED);
+                    });
+                }
             });
-            sections.forEach(s => {
+            sidebarSections.forEach(s => {
                 s.style.display = s.getAttribute('data-sidebar-section') == idx ? 'block' : 'none';
+            });
+            // Auto-reset to Overview tab when switching sidebar sections
+            activateTab(1);
+        };
+
+        // ── Highlight Content Tab ────────────────────────────────────────────
+        const activateTab = (idx) => {
+            tabBtns.forEach((btn) => {
+                const isActive = btn.getAttribute('data-content-tab') == idx;
+                btn.style.borderBottomColor = isActive ? BRAND_BLUE : 'transparent';
+                btn.style.color = isActive ? BRAND_BLUE : TEXT_MUTED;
+                btn.style.fontWeight = isActive ? '700' : '600';
+                btn.style.background = isActive ? LIGHT_BLUE : 'transparent';
             });
         };
 
+        // ── Interaction Handlers ─────────────────────────────────────────────
         sidebarItems.forEach((item, i) => {
             item.onclick = (e) => {
                 if (item.getAttribute('href').startsWith('#')) e.preventDefault();
-                activate(i + 1);
+                activateSidebar(i + 1);
             };
         });
+
+        tabBtns.forEach((btn) => {
+            btn.onclick = (e) => {
+                const href = btn.getAttribute('href');
+                if (href && href.startsWith('#')) {
+                    // Smooth scroll to the target
+                    const target = root.querySelector(href);
+                    if (target) {
+                        e.preventDefault();
+                        const offset = 120; // Sticky header offset
+                        const bodyRect = document.body.getBoundingClientRect().top;
+                        const elementRect = target.getBoundingClientRect().top;
+                        const elementPosition = elementRect - bodyRect;
+                        const offsetPosition = elementPosition - offset;
+                        window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
+                    }
+                }
+            };
+        });
+
+        // ── Scrollspy System ────────────────────────────────────────────────
+        // Use IntersectionObserver to highlight tabs/sidebar as user scrolls
+        const observerOptions = {
+            root: null,
+            rootMargin: '-150px 0px -70% 0px',
+            threshold: 0
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const id = entry.target.getAttribute('data-content-section');
+                    if (id) activateTab(id);
+                }
+            });
+        }, observerOptions);
+
+        contentSections.forEach(section => observer.observe(section));
+
+        // ── Initial State ───────────────────────────────────────────────────
+        // Small delay to ensure all DOM styles are painted
+        setTimeout(() => {
+            activateSidebar(1);
+            activateTab(1);
+        }, 100);
     }
 
     // Run after a short delay to ensure DOM is ready if injected dynamically
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', init);
     } else {
-        setTimeout(init, 100);
+        setTimeout(init, 200);
     }
 })();
 </script>
@@ -881,19 +957,63 @@ const EXTRA_SECTIONS: SectionDefinition[] = [
         category: 'pages',
         html: COURSE_DETAIL_HTML,
         css: `
-/* Tab active highlight on scroll */
-[data - content - tab]: hover { color: #0f172a !important; }
-/* Sidebar item hover */
-[data - sidebar - item]:hover { background: #f8fafc; border - left - color: #cbd5e1!important; }
-            /* Smooth scroll */
-            html { scroll - behavior: smooth; }
+/* Smooth scroll */
+html { scroll-behavior: smooth; }
+
+/* Responsive adjustments */
+@media (max-width: 991px) {
+    /* Main container should still be flex but column for mobile */
+    div[style*="max-width:1400px"] { flex-direction: column !important; padding: 0 !important; gap: 0 !important; }
+    
+    /* Sidebar as a horizontal scrollable strip - Sticky at top */
+    aside { 
+        width: 100% !important; 
+        position: sticky !important; 
+        top: 0 !important; 
+        z-index: 100 !important; 
+        margin-bottom: 0 !important; 
+        max-height: none !important; 
+        border-radius: 0 !important; 
+        border-left: 0 !important; 
+        border-right: 0 !important; 
+        border-top: 0 !important;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05) !important;
+        background: #fff !important;
+    }
+    aside [data-var="course_sidebar_heading"] { display: none !important; }
+    nav[data-sidebar-nav] { display: flex !important; flex-direction: row !important; flex-wrap: nowrap !important; overflow-x: auto !important; -ms-overflow-style:none; scrollbar-width:none; padding: 0 8px !important; }
+    nav[data-sidebar-nav]::-webkit-scrollbar { display: none; }
+    [data-sidebar-item] { flex-shrink: 0 !important; border-left: 0 !important; border-bottom: 3px solid transparent !important; padding: 14px 16px !important; }
+    
+    /* Content Area */
+    main { width: 100% !important; padding: 16px !important; }
+    
+    /* Breadcrumbs/Title - ensure left aligned */
+    div[style*="margin-bottom:12px"] { justify-content: flex-start !important; text-align: left !important; }
+    h1[data-var="course_page_title"] { text-align: left !important; margin: 8px 0 20px 0 !important; font-size: 24px !important; }
+
+    /* Tabs - Sticky below the sidebar */
+    [data-content-tabs-bar] { 
+        position: sticky !important; 
+        top: 47px !important; /* height of sidebar menu */
+        flex-wrap: nowrap !important; 
+        overflow-x: auto !important; 
+        z-index: 99 !important; 
+        background: #fff !important; 
+        margin: -16px -16px 20px -16px !important; /* Negative margin to bleed to edges */
+        padding: 0 16px !important;
+        border-bottom: 1px solid #e2e8f0 !important;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.02) !important;
+    }
+}
+
 /* Rich content typography */
-[data -var-html] h2 { font - size: 18px; font - weight: 700; color:#0f172a; margin: 0 0 12px 0; }
-[data -var-html] h3 { font - size: 16px; font - weight: 600; color:#0f172a; margin: 16px 0 8px 0; }
-[data -var-html] p { font - size: 15px; color:#374151; line - height: 1.8; margin: 0 0 12px 0; }
-[data -var-html]ul, [data -var-html] ol { padding - left: 20px; color:#475569; font - size: 15px; line - height: 2; }
-[data -var-html] a { color:#0369a1; }
-[data -var-html] strong { color:#0f172a; }
+[data-var-html] h2 { font-size: 20px; font-weight: 700; color:#0f172a; margin: 0 0 16px 0; }
+[data-var-html] h3 { font-size: 18px; font-weight: 600; color:#0f172a; margin: 16px 0 10px 0; }
+[data-var-html] p { font-size: 15px; color:#374151; line-height: 1.8; margin: 0 0 14px 0; }
+[data-var-html] ul, [data-var-html] ol { padding-left: 20px; color:#475569; font-size: 15px; line-height: 2; margin-bottom: 20px; }
+[data-var-html] a { color:#063f78; text-decoration: underline; }
+[data-var-html] strong { color:#0f172a; }
 `,
         defaultProps: {
             course_sidebar_heading: 'TCS NQT MENU',
