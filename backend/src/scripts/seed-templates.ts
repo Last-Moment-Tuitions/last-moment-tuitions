@@ -668,6 +668,18 @@ const COURSE_DETAIL_HTML = `
                     <svg width="15" height="15" fill="none" viewBox="0 0 24 24"><path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke="#64748b" stroke-width="2" stroke-linecap="round"/></svg>
                     <span data-var="course_nav3_label">How To Apply</span>
                 </a>
+                <a data-sidebar-item="4" href="#" style="display:none; align-items:center; gap:8px; padding:12px 16px; text-decoration:none; color:#374151; font-size:14px; font-weight:500; border-left:3px solid transparent; transition:all 0.2s;">
+                    <svg width="15" height="15" fill="none" viewBox="0 0 24 24"><path d="M12 6v6m0 0v6m0-6h6m-6 0H6" stroke="#64748b" stroke-width="2" stroke-linecap="round"/></svg>
+                    <span data-var="course_nav4_label">Extra Section 1</span>
+                </a>
+                <a data-sidebar-item="5" href="#" style="display:none; align-items:center; gap:8px; padding:12px 16px; text-decoration:none; color:#374151; font-size:14px; font-weight:500; border-left:3px solid transparent; transition:all 0.2s;">
+                    <svg width="15" height="15" fill="none" viewBox="0 0 24 24"><path d="M12 6v6m0 0v6m0-6h6m-6 0H6" stroke="#64748b" stroke-width="2" stroke-linecap="round"/></svg>
+                    <span data-var="course_nav5_label">Extra Section 2</span>
+                </a>
+                <a data-sidebar-item="6" href="#" style="display:none; align-items:center; gap:8px; padding:12px 16px; text-decoration:none; color:#374151; font-size:14px; font-weight:500; border-left:3px solid transparent; transition:all 0.2s;">
+                    <svg width="15" height="15" fill="none" viewBox="0 0 24 24"><path d="M12 6v6m0 0v6m0-6h6m-6 0H6" stroke="#64748b" stroke-width="2" stroke-linecap="round"/></svg>
+                    <span data-var="course_nav6_label">Extra Section 3</span>
+                </a>
             </nav>
         </aside>
 
@@ -786,6 +798,36 @@ const COURSE_DETAIL_HTML = `
                 </div>
             </div>
 
+            <!-- Panel 4: Extra 1 (hidden by default) -->
+            <div data-sidebar-section="4" style="display:none;">
+                <div style="background:#fff; border:1px solid #e2e8f0; border-radius:10px; padding:28px; box-shadow:0 1px 2px rgba(0,0,0,0.02);">
+                    <div data-var-html="course_nav4_content">
+                        <h2 style="font-size:18px; font-weight:700; color:#0f172a; margin:0 0 12px 0;">Extra Section 1</h2>
+                        <p style="font-size:15px; color:#374151; line-height:1.8; margin:0 0 12px 0;">Additional content can go here.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Panel 5: Extra 2 (hidden by default) -->
+            <div data-sidebar-section="5" style="display:none;">
+                <div style="background:#fff; border:1px solid #e2e8f0; border-radius:10px; padding:28px; box-shadow:0 1px 2px rgba(0,0,0,0.02);">
+                    <div data-var-html="course_nav5_content">
+                        <h2 style="font-size:18px; font-weight:700; color:#0f172a; margin:0 0 12px 0;">Extra Section 2</h2>
+                        <p style="font-size:15px; color:#374151; line-height:1.8; margin:0 0 12px 0;">Additional content can go here.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Panel 6: Extra 3 (hidden by default) -->
+            <div data-sidebar-section="6" style="display:none;">
+                <div style="background:#fff; border:1px solid #e2e8f0; border-radius:10px; padding:28px; box-shadow:0 1px 2px rgba(0,0,0,0.02);">
+                    <div data-var-html="course_nav6_content">
+                        <h2 style="font-size:18px; font-weight:700; color:#0f172a; margin:0 0 12px 0;">Extra Section 3</h2>
+                        <p style="font-size:15px; color:#374151; line-height:1.8; margin:0 0 12px 0;">Additional content can go here.</p>
+                    </div>
+                </div>
+            </div>
+
         </main>
     </div>
 </div>
@@ -835,6 +877,12 @@ const EXTRA_SECTIONS: SectionDefinition[] = [
             course_section5_content: '<h2 style="font-size:20px;font-weight:700;color:#0f172a;margin:0 0 16px 0;">Video Tutorials</h2><p style="font-size:15px;color:#374151;line-height:1.8;">Watch our curated video tutorials to understand complex topics with ease.</p>',
             course_nav2_content: '<h2 style="font-size:18px;font-weight:700;color:#0f172a;margin:0 0 12px 0;">About TCS NQT</h2><p style="font-size:15px;color:#374151;line-height:1.8;margin:0 0 12px 0;">TCS National Qualifier Test (NQT) is a standardized assessment conducted by Tata Consultancy Services to evaluate candidates for entry-level technology roles.</p><ul style="padding-left:20px;color:#475569;font-size:15px;line-height:2;"><li>Open to all graduates from any stream</li><li>Held multiple times a year</li><li>Score valid for 2 years</li></ul>',
             course_nav3_content: '<h2 style="font-size:18px;font-weight:700;color:#0f172a;margin:0 0 12px 0;">Application Process</h2><p style="font-size:15px;color:#374151;line-height:1.8;margin:0 0 12px 0;">Follow these steps to apply for the TCS NQT examination.</p><ol style="padding-left:20px;color:#475569;font-size:15px;line-height:2;"><li>Register on the TCS NextStep portal</li><li>Complete your profile</li><li>Apply for the NQT exam slot</li><li>Prepare with mock tests</li></ol>',
+            course_nav4_label: 'Extra Section 1',
+            course_nav5_label: 'Extra Section 2',
+            course_nav6_label: 'Extra Section 3',
+            course_nav4_content: '<h2 style="font-size:18px;font-weight:700;color:#0f172a;margin:0 0 12px 0;">Extra Section 1</h2><p style="font-size:15px;color:#374151;line-height:1.8;margin:0 0 12px 0;">This is an extra section for your content.</p>',
+            course_nav5_content: '<h2 style="font-size:18px;font-weight:700;color:#0f172a;margin:0 0 12px 0;">Extra Section 2</h2><p style="font-size:15px;color:#374151;line-height:1.8;margin:0 0 12px 0;">This is an extra section for your content.</p>',
+            course_nav6_content: '<h2 style="font-size:18px;font-weight:700;color:#0f172a;margin:0 0 12px 0;">Extra Section 3</h2><p style="font-size:15px;color:#374151;line-height:1.8;margin:0 0 12px 0;">This is an extra section for your content.</p>',
         },
     },
 ];
