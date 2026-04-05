@@ -1100,7 +1100,12 @@ export const loadTemplateRefBlock = (editor) => {
                     renderDoc.querySelectorAll('[data-var]').forEach(el => {
                         const name = el.getAttribute('data-var');
                         const propKey = `prop_${name}`;
-                        const value = this.model.get(propKey) || fetchedDefaultProps[name] || el.textContent.trim();
+                        let value = this.model.get(propKey);
+
+                        // If explicitly cleared (empty string), use a placeholder in editor
+                        if (value === '') value = `[Empty ${name}]`;
+                        else value = value || fetchedDefaultProps[name] || el.textContent.trim();
+
                         // Only update text content (preserve child elements that have their own data-var)
                         if (el.children.length === 0) {
                             el.textContent = value;
@@ -1118,7 +1123,11 @@ export const loadTemplateRefBlock = (editor) => {
                     renderDoc.querySelectorAll('[data-var-src]').forEach(el => {
                         const name = el.getAttribute('data-var-src');
                         const propKey = `prop_${name}`;
-                        const value = this.model.get(propKey) || fetchedDefaultProps[name] || el.getAttribute('src');
+                        let value = this.model.get(propKey);
+
+                        if (value === '') value = 'https://placehold.co/600x400/f3f4f6/9ca3af?text=Add+Image';
+                        else value = value || fetchedDefaultProps[name] || el.getAttribute('src');
+
                         el.setAttribute('src', value);
                     });
 
@@ -1134,7 +1143,17 @@ export const loadTemplateRefBlock = (editor) => {
                     renderDoc.querySelectorAll('[data-var-html]').forEach(el => {
                         const name = el.getAttribute('data-var-html');
                         const propKey = `prop_${name}`;
-                        const value = this.model.get(propKey) || fetchedDefaultProps[name] || el.innerHTML.trim();
+                        let value = this.model.get(propKey);
+
+                        if (value === '') {
+                            value = `<div style="padding:20px; border:2px dashed #e2e8f0; background:#f8fafc; border-radius:8px; text-align:center; color:#64748b; font-family:sans-serif;">
+                                <div style="font-weight:700; margin-bottom:4px;">[Empty ${name}]</div>
+                                <div style="font-size:12px;">Click to edit content</div>
+                            </div>`;
+                        } else {
+                            value = value || fetchedDefaultProps[name] || el.innerHTML.trim();
+                        }
+
                         el.innerHTML = value;
                     });
 
