@@ -573,6 +573,44 @@ export const initEditor = (pageId) => {
                 model.set('toolbar', newToolbar);
             }
         }
+
+        // ── Auto-Show Hidden Course/Tab Sections when their Nav is selected in Editor ──
+        // This makes decomposed HTML components clickable and navigatable within the editor natively
+        let sidebarItem = null;
+        let contentTab = null;
+        
+        let curr = model;
+        while (curr) {
+            const attrs = curr.getAttributes();
+            if (attrs['data-sidebar-item']) sidebarItem = attrs['data-sidebar-item'];
+            if (attrs['data-content-tab']) contentTab = attrs['data-content-tab'];
+            if (sidebarItem || contentTab) break;
+            curr = curr.parent();
+        }
+
+        if (sidebarItem || contentTab) {
+            const wrapper = editor.getWrapper();
+            if (wrapper) {
+                if (sidebarItem) {
+                    const sections = wrapper.find('[data-sidebar-section]');
+                    sections.forEach(sec => {
+                        const secIdx = sec.getAttributes()['data-sidebar-section'];
+                        sec.addStyle({ display: String(secIdx) === String(sidebarItem) ? 'block' : 'none' });
+                    });
+                }
+                if (contentTab) {
+                    const sections = wrapper.find('[data-content-section], [data-tab-pane], [id^="content-tab-"]');
+                    sections.forEach(sec => {
+                        const attrs = sec.getAttributes();
+                        const secIdx = attrs['data-content-section'] || attrs['data-tab-pane'];
+                        // Make sure we only affect the ones configured correctly 
+                        if (secIdx) {
+                            sec.addStyle({ display: String(secIdx) === String(contentTab) ? 'block' : 'none' });
+                        }
+                    });
+                }
+            }
+        }
     });
 
     // Synchronize canvas highlighting and securely clean up corrupted database icons
