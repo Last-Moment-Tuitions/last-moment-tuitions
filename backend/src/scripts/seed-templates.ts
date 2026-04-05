@@ -645,6 +645,202 @@ const SECTIONS: SectionDefinition[] = [
     },
 ];
 
+// ─── Course Detail Page HTML ──────────────────────────────────────────────────
+const COURSE_DETAIL_HTML = `
+<div style="font-family:'Inter','Segoe UI',sans-serif; background:#f8fafc; min-height:100vh;">
+
+    <!-- Main Layout: Left Sidebar + Right Content -->
+    <div style="max-width:1200px; margin:0 auto; padding:24px; display:flex; gap:28px; align-items:flex-start;">
+
+        <!-- Left Sidebar Nav -->
+        <aside style="width:240px; flex-shrink:0; background:#fff; border:1px solid #e2e8f0; border-radius:10px; padding:12px 0; position:sticky; top:24px; max-height:calc(100vh - 48px); overflow-y:auto; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+            <div style="padding:10px 16px 6px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:#94a3b8;" data-var="course_sidebar_heading">TCS NQT MENU</div>
+            <nav data-sidebar-nav style="display:flex; flex-direction:column; margin-top:4px;">
+                <a data-sidebar-item="1" href="#" style="display:flex; align-items:center; gap:8px; padding:12px 16px; text-decoration:none; color:#ea580c; font-size:14px; font-weight:600; border-left:3px solid #f97316; background:#fff7ed; transition:all 0.2s;">
+                    <svg width="15" height="15" fill="none" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" stroke="#f97316" stroke-width="2"/><path d="M7 7h10M7 12h10M7 17h6" stroke="#f97316" stroke-width="2" stroke-linecap="round"/></svg>
+                    <span data-var="course_nav1_label">Placement Papers</span>
+                </a>
+                <a data-sidebar-item="2" href="#" style="display:flex; align-items:center; gap:8px; padding:12px 16px; text-decoration:none; color:#374151; font-size:14px; font-weight:500; border-left:3px solid transparent; transition:all 0.2s;">
+                    <svg width="15" height="15" fill="none" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" stroke="#64748b" stroke-width="2" stroke-linecap="round"/></svg>
+                    <span data-var="course_nav2_label">What Is TCS NQT?</span>
+                </a>
+                <a data-sidebar-item="3" href="#" style="display:flex; align-items:center; gap:8px; padding:12px 16px; text-decoration:none; color:#374151; font-size:14px; font-weight:500; border-left:3px solid transparent; transition:all 0.2s;">
+                    <svg width="15" height="15" fill="none" viewBox="0 0 24 24"><path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke="#64748b" stroke-width="2" stroke-linecap="round"/></svg>
+                    <span data-var="course_nav3_label">How To Apply</span>
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Right: Sidebar Section Panels (only one visible at a time) -->
+        <main style="flex:1; min-width:0;">
+
+            <!-- Breadcrumb (Shared above active section) -->
+            <div style="font-size:13px; color:#64748b; margin-bottom:12px; display:flex; align-items:center; flex-wrap:wrap; gap:4px;">
+                <a href="#" style="color:#64748b; text-decoration:none;" data-var="course_breadcrumb_home">Home</a>
+                <span>›</span>
+                <a href="#" style="color:#64748b; text-decoration:none;" data-var="course_breadcrumb_parent">TCS NQT</a>
+                <span>›</span>
+                <a href="#" style="color:#0369a1; text-decoration:none;" data-var="course_breadcrumb_current">TCS NQT Placement Papers and Questions 2026</a>
+            </div>
+
+            <h1 style="font-size:clamp(24px,3.5vw,36px); font-weight:800; color:#0f172a; margin:0 0 24px 0; line-height:1.2;" data-var="course_page_title">TCS NQT Placement Papers and Questions 2026</h1>
+
+            <!-- Panel 1: Placement Papers (active by default) -->
+            <div data-sidebar-section="1" style="display:block;">
+
+                <!-- Inner Content Tabs (for scrolling to sections) -->
+                <nav style="display:flex; align-items:center; overflow-x:auto; margin-bottom:24px; border-bottom:1px solid #e2e8f0; -ms-overflow-style:none; scrollbar-width:none;" data-content-tabs-bar>
+                    <a data-content-tab="1" href="#ct-1" style="padding:10px 16px; text-decoration:none; color:#0f172a; font-size:14px; font-weight:700; border-bottom:2px solid #f97316; white-space:nowrap; flex-shrink:0;" data-var="course_tab1_label">Overview</a>
+                    <a data-content-tab="2" href="#ct-2" style="padding:10px 16px; text-decoration:none; color:#64748b; font-size:14px; font-weight:600; border-bottom:2px solid transparent; white-space:nowrap; flex-shrink:0;" data-var="course_tab2_label">Syllabus</a>
+                    <a data-content-tab="3" href="#ct-3" style="padding:10px 16px; text-decoration:none; color:#64748b; font-size:14px; font-weight:600; border-bottom:2px solid transparent; white-space:nowrap; flex-shrink:0;" data-var="course_tab3_label">Prepare</a>
+                    <a data-content-tab="4" href="#ct-4" style="padding:10px 16px; text-decoration:none; color:#64748b; font-size:14px; font-weight:600; border-bottom:2px solid transparent; white-space:nowrap; flex-shrink:0;" data-var="course_tab4_label">Interview</a>
+                    <a data-content-tab="5" href="#ct-5" style="padding:10px 16px; text-decoration:none; color:#64748b; font-size:14px; font-weight:600; border-bottom:2px solid transparent; white-space:nowrap; flex-shrink:0;" data-var="course_tab5_label">Video</a>
+                </nav>
+
+                <!-- Cards for each subsection -->
+                <section id="ct-1" data-content-section="1" style="margin-bottom:28px;">
+                    <div style="background:#fff; border:1px solid #e2e8f0; border-radius:10px; padding:28px; box-shadow:0 1px 2px rgba(0,0,0,0.02);">
+                        <div data-var-html="course_section1_content">
+                            <h2 style="font-size:20px; font-weight:700; color:#0f172a; margin:0 0 14px 0;">TCS NQT Placement Papers and Questions 2026</h2>
+                            <p style="font-size:15px; color:#374151; line-height:1.8; margin:0 0 14px 0;">TCS NQT Written Test Questions and pattern based practice problems are available on this page. <strong>Test Pattern</strong> has been changed for the TCS NQT as some sections have been replaced with new sections.</p>
+                            <ul style="padding-left:20px; color:#475569; font-size:15px; line-height:2;">
+                                <li>Pattern-based questions with detailed solutions</li>
+                                <li>Previous year question papers included</li>
+                                <li>Topic-wise practice sets</li>
+                                <li>Updated for the latest exam format</li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="ct-2" data-content-section="2" style="margin-bottom:28px;">
+                    <div style="background:#fff; border:1px solid #e2e8f0; border-radius:10px; padding:28px; box-shadow:0 1px 2px rgba(0,0,0,0.02);">
+                        <div data-var-html="course_section2_content">
+                            <h2 style="font-size:20px; font-weight:700; color:#0f172a; margin:0 0 14px 0;">Syllabus</h2>
+                            <p style="font-size:15px; color:#374151; line-height:1.8; margin:0 0 14px 0;">The complete syllabus covers quantitative aptitude, verbal ability, reasoning, and programming logic.</p>
+                            <ul style="padding-left:20px; color:#475569; font-size:15px; line-height:2;">
+                                <li>Quantitative Aptitude</li>
+                                <li>Verbal Ability &amp; English</li>
+                                <li>Reasoning Ability</li>
+                                <li>Programming Logic (Coding)</li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="ct-3" data-content-section="3" style="margin-bottom:28px;">
+                    <div style="background:#fff; border:1px solid #e2e8f0; border-radius:10px; padding:28px; box-shadow:0 1px 2px rgba(0,0,0,0.02);">
+                        <div data-var-html="course_section3_content">
+                            <h2 style="font-size:20px; font-weight:700; color:#0f172a; margin:0 0 14px 0;">How to Prepare</h2>
+                            <p style="font-size:15px; color:#374151; line-height:1.8; margin:0 0 14px 0;">Follow this step-by-step preparation guide to maximize your score.</p>
+                            <ol style="padding-left:20px; color:#475569; font-size:15px; line-height:2;">
+                                <li>Understand the exam pattern</li>
+                                <li>Practice topic-wise questions daily</li>
+                                <li>Take full-length mock tests</li>
+                            </ol>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="ct-4" data-content-section="4" style="margin-bottom:28px;">
+                    <div style="background:#fff; border:1px solid #e2e8f0; border-radius:10px; padding:28px; box-shadow:0 1px 2px rgba(0,0,0,0.02);">
+                        <div data-var-html="course_section4_content">
+                            <h2 style="font-size:20px; font-weight:700; color:#0f172a; margin:0 0 14px 0;">Interview Preparation</h2>
+                            <p style="font-size:15px; color:#374151; line-height:1.8;">After clearing the written test, you face HR and Technical interviews. This section covers the most common questions with model answers.</p>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="ct-5" data-content-section="5" style="margin-bottom:28px;">
+                    <div style="background:#fff; border:1px solid #e2e8f0; border-radius:10px; padding:28px; box-shadow:0 1px 2px rgba(0,0,0,0.02);">
+                        <div data-var-html="course_section5_content">
+                            <h2 style="font-size:20px; font-weight:700; color:#0f172a; margin:0 0 14px 0;">Video Tutorials</h2>
+                            <p style="font-size:15px; color:#374151; line-height:1.8;">Watch our curated video tutorials to understand complex topics with ease.</p>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Panel 2: What Is TCS NQT? (hidden by default) -->
+            <div data-sidebar-section="2" style="display:none;">
+                <div style="background:#fff; border:1px solid #e2e8f0; border-radius:10px; padding:28px; box-shadow:0 1px 2px rgba(0,0,0,0.02);">
+                    <div data-var-html="course_nav2_content">
+                        <h2 style="font-size:18px; font-weight:700; color:#0f172a; margin:0 0 12px 0;">About TCS NQT</h2>
+                        <p style="font-size:15px; color:#374151; line-height:1.8; margin:0 0 12px 0;">TCS National Qualifier Test (NQT) is a standardized assessment conducted by Tata Consultancy Services to evaluate candidates for entry-level technology roles.</p>
+                        <h3 style="font-size:16px; font-weight:600; color:#0f172a; margin:16px 0 8px;">Key Features</h3>
+                        <ul style="padding-left:20px; color:#475569; font-size:15px; line-height:2;">
+                            <li>Open to all graduates from any stream</li>
+                            <li>Held multiple times a year</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Panel 3: How To Apply (hidden by default) -->
+            <div data-sidebar-section="3" style="display:none;">
+                <div style="background:#fff; border:1px solid #e2e8f0; border-radius:10px; padding:28px; box-shadow:0 1px 2px rgba(0,0,0,0.02);">
+                    <div data-var-html="course_nav3_content">
+                        <h2 style="font-size:18px; font-weight:700; color:#0f172a; margin:0 0 12px 0;">Application Process</h2>
+                        <p style="font-size:15px; color:#374151; line-height:1.8; margin:0 0 12px 0;">Follow these steps to apply for the TCS NQT examination.</p>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+</div>
+`;
+
+
+// ─── Additional SECTIONS appended ────────────────────────────────────────────
+const EXTRA_SECTIONS: SectionDefinition[] = [
+    {
+        slug: 'lmt-course-detail-page',
+        title: 'Course Detail Page',
+        category: 'pages',
+        html: COURSE_DETAIL_HTML,
+        css: `
+/* Tab active highlight on scroll */
+[data - content - tab]: hover { color: #0f172a !important; }
+/* Sidebar item hover */
+[data - sidebar - item]:hover { background: #f8fafc; border - left - color: #cbd5e1!important; }
+            /* Smooth scroll */
+            html { scroll - behavior: smooth; }
+/* Rich content typography */
+[data -var-html] h2 { font - size: 18px; font - weight: 700; color:#0f172a; margin: 0 0 12px 0; }
+[data -var-html] h3 { font - size: 16px; font - weight: 600; color:#0f172a; margin: 16px 0 8px 0; }
+[data -var-html] p { font - size: 15px; color:#374151; line - height: 1.8; margin: 0 0 12px 0; }
+[data -var-html]ul, [data -var-html] ol { padding - left: 20px; color:#475569; font - size: 15px; line - height: 2; }
+[data -var-html] a { color:#0369a1; }
+[data -var-html] strong { color:#0f172a; }
+`,
+        defaultProps: {
+            course_sidebar_heading: 'TCS NQT MENU',
+            course_nav1_label: 'Placement Papers',
+            course_nav2_label: 'What Is TCS NQT?',
+            course_nav3_label: 'How To Apply',
+            course_breadcrumb_home: 'Home',
+            course_breadcrumb_parent: 'TCS NQT',
+            course_breadcrumb_current: 'TCS NQT Placement Papers and Questions 2026',
+            course_page_title: 'TCS NQT Placement Papers and Questions 2026',
+            course_tab1_label: 'Overview',
+            course_tab2_label: 'Syllabus',
+            course_tab3_label: 'Prepare',
+            course_tab4_label: 'Interview',
+            course_tab5_label: 'Video',
+            course_section1_content: '<h2 style="font-size:20px;font-weight:700;color:#0f172a;margin:0 0 16px 0;">TCS NQT Placement Papers and Questions 2026</h2><p style="font-size:15px;color:#374151;line-height:1.8;margin:0 0 14px 0;">TCS NQT Written Test Questions and pattern based practice problems are available on this page. <strong>Test Pattern</strong> has been updated for the latest exam cycle.</p><ul style="padding-left:20px;color:#475569;font-size:15px;line-height:2;"><li>Pattern-based questions with detailed solutions</li><li>Previous year question papers included</li><li>Topic-wise practice sets</li></ul>',
+            course_section2_content: '<h2 style="font-size:20px;font-weight:700;color:#0f172a;margin:0 0 16px 0;">Syllabus</h2><p style="font-size:15px;color:#374151;line-height:1.8;">The complete syllabus covers quantitative aptitude, verbal ability, reasoning, and programming logic.</p>',
+            course_section3_content: '<h2 style="font-size:20px;font-weight:700;color:#0f172a;margin:0 0 16px 0;">How to Prepare</h2><p style="font-size:15px;color:#374151;line-height:1.8;">Follow this step-by-step preparation guide to maximize your score.</p>',
+            course_section4_content: '<h2 style="font-size:20px;font-weight:700;color:#0f172a;margin:0 0 16px 0;">Interview Preparation</h2><p style="font-size:15px;color:#374151;line-height:1.8;">After clearing the written test, you face HR and Technical interviews. This section covers the most common questions.</p>',
+            course_section5_content: '<h2 style="font-size:20px;font-weight:700;color:#0f172a;margin:0 0 16px 0;">Video Tutorials</h2><p style="font-size:15px;color:#374151;line-height:1.8;">Watch our curated video tutorials to understand complex topics with ease.</p>',
+            course_nav2_content: '<h2 style="font-size:18px;font-weight:700;color:#0f172a;margin:0 0 12px 0;">About TCS NQT</h2><p style="font-size:15px;color:#374151;line-height:1.8;margin:0 0 12px 0;">TCS National Qualifier Test (NQT) is a standardized assessment conducted by Tata Consultancy Services to evaluate candidates for entry-level technology roles.</p><ul style="padding-left:20px;color:#475569;font-size:15px;line-height:2;"><li>Open to all graduates from any stream</li><li>Held multiple times a year</li><li>Score valid for 2 years</li></ul>',
+            course_nav3_content: '<h2 style="font-size:18px;font-weight:700;color:#0f172a;margin:0 0 12px 0;">Application Process</h2><p style="font-size:15px;color:#374151;line-height:1.8;margin:0 0 12px 0;">Follow these steps to apply for the TCS NQT examination.</p><ol style="padding-left:20px;color:#475569;font-size:15px;line-height:2;"><li>Register on the TCS NextStep portal</li><li>Complete your profile</li><li>Apply for the NQT exam slot</li><li>Prepare with mock tests</li></ol>',
+        },
+    },
+];
+
+const ALL_SECTIONS = [...SECTIONS, ...EXTRA_SECTIONS];
+
 // ─── Seeder ───────────────────────────────────────────────────────────────────
 async function seedSection(section: SectionDefinition, force = false) {
     const existing = await PageModel.findOne({ slug: section.slug, type: 'template' });
@@ -690,7 +886,7 @@ async function main() {
     console.log(`\n🌱 Seeding Section Templates${force ? ' (force-update mode)' : ''}...\n`);
     await mongoose.connect(mongoUri);
 
-    for (const section of SECTIONS) {
+    for (const section of ALL_SECTIONS) {
         await seedSection(section, force);
     }
 
