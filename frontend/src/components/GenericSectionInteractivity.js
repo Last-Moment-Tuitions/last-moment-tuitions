@@ -42,9 +42,9 @@ export default function GenericSectionInteractivity() {
                     const groupTabs = container.querySelectorAll('[data-tab]');
                     groupTabs.forEach(tabBtn => {
                         const isActive = tabBtn === btn;
-                        tabBtn.style.background = isActive ? '#047857' : 'transparent';
+                        tabBtn.style.background = isActive ? '#063f78' : 'transparent';
                         tabBtn.style.color = isActive ? '#fff' : '#374151';
-                        tabBtn.style.borderColor = isActive ? '#047857' : 'transparent';
+                        tabBtn.style.borderColor = isActive ? '#063f78' : 'transparent';
                     });
 
                     const tabId = btn.getAttribute('data-tab');
@@ -145,9 +145,9 @@ export function initCourseDetailPage(root = document) {
             sidebarItems.forEach((item, i) => {
                 const isActive = String(i + 1) === String(targetIdx);
                 // Highlight active sidebar item
-                item.style.borderLeftColor = isActive ? '#f97316' : 'transparent';
-                item.style.background = isActive ? '#fff7ed' : 'transparent';
-                item.style.color = isActive ? '#ea580c' : '#374151';
+                item.style.borderLeftColor = isActive ? '#063f78' : 'transparent';
+                item.style.background = isActive ? '#f0f9ff' : 'transparent';
+                item.style.color = isActive ? '#063f78' : '#374151';
                 item.style.fontWeight = isActive ? '600' : '500';
             });
 
@@ -188,9 +188,10 @@ export function initCourseDetailPage(root = document) {
             contentTabBtns.forEach(btn => {
                 const targetId = btn.getAttribute('href')?.replace('#', '') || btn.getAttribute('data-content-tab-target');
                 const isActive = targetId === currentId;
-                btn.style.borderBottom = isActive ? '2px solid #f97316' : '2px solid transparent';
-                btn.style.color = isActive ? '#0f172a' : '#64748b';
+                btn.style.borderBottom = isActive ? '2px solid #063f78' : '2px solid transparent';
+                btn.style.color = isActive ? '#063f78' : '#64748b';
                 btn.style.fontWeight = isActive ? '700' : '600';
+                btn.style.background = isActive ? '#f0f9ff' : 'transparent';
             });
         };
 
@@ -213,9 +214,10 @@ export function initCourseDetailPage(root = document) {
                         b.style.color = '#64748b';
                         b.style.fontWeight = '600';
                     });
-                    btn.style.borderBottom = '2px solid #f97316';
-                    btn.style.color = '#0f172a';
+                    btn.style.borderBottom = '2px solid #063f78';
+                    btn.style.color = '#063f78';
                     btn.style.fontWeight = '700';
+                    btn.style.background = '#f0f9ff';
                 }
             });
         });

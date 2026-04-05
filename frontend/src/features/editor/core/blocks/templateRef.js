@@ -1082,6 +1082,13 @@ export const loadTemplateRefBlock = (editor) => {
                     // ── Apply Variable Values to HTML ───────────────────────────
                     const renderDoc = parser.parseFromString(html, 'text/html');
 
+                    // Sync Layout Gaps
+                    const mainWrapper = renderDoc.querySelector('div[style*="max-width:"]');
+                    if (mainWrapper) {
+                        mainWrapper.style.maxWidth = '1400px';
+                        mainWrapper.style.gap = '32px';
+                    }
+
                     // Sync Content Tab Highlighting (Overview, Syllabus, etc.)
                     activeTab = this.model.get('prop_active_tab') || '1';
                     renderDoc.querySelectorAll('[data-content-tab], [data-tab]').forEach(btn => {
@@ -1090,12 +1097,12 @@ export const loadTemplateRefBlock = (editor) => {
 
                         // Vibrant Highlight for the selected tab
                         if (isActive) {
-                            btn.style.borderBottom = '2px solid #f97316';
-                            btn.style.color = '#0f172a';
+                            btn.style.borderBottom = '2px solid #063f78';
+                            btn.style.color = '#063f78';
                             btn.style.fontWeight = '700';
-                            btn.style.background = '#fff';
+                            btn.style.background = '#f0f9ff';
                         } else {
-                            btn.style.borderBottom = '1px solid transparent';
+                            btn.style.borderBottom = '2px solid transparent';
                             btn.style.color = '#64748b';
                             btn.style.fontWeight = '600';
                             btn.style.background = 'transparent';
@@ -1121,9 +1128,9 @@ export const loadTemplateRefBlock = (editor) => {
                     renderDoc.querySelectorAll('[data-sidebar-item]').forEach((item, i) => {
                         const targetIdx = item.getAttribute('data-sidebar-item') || String(i + 1);
                         const isActive = String(targetIdx) === String(activeSidebar);
-                        item.style.borderLeftColor = isActive ? '#f97316' : 'transparent';
-                        item.style.background = isActive ? '#fff7ed' : 'transparent';
-                        item.style.color = isActive ? '#ea580c' : '#374151';
+                        item.style.borderLeftColor = isActive ? '#063f78' : 'transparent';
+                        item.style.background = isActive ? '#f0f9ff' : 'transparent';
+                        item.style.color = isActive ? '#063f78' : '#374151';
                         item.style.fontWeight = isActive ? '600' : '500';
                     });
 
@@ -1205,10 +1212,30 @@ export const loadTemplateRefBlock = (editor) => {
                         .gjs-dashed [data-var] { 
                             outline: none !important; 
                         }
+                        /* Sticky Tab Bar in Editor */
+                        [data-content-tabs-bar] {
+                            position: sticky !important;
+                            top: 0 !important;
+                            background: white !important;
+                            z-index: 100 !important;
+                            padding: 4px 0 !important;
+                            border-bottom: 1px solid #e2e8f0 !important;
+                        }
+
+                        /* Responsive Editor Preview Simulation */
+                        @media (max-width: 991px) {
+                            [style*="max-width:1400px"] { flex-direction: column !important; padding: 0 !important; }
+                            aside { width: 100% !important; margin-bottom: 0 !important; position: sticky !important; top: 0 !important; z-index: 100 !important; background: white !important; }
+                            nav[data-sidebar-nav] { display: flex !important; flex-direction: row !important; flex-wrap: nowrap !important; overflow-x: auto !important; }
+                            [data-sidebar-item] { flex-shrink: 0 !important; border-left: 0 !important; border-bottom: 3px solid transparent !important; }
+                            main { width: 100% !important; padding: 16px !important; }
+                            [data-content-tabs-bar] { position: sticky !important; top: 47px !important; z-index: 99 !important; background: white !important; margin: -16px -16px 20px -16px !important; width: calc(100% + 32px) !important; }
+                        }
+                        
                         /* But keep a subtle focus for the whole item */
                         .gjs-dashed [data-sidebar-item],
                         .gjs-dashed [data-content-tab] {
-                            outline: 1px dashed rgba(249, 115, 22, 0.3) !important;
+                            outline: 1px dashed rgba(6, 63, 120, 0.3) !important;
                         }
                     `;
                     renderDoc.head.appendChild(style);
