@@ -163,6 +163,201 @@ export const loadTemplateRefBlock = (editor) => {
         });
     }
 
+    // ── Register the 'rich-text' trait type (Quill powered) ─────────────────────
+    if (!editor.TraitManager.getType('rich-text')) {
+        editor.TraitManager.addType('rich-text', {
+            createInput({ trait }) {
+                const propName = trait.get('name');
+                const componentModel = trait.target || trait.model;
+                const label = trait.get('label') || propName;
+
+                const wrapper = document.createElement('div');
+                wrapper.style.cssText = 'display:flex; flex-direction:column; gap:6px; padding:4px 0;';
+
+                // Toolbar
+                const toolbar = document.createElement('div');
+                toolbar.style.cssText = 'display:flex; flex-wrap:wrap; gap:3px; background:#1f2937; border-radius:4px 4px 0 0; padding:4px;';
+                toolbar.dataset.propName = propName;
+
+                const btnStyle = 'background:#374151; color:#e5e7eb; border:none; border-radius:3px; padding:3px 7px; font-size:12px; cursor:pointer; font-weight:bold;';
+
+                const buttons = [
+                    { cmd: 'bold', label: 'B', title: 'Bold' },
+                    { cmd: 'italic', label: '<i>I</i>', title: 'Italic' },
+                    { cmd: 'underline', label: '<u>U</u>', title: 'Underline' },
+                    { cmd: 'insertUnorderedList', label: '• List', title: 'Bullet List' },
+                    { cmd: 'insertOrderedList', label: '1. List', title: 'Numbered List' },
+                    { cmd: 'formatBlock:h2', label: 'H2', title: 'Heading 2' },
+                    { cmd: 'formatBlock:h3', label: 'H3', title: 'Heading 3' },
+                    { cmd: 'formatBlock:p', label: 'P', title: 'Paragraph' },
+                    { cmd: 'removeFormat', label: 'Clear', title: 'Clear Format' },
+                ];
+
+                buttons.forEach(({ cmd, label, title }) => {
+                    const btn = document.createElement('button');
+                    btn.innerHTML = label;
+                    btn.title = title;
+                    btn.style.cssText = btnStyle;
+                    btn.addEventListener('mousedown', (e) => {
+                        e.preventDefault();
+                        const [command, arg] = cmd.split(':');
+                        editableDiv.focus();
+                        document.execCommand(command, false, arg || null);
+                        if (componentModel) {
+                            componentModel.set(propName, editableDiv.innerHTML);
+                            componentModel.trigger('change:templateContent');
+                        }
+                    });
+                    toolbar.appendChild(btn);
+                });
+
+                // Link button
+                const linkBtn = document.createElement('button');
+                linkBtn.textContent = '🔗';
+                linkBtn.title = 'Insert Link';
+                linkBtn.style.cssText = btnStyle;
+                linkBtn.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    const url = prompt('Enter URL:');
+                    if (url) {
+                        editableDiv.focus();
+                        document.execCommand('createLink', false, url);
+                        if (componentModel) {
+                            componentModel.set(propName, editableDiv.innerHTML);
+                            componentModel.trigger('change:templateContent');
+                        }
+                    }
+                });
+                toolbar.appendChild(linkBtn);
+
+                // Expand/Modal button
+                const expandBtn = document.createElement('button');
+                expandBtn.textContent = '⛶ Expand';
+                expandBtn.title = 'Full Screen Editor';
+                expandBtn.style.cssText = btnStyle + 'margin-left:auto; background:#10b981;';
+
+                let isExpanded = false;
+                // Save original styles
+                const origWrapperStyle = wrapper.style.cssText;
+                const origDivStyle = 'min-height:120px; max-height:300px; overflow-y:auto; background:#0f172a; color:#e5e7eb; border:1px solid #374151; border-top:none; border-radius:0 0 4px 4px; padding:8px; font-size:13px; line-height:1.6; outline:none;';
+
+                expandBtn.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    isExpanded = !isExpanded;
+                    if (isExpanded) {
+                        expandBtn.textContent = '✖ Close';
+                        expandBtn.style.background = '#ef4444';
+
+                        // Fullscreen modal styles overlaying the entire grapejs editor
+                        wrapper.style.cssText = 'position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); width:60vw; height:60vh; z-index:99999; background:#1f2937; padding:16px; border-radius:8px; box-shadow:0 25px 50px -12px rgba(0, 0, 0, 0.5); display:flex; flex-direction:column;';
+                        editableDiv.style.cssText = origDivStyle + ' flex:1; max-height:none; background:#0f172a; border-radius:4px; font-size:15px; padding:16px;';
+
+                        // Add modal overlay backdrop
+                        const backdrop = document.createElement('div');
+                        backdrop.id = 'rte-backdrop';
+                        backdrop.style.cssText = 'position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.7); z-index:99998;';
+                        document.body.appendChild(backdrop);
+                    } else {
+                        expandBtn.textContent = '⛶ Expand';
+                        expandBtn.style.background = '#10b981';
+                        wrapper.style.cssText = origWrapperStyle;
+                        editableDiv.style.cssText = origDivStyle;
+                        const backdrop = document.getElementById('rte-backdrop');
+                        if (backdrop) backdrop.remove();
+                    }
+                });
+                toolbar.appendChild(expandBtn);
+
+                // Table button
+                const tableBtn = document.createElement('button');
+                tableBtn.textContent = '⊞ Table';
+                tableBtn.title = 'Insert 2x2 Table';
+                tableBtn.style.cssText = btnStyle;
+                tableBtn.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    editableDiv.focus();
+                    const tableHtml = `
+                    <table style="width:100%; border-collapse: collapse; margin-bottom: 1rem;">
+                        <tbody>
+                            <tr>
+                                <td style="border: 1px solid #cbd5e1; padding: 8px;">Header 1</td>
+                                <td style="border: 1px solid #cbd5e1; padding: 8px;">Header 2</td>
+                            </tr>
+                            <tr>
+                                <td style="border: 1px solid #cbd5e1; padding: 8px;">Row 1 Col 1</td>
+                                <td style="border: 1px solid #cbd5e1; padding: 8px;">Row 1 Col 2</td>
+                            </tr>
+                        </tbody>
+                    </table><br/>`;
+                    document.execCommand('insertHTML', false, tableHtml);
+                    if (componentModel) {
+                        componentModel.set(propName, editableDiv.innerHTML);
+                        componentModel.trigger('change:templateContent');
+                    }
+                });
+                // Insert tableBtn just before Link button
+                toolbar.insertBefore(tableBtn, linkBtn);
+
+                // Color button
+                const colorBtn = document.createElement('button');
+                colorBtn.textContent = '🎨 Color';
+                colorBtn.title = 'Text Color';
+                colorBtn.style.cssText = btnStyle;
+                colorBtn.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    const col = prompt('Enter color hex (e.g. #ea580c):');
+                    if (col) {
+                        editableDiv.focus();
+                        document.execCommand('foreColor', false, col);
+                        if (componentModel) {
+                            componentModel.set(propName, editableDiv.innerHTML);
+                            componentModel.trigger('change:templateContent');
+                        }
+                    }
+                });
+                toolbar.insertBefore(colorBtn, linkBtn);
+
+                // Editable content area
+                const editableDiv = document.createElement('div');
+                editableDiv.contentEditable = 'true';
+                editableDiv.style.cssText = origDivStyle;
+                editableDiv.innerHTML = componentModel ? (componentModel.get(propName) || '') : '';
+
+                editableDiv.addEventListener('input', () => {
+                    if (componentModel) {
+                        componentModel.set(propName, editableDiv.innerHTML);
+                        componentModel.trigger('change:templateContent');
+                    }
+                });
+
+                // Paste as plain HTML
+                editableDiv.addEventListener('paste', (e) => {
+                    e.preventDefault();
+                    // Basic strip to keep semantic tags but remove heavy word/excel tracking styles if needed
+                    const text = e.clipboardData.getData('text/html') || e.clipboardData.getData('text/plain');
+                    document.execCommand('insertHTML', false, text);
+                });
+
+                wrapper.appendChild(toolbar);
+                wrapper.appendChild(editableDiv);
+                return wrapper;
+            },
+            onEvent() { },
+            onUpdate({ elInput, trait }) {
+                const propName = trait.get('name');
+                const componentModel = trait.target || trait.model;
+                if (!componentModel || !elInput) return;
+                const editableDiv = elInput.querySelector('[contenteditable]');
+                if (editableDiv) {
+                    const val = componentModel.get(propName) || '';
+                    if (editableDiv.innerHTML !== val) {
+                        editableDiv.innerHTML = val;
+                    }
+                }
+            }
+        });
+    }
+
     // ── Component Type: template-ref ──────────────────────────────────────────
     domc.addType('template-ref', {
         isComponent: el => el.tagName === 'TEMPLATE-REF',
@@ -257,34 +452,53 @@ export const loadTemplateRefBlock = (editor) => {
                         });
                     };
 
+                    const currentTabId = this.model.get('prop_active_tab');
+                    if (currentTabId) {
+                        const activeBtn = Array.from(tabs).find(b => b.getAttribute('data-tab') === currentTabId);
+                        if (activeBtn) activateTab(activeBtn);
+                    } else if (tabs.length > 0) {
+                        activateTab(tabs[0]);
+                    }
+
                     tabs.forEach(btn => {
-                        btn.addEventListener('click', (e) => {
-                            // stopPropagation so GrapeJS doesn't interpret the click
-                            // as an attempt to deselect / re-select the component
-                            e.stopPropagation();
+                        btn.style.pointerEvents = 'auto';
+                        btn.addEventListener('mousedown', (e) => {
+                            e.stopPropagation(); // Prevent GrapeJS from selecting inner text nodes
+                            e.preventDefault();
                             activateTab(btn);
 
                             const tabId = btn.getAttribute('data-tab');
                             if (tabId) {
-                                // Important: trigger a re-render of the component and force
-                                // the traits panel to update with variables from the new tab
-                                this.model.set('_force_trait_reset', true, { silent: true });
-                                this.model.set('prop_active_tab', tabId);
+                                setTimeout(() => {
+                                    const editor = this.model.opt.em.get('Editor');
+                                    editor.select(this.model); // Force GrapeJS to select the Wrapper instead of the Span
+
+                                    this.model.set('_force_trait_reset', true, { silent: true });
+                                    this.model.set('prop_active_tab', tabId, { silent: true });
+                                    this.renderTemplate();
+                                }, 50);
                             }
                         });
                     });
                 }
 
                 // ── 2. Accordion chevron sync ────────────────────────────────────
-                // <details> opens/closes natively, but the chevron span inside
-                // <summary> needs to be updated manually.
                 const allDetails = contentDiv.querySelectorAll('details[data-module]');
                 allDetails.forEach(details => {
                     const summary = details.querySelector('summary');
                     const chevron = summary?.querySelector('span:last-child, .mod-chevron');
 
-                    // Set initial state
                     if (chevron) chevron.textContent = details.open ? '−' : '›';
+
+                    // details uses native browser click behavior which works sometimes, 
+                    // but we can augment the summary with mousedown just in case.
+                    if (summary) {
+                        summary.style.pointerEvents = 'auto';
+                        details.style.pointerEvents = 'auto';
+                        summary.addEventListener('mousedown', (e) => {
+                            // Let it bubble
+                        });
+                    }
 
                     details.addEventListener('toggle', () => {
                         if (chevron) chevron.textContent = details.open ? '−' : '›';
@@ -297,31 +511,101 @@ export const loadTemplateRefBlock = (editor) => {
                 const testNext = contentDiv.querySelector('.test-next');
                 if (testTrack && testPrev && testNext) {
                     const scrollAmount = 344; // 320px width + 24px gap
-                    testPrev.addEventListener('click', (e) => {
-                        e.stopPropagation();
+
+                    testPrev.style.pointerEvents = 'auto';
+                    testPrev.addEventListener('mousedown', (e) => {
+                        e.preventDefault();
                         testTrack.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
                     });
-                    testNext.addEventListener('click', (e) => {
-                        e.stopPropagation();
+
+                    testNext.style.pointerEvents = 'auto';
+                    testNext.addEventListener('mousedown', (e) => {
+                        e.preventDefault();
                         testTrack.scrollBy({ left: scrollAmount, behavior: 'smooth' });
                     });
 
-                    // Auto-slide logic
                     let isHovering = false;
+                    testTrack.style.pointerEvents = 'auto';
                     testTrack.addEventListener('mouseenter', () => isHovering = true);
                     testTrack.addEventListener('mouseleave', () => isHovering = false);
 
                     if (this._sliderInterval) clearInterval(this._sliderInterval);
                     this._sliderInterval = setInterval(() => {
                         if (isHovering || !testTrack.isConnected) return;
-
-                        // Check if we hit the end
                         if (Math.ceil(testTrack.scrollLeft + testTrack.clientWidth) >= testTrack.scrollWidth) {
                             testTrack.scrollTo({ left: 0, behavior: 'smooth' });
                         } else {
                             testTrack.scrollBy({ left: scrollAmount, behavior: 'smooth' });
                         }
                     }, 3000);
+                }
+
+                // ── 4. Course Detail Page: Left Sidebar ─────────────────────────
+                const sidebarItems = contentDiv.querySelectorAll('[data-sidebar-item]');
+                const allSidebarSections = contentDiv.querySelectorAll('[data-sidebar-section]');
+
+                if (sidebarItems.length > 0) {
+                    const activateSidebarItem = (targetIdx) => {
+                        sidebarItems.forEach((item, i) => {
+                            const isActive = String(i + 1) === String(targetIdx);
+                            item.style.borderLeftColor = isActive ? '#f97316' : 'transparent';
+                            item.style.background = isActive ? '#fff7ed' : 'transparent';
+                            item.style.color = isActive ? '#ea580c' : '#374151';
+                            item.style.fontWeight = isActive ? '600' : '500';
+                        });
+                        allSidebarSections.forEach(section => {
+                            const idx = section.getAttribute('data-sidebar-section');
+                            section.style.display = String(idx) === String(targetIdx) ? 'block' : 'none';
+                        });
+                    };
+
+                    let currentSidebarIdx = this.model.get('prop_active_sidebar') || '1';
+                    activateSidebarItem(currentSidebarIdx);
+
+                    sidebarItems.forEach((item, i) => {
+                        // Use mousedown and allow internal interaction!
+                        item.style.pointerEvents = 'auto';
+                        item.addEventListener('mousedown', (e) => {
+                            e.stopPropagation(); // Prevent GrapeJS from selecting inner text nodes
+                            e.preventDefault();
+                            activateSidebarItem(i + 1);
+
+                            // Process UI change sequentially so GrapeJS can finish bubbling first
+                            setTimeout(() => {
+                                const editor = this.model.opt.em.get('Editor');
+                                editor.select(this.model);
+
+                                this.model.set('_force_trait_reset', true, { silent: true });
+                                this.model.set('prop_active_sidebar', String(i + 1), { silent: true });
+                                this.renderTemplate();
+                            }, 50);
+                        });
+                    });
+                }
+
+                // ── 5. Course Detail Page: Content Tab → Smooth Scroll ──────────
+                const contentTabBtns = contentDiv.querySelectorAll('[data-content-tab]');
+                if (contentTabBtns.length > 0) {
+                    contentTabBtns.forEach(btn => {
+                        btn.style.pointerEvents = 'auto';
+                        btn.addEventListener('mousedown', (e) => {
+                            e.preventDefault();
+                            const href = btn.getAttribute('href') || `#content-tab-${btn.getAttribute('data-content-tab')}`;
+                            const targetId = href.replace('#', '');
+                            const targetEl = contentDiv.querySelector(`#${targetId}`) || document.getElementById(targetId);
+                            if (targetEl) {
+                                targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            }
+                            contentTabBtns.forEach(b => {
+                                b.style.borderBottom = '2px solid transparent';
+                                b.style.color = '#64748b';
+                                b.style.fontWeight = '600';
+                            });
+                            btn.style.borderBottom = '2px solid #f97316';
+                            btn.style.color = '#0f172a';
+                            btn.style.fontWeight = '700';
+                        });
+                    });
                 }
             },
 
@@ -347,19 +631,23 @@ export const loadTemplateRefBlock = (editor) => {
                     <style>@keyframes spin{100%{transform:rotate(360deg)}}</style>`;
 
                 try {
-                    // ── Fetch with cache ───────────────────────────────────────
+                    // ── Fetch with cache / timestamp ───────────────────────────
                     let templateData;
+                    // Provide a way to bypass cache: just clear local _templateCache
+                    // or append timestamp if we want global bypass. For now, rely on _templateCache
                     if (_templateCache.has(templateId)) {
                         templateData = _templateCache.get(templateId);
                     } else {
                         const { adminService } = await import('@/services/adminService');
+                        // Bypassing browser-level cache for template fetches can be done via query 
+                        // if needed, but adminService.getPage uses standard fetch
                         templateData = await adminService.getPage(templateId);
-                        
+
                         if (!templateData) {
-                             throw new Error(`No data for template ${templateId}`);
+                            throw new Error(`No data for template ${templateId}`);
                         }
-                        
-                        // Handle the case where the backend wraps it in 'data' even if interceptor missed it somehow
+
+                        // Handle the case where the backend wraps it in 'data'
                         if (templateData.data) {
                             templateData = templateData.data;
                         }
@@ -383,8 +671,7 @@ export const loadTemplateRefBlock = (editor) => {
                         this.model.set('prop_active_tab', activeTab, { silent: true });
                     }
 
-                    // Pre-process doc to find hidden panes
-                    // If a tab pane is not active, we ignore its variables so they don't clutter the sidebar
+                    // Pre-process doc to find hidden standard tabs
                     doc.querySelectorAll('[data-tab-pane]').forEach(pane => {
                         if (pane.getAttribute('data-tab-pane') === activeTab) {
                             pane.setAttribute('data-hidden-pane', 'false');
@@ -393,9 +680,23 @@ export const loadTemplateRefBlock = (editor) => {
                         }
                     });
 
+                    // Pre-process doc to find hidden Course Detail sidebar sections
+                    let activeSidebar = this.model.get('prop_active_sidebar') || '1';
+                    doc.querySelectorAll('[data-sidebar-section]').forEach(section => {
+                        if (section.getAttribute('data-sidebar-section') === activeSidebar) {
+                            section.setAttribute('data-hidden-section', 'false');
+                        } else {
+                            section.setAttribute('data-hidden-section', 'true');
+                        }
+                    });
+
+                    // Helper: only show form controls for variables in visible panes
                     const isVisible = (el) => {
                         const pane = el.closest('[data-tab-pane]');
-                        return !pane || pane.getAttribute('data-hidden-pane') !== 'true';
+                        const sidebarSection = el.closest('[data-sidebar-section]');
+                        if (pane && pane.getAttribute('data-hidden-pane') === 'true') return false;
+                        if (sidebarSection && sidebarSection.getAttribute('data-hidden-section') === 'true') return false;
+                        return true;
                     };
 
                     // ── Variable Detection ─────────────────────────────────────
@@ -451,7 +752,17 @@ export const loadTemplateRefBlock = (editor) => {
                         }
                     });
 
-                    // 5. Auto-detect unbound <img> tags (img_1_src, img_2_src...)
+                    // 5. data-var-html (rich HTML content — innerHTML binding)
+                    const htmlVars = new Map();  // varName → defaultHtml
+                    doc.querySelectorAll('[data-var-html]').forEach(el => {
+                        if (!isVisible(el)) return;
+                        const name = el.getAttribute('data-var-html');
+                        if (!htmlVars.has(name)) {
+                            htmlVars.set(name, fetchedDefaultProps[name] || el.innerHTML.trim() || '');
+                        }
+                    });
+
+                    // 6. Auto-detect unbound <img> tags (img_1_src, img_2_src...)
                     const autoImageVars = new Map();
                     let autoImgIndex = 0;
                     doc.querySelectorAll('img').forEach(img => {
@@ -483,6 +794,11 @@ export const loadTemplateRefBlock = (editor) => {
                     linkVars.forEach((defaultHref, name) => {
                         if (!this.model.get(`prop_${name}`)) {
                             this.model.set(`prop_${name}`, defaultHref, { silent: true });
+                        }
+                    });
+                    htmlVars.forEach((defaultHtml, name) => {
+                        if (!this.model.get(`prop_${name}`)) {
+                            this.model.set(`prop_${name}`, defaultHtml, { silent: true });
                         }
                     });
                     autoImageVars.forEach((defaultSrc, name) => {
@@ -549,6 +865,16 @@ export const loadTemplateRefBlock = (editor) => {
                             name: `prop_${name}`,
                             label: `🔗 Link: ${toLabel(name)}`,
                             placeholder: 'https://...',
+                            changeProp: 1,
+                        });
+                    });
+
+                    // Rich HTML variable traits
+                    htmlVars.forEach((_, name) => {
+                        newTraits.push({
+                            type: 'rich-text',
+                            name: `prop_${name}`,
+                            label: `📝 Content: ${toLabel(name)}`,
                             changeProp: 1,
                         });
                     });
@@ -626,6 +952,72 @@ export const loadTemplateRefBlock = (editor) => {
                             newTraits.push({ type: 'image-picker', name: `prop_${prefix}avatar`, label: `T${i}: Avatar (Img)`, changeProp: 1, defaultSrc: 'https://i.pravatar.cc/60' });
                         }
                     }
+
+                    // ── Dynamic Sidebar Item Count Support ──────────────────────────
+                    const sidebarItemEls = doc.querySelectorAll('[data-sidebar-item]');
+                    const baseSidebarCount = sidebarItemEls.length;
+
+                    if (baseSidebarCount > 0) {
+                        const propKey = 'prop_sidebar_items_count';
+                        if (!this.model.get(propKey)) {
+                            this.model.set(propKey, fetchedDefaultProps[propKey] || baseSidebarCount, { silent: true });
+                        }
+                        newTraits.push({
+                            type: 'number',
+                            name: propKey,
+                            label: '🗂 Sidebar Item Count',
+                            changeProp: 1,
+                            min: 1,
+                            max: 30,
+                        });
+
+                        const currentCount = parseInt(this.model.get(propKey) || baseSidebarCount, 10);
+                        for (let i = baseSidebarCount + 1; i <= currentCount; i++) {
+                            const labelKey = `prop_sidebar_item${i}_label`;
+                            const hrefKey = `prop_sidebar_item${i}_href`;
+                            const contentKey = `prop_sidebar_item${i}_content`;
+                            if (!this.model.get(labelKey)) {
+                                this.model.set(labelKey, `Item ${i}`, { silent: true });
+                                this.model.set(hrefKey, `#section-${i}`, { silent: true });
+                                this.model.set(contentKey, `<h2>Section ${i}</h2><p>Add your content here...</p>`, { silent: true });
+                            }
+                            newTraits.push({ type: 'text', name: labelKey, label: `Nav ${i}: Label`, changeProp: 1 });
+                            newTraits.push({ type: 'text', name: hrefKey, label: `Nav ${i}: URL/Slug`, changeProp: 1 });
+                            newTraits.push({ type: 'rich-text', name: contentKey, label: `📝 Nav ${i}: Content`, changeProp: 1 });
+                        }
+                    }
+
+                    // ── Dynamic Tab Count Support (top tabs on course detail page) –
+                    const tabBtns = doc.querySelectorAll('[data-content-tab]');
+                    const baseTabCount = tabBtns.length;
+
+                    if (baseTabCount > 0) {
+                        const propKey = 'prop_tabs_count';
+                        if (!this.model.get(propKey)) {
+                            this.model.set(propKey, fetchedDefaultProps[propKey] || baseTabCount, { silent: true });
+                        }
+                        newTraits.push({
+                            type: 'number',
+                            name: propKey,
+                            label: '📑 Tab Count',
+                            changeProp: 1,
+                            min: 1,
+                            max: 10,
+                        });
+
+                        const currentCount = parseInt(this.model.get(propKey) || baseTabCount, 10);
+                        for (let i = baseTabCount + 1; i <= currentCount; i++) {
+                            const tabLabelKey = `prop_tab${i}_label`;
+                            const tabContentKey = `prop_tab${i}_content`;
+                            if (!this.model.get(tabLabelKey)) {
+                                this.model.set(tabLabelKey, `Tab ${i}`, { silent: true });
+                                this.model.set(tabContentKey, `<h2>Tab ${i} Content</h2><p>Add tab content here...</p>`, { silent: true });
+                            }
+                            newTraits.push({ type: 'text', name: tabLabelKey, label: `Tab ${i}: Label`, changeProp: 1 });
+                            newTraits.push({ type: 'rich-text', name: tabContentKey, label: `📝 Tab ${i}: Content`, changeProp: 1 });
+                        }
+                    }
+
                     // Only reset traits when the template ID changes, Or trait count changes, Or forced.
                     const prevCount = this.model.get('traits').length;
                     const newCount = newTraits.length;
@@ -715,6 +1107,14 @@ export const loadTemplateRefBlock = (editor) => {
                         const propKey = `prop_${name}`;
                         const value = this.model.get(propKey) || fetchedDefaultProps[name] || el.getAttribute('src');
                         el.setAttribute('src', value);
+                    });
+
+                    // Apply data-var-html innerHTML overrides
+                    renderDoc.querySelectorAll('[data-var-html]').forEach(el => {
+                        const name = el.getAttribute('data-var-html');
+                        const propKey = `prop_${name}`;
+                        const value = this.model.get(propKey) || fetchedDefaultProps[name] || el.innerHTML.trim();
+                        el.innerHTML = value;
                     });
 
                     // Apply data-var-link overrides
@@ -825,18 +1225,90 @@ export const loadTemplateRefBlock = (editor) => {
                         }
                     }
 
+                    // ── Dynamic Sidebar Item Expansion ─────────────────────────
+                    if (baseSidebarCount > 0) {
+                        const currentCount = parseInt(this.model.get('prop_sidebar_items_count') || baseSidebarCount, 10);
+                        if (currentCount > baseSidebarCount) {
+                            const tempDoc = parser.parseFromString(htmlToRender, 'text/html');
+                            const sidebarNav = tempDoc.querySelector('[data-sidebar-nav]');
+                            const sidebarContentArea = tempDoc.querySelector('[data-sidebar-content]');
+                            const lastSidebarItem = tempDoc.querySelector('[data-sidebar-item]:last-of-type');
+
+                            if (sidebarNav && lastSidebarItem) {
+                                for (let i = baseSidebarCount + 1; i <= currentCount; i++) {
+                                    const label = this.model.get(`prop_sidebar_item${i}_label`) || `Item ${i}`;
+                                    const href = this.model.get(`prop_sidebar_item${i}_href`) || `#section-${i}`;
+                                    const content = this.model.get(`prop_sidebar_item${i}_content`) || `<h2>${label}</h2><p>Add your content here...</p>`;
+
+                                    // Add nav item
+                                    const navItem = document.createElement('a');
+                                    navItem.setAttribute('data-sidebar-item', `${i}`);
+                                    navItem.setAttribute('href', href);
+                                    navItem.style.cssText = 'display:flex; align-items:center; gap:8px; padding:10px 16px; text-decoration:none; color:#374151; font-size:14px; font-weight:500; border-left:2px solid transparent; transition:all 0.2s;';
+                                    navItem.innerHTML = `<span>${label}</span>`;
+                                    sidebarNav.appendChild(navItem);
+
+                                    // Add content section
+                                    if (sidebarContentArea) {
+                                        const section = document.createElement('section');
+                                        section.setAttribute('data-sidebar-section', `${i}`);
+                                        section.style.cssText = 'padding:20px 0; border-top:1px solid #e5e7eb; margin-top:20px;';
+                                        section.innerHTML = content;
+                                        sidebarContentArea.appendChild(section);
+                                    }
+                                }
+                            }
+                            htmlToRender = tempDoc.body.innerHTML;
+                        }
+                    }
+
+                    // ── Dynamic Content Tab Expansion ──────────────────────────
+                    if (baseTabCount > 0) {
+                        const currentCount = parseInt(this.model.get('prop_tabs_count') || baseTabCount, 10);
+                        if (currentCount > baseTabCount) {
+                            const tempDoc = parser.parseFromString(htmlToRender, 'text/html');
+                            const tabBar = tempDoc.querySelector('[data-content-tabs-bar]');
+                            const tabContents = tempDoc.querySelector('[data-content-tabs-content]');
+
+                            if (tabBar) {
+                                for (let i = baseTabCount + 1; i <= currentCount; i++) {
+                                    const tabLabel = this.model.get(`prop_tab${i}_label`) || `Tab ${i}`;
+                                    const tabContent = this.model.get(`prop_tab${i}_content`) || `<h2>${tabLabel}</h2><p>Add content here...</p>`;
+                                    const sectionId = `content-tab-${i}`;
+
+                                    const tabBtn = document.createElement('a');
+                                    tabBtn.setAttribute('data-content-tab', `${i}`);
+                                    tabBtn.href = `#${sectionId}`;
+                                    tabBtn.style.cssText = 'padding:10px 16px; text-decoration:none; color:#374151; font-size:14px; font-weight:600; border-bottom:2px solid transparent; white-space:nowrap;';
+                                    tabBtn.textContent = tabLabel;
+                                    tabBar.appendChild(tabBtn);
+
+                                    if (tabContents) {
+                                        const contentSection = document.createElement('section');
+                                        contentSection.id = sectionId;
+                                        contentSection.setAttribute('data-content-section', `${i}`);
+                                        contentSection.style.cssText = 'padding:32px 0; scroll-margin-top:80px;';
+                                        contentSection.innerHTML = tabContent;
+                                        tabContents.appendChild(contentSection);
+                                    }
+                                }
+                            }
+                            htmlToRender = tempDoc.body.innerHTML;
+                        }
+                    }
+
                     // ── Recursive Nested Template Resolution ───────────────────
                     const resolveNested = async (htmlString) => {
                         const tempParser = new DOMParser();
                         const tempDoc = tempParser.parseFromString(htmlString, 'text/html');
                         const nestedRefs = tempDoc.querySelectorAll('template-ref');
                         if (nestedRefs.length === 0) return htmlString;
-                        
+
                         const { adminService } = await import('@/services/adminService');
                         for (const ref of nestedRefs) {
                             const nId = ref.getAttribute('data-template-id');
                             if (!nId) continue;
-                            
+
                             try {
                                 let nData;
                                 if (_templateCache.has(nId)) {
@@ -846,22 +1318,22 @@ export const loadTemplateRefBlock = (editor) => {
                                     if (nData?.data) nData = nData.data;
                                     _templateCache.set(nId, nData);
                                 }
-                                
+
                                 if (nData) {
                                     let nHtml = nData.gjsHtml || '';
                                     let nProps = nData.defaultProps || {};
                                     const rawProps = ref.getAttribute('data-props');
                                     if (rawProps) {
-                                        try { Object.assign(nProps, JSON.parse(rawProps.replace(/&quot;/g, '"'))); } catch(e){}
+                                        try { Object.assign(nProps, JSON.parse(rawProps.replace(/&quot;/g, '"'))); } catch (e) { }
                                     }
-                                    
+
                                     for (const [key, val] of Object.entries(nProps)) {
                                         if (val !== undefined && val !== null) {
                                             const regex = new RegExp(`\\{\\{\\s*${key}\\s*\\}\\}`, 'g');
                                             nHtml = nHtml.replace(regex, val);
                                         }
                                     }
-                                    
+
                                     const nDoc = tempParser.parseFromString(nHtml, 'text/html');
                                     nDoc.querySelectorAll('[data-var]').forEach(el => {
                                         const name = el.getAttribute('data-var');
@@ -959,9 +1431,9 @@ export const loadTemplateRefBlock = (editor) => {
                                             }
                                         }
                                     }
-                                    
+
                                     nHtml = nDoc.body.innerHTML;
-                                    
+
                                     const wrapper = document.createElement('div');
                                     wrapper.className = ref.className || 'template-ref-placeholder';
                                     wrapper.setAttribute('data-template-id', nId);
@@ -1004,7 +1476,6 @@ export const loadTemplateRefBlock = (editor) => {
                     wrapper.appendChild(contentDiv);
                     wrapper.style.cssText = 'position:relative; display:block; width: 100%;';
 
-                    // ── Section Interactivity ──────────────────────────────────
                     // Tabs + accordion work natively now that pointer-events:none is gone.
                     // We just need to wire up tab active state switching and chevron updates.
                     this._initSectionInteractivity(contentDiv);
@@ -1016,7 +1487,7 @@ export const loadTemplateRefBlock = (editor) => {
                     wrapper.appendChild(badge);
 
                     this.el.appendChild(wrapper);
-                    
+
                     // CRITICAL: CSS layout constraints are applied in onRender
                     // to ensure both empty and loaded templates are properly isolated.
 
