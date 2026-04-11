@@ -624,18 +624,18 @@ export const initEditor = (pageId) => {
         // ── Auto-Show Hidden Course/Tab Sections when their Nav is selected in Editor ──
         // This makes decomposed HTML components clickable and navigatable within the editor natively
         let sidebarItem = null;
-        let contentTab = null;
+        let tabItem = null;
         
         let curr = model;
         while (curr) {
             const attrs = curr.getAttributes();
             if (attrs['data-sidebar-item']) sidebarItem = attrs['data-sidebar-item'];
-            if (attrs['data-content-tab']) contentTab = attrs['data-content-tab'];
-            if (sidebarItem || contentTab) break;
+            if (attrs['data-tab']) tabItem = attrs['data-tab'];
+            if (sidebarItem || tabItem) break;
             curr = curr.parent();
         }
 
-        if (sidebarItem || contentTab) {
+        if (sidebarItem || tabItem) {
             const wrapper = editor.getWrapper();
             if (wrapper) {
                 if (sidebarItem) {
@@ -645,14 +645,14 @@ export const initEditor = (pageId) => {
                         sec.addStyle({ display: String(secIdx) === String(sidebarItem) ? 'block' : 'none' });
                     });
                 }
-                if (contentTab) {
-                    const sections = wrapper.find('[data-content-section], [data-tab-pane], [id^="content-tab-"]');
+                if (tabItem) {
+                    const sections = wrapper.find('[data-tab-pane]');
                     sections.forEach(sec => {
                         const attrs = sec.getAttributes();
-                        const secIdx = attrs['data-content-section'] || attrs['data-tab-pane'];
+                        const secIdx = attrs['data-tab-pane'];
                         // Make sure we only affect the ones configured correctly 
                         if (secIdx) {
-                            sec.addStyle({ display: String(secIdx) === String(contentTab) ? 'block' : 'none' });
+                            sec.addStyle({ display: String(secIdx) === String(tabItem) ? 'block' : 'none' });
                         }
                     });
                 }
@@ -813,14 +813,18 @@ export const initEditor = (pageId) => {
         const triggerUpdate = () => {
             clearTimeout(updateTimeout);
             updateTimeout = setTimeout(() => {
-                if (!editor || typeof editor.getWrapper !== 'function') return;
+                try {
+                    if (!editor || typeof editor.getWrapper !== 'function') return;
 
-                const walk = (cmp) => { updateCanvasHighlights(cmp); cmp.components().forEach(walk); };
-                const wrapper = editor.getWrapper();
-                if (wrapper) walk(wrapper);
+                    const walk = (cmp) => { updateCanvasHighlights(cmp); cmp.components().forEach(walk); };
+                    const wrapper = editor.getWrapper();
+                    if (wrapper) walk(wrapper);
 
-                if (editor.Layers && editor.Layers.render) {
-                    editor.Layers.render();
+                    if (editor.Layers && editor.Layers.render) {
+                        editor.Layers.render();
+                    }
+                } catch (err) {
+                    // Ignore errors during async highlight updates if editor is destroyed
                 }
             }, 500);
         };

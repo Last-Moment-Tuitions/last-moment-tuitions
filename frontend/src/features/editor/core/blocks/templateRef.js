@@ -486,6 +486,7 @@ export const loadTemplateRefBlock = (editor) => {
 
                     tabs.forEach(btn => {
                         btn.style.pointerEvents = 'auto';
+                        btn.addEventListener('click', (e) => e.preventDefault());
                         btn.addEventListener('mousedown', (e) => {
                             e.stopPropagation(); // Prevent GrapeJS from selecting inner text nodes
                             e.preventDefault();
@@ -589,6 +590,7 @@ export const loadTemplateRefBlock = (editor) => {
                     sidebarItems.forEach((item, i) => {
                         // Use mousedown and allow internal interaction!
                         item.style.pointerEvents = 'auto';
+                        item.addEventListener('click', (e) => e.preventDefault());
                         item.addEventListener('mousedown', (e) => {
                             e.stopPropagation(); // Prevent GrapeJS from selecting inner text nodes
                             e.preventDefault();
@@ -617,6 +619,7 @@ export const loadTemplateRefBlock = (editor) => {
                 if (contentTabBtns.length > 0) {
                     contentTabBtns.forEach(btn => {
                         btn.style.pointerEvents = 'auto';
+                        btn.addEventListener('click', (e) => e.preventDefault());
                         btn.addEventListener('mousedown', (e) => {
                             e.preventDefault();
                             const href = btn.getAttribute('href') || `#content-tab-${btn.getAttribute('data-content-tab')}`;
