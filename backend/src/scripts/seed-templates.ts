@@ -892,23 +892,21 @@ const COURSE_DETAIL_HTML = `
             };
         });
 
-        tabBtns.forEach((btn) => {
-            btn.onclick = (e) => {
-                const href = btn.getAttribute('href');
-                if (href && href.startsWith('#')) {
-                    // Smooth scroll to the target
-                    const target = root.querySelector(href);
-                    if (target) {
-                        e.preventDefault();
-                        const offset = 120; // Sticky header offset
-                        const bodyRect = document.body.getBoundingClientRect().top;
-                        const elementRect = target.getBoundingClientRect().top;
-                        const elementPosition = elementRect - bodyRect;
-                        const offsetPosition = elementPosition - offset;
-                        window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
-                    }
+        // Bind click: smooth scroll to section
+        tabBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const idx = btn.getAttribute('data-content-tab');
+                const targetEl = document.querySelector('[data-content-section="' + idx + '"]');
+                if (targetEl) {
+                    const mobileOffset = 128; // Header(80) + Tabs(48)
+                    const desktopOffset = 128;
+                    const chosenOffset = window.innerWidth <= 991 ? mobileOffset : desktopOffset;
+                    
+                    const top = targetEl.getBoundingClientRect().top + window.scrollY - chosenOffset;
+                    window.scrollTo({ top, behavior: 'smooth' });
                 }
-            };
+            });
         });
 
         // ── Scrollspy System ────────────────────────────────────────────────
@@ -965,19 +963,19 @@ html { scroll-behavior: smooth; }
     /* Main container should still be flex but column for mobile */
     div[style*="max-width:1400px"] { flex-direction: column !important; padding: 0 !important; gap: 0 !important; }
     
-    /* Sidebar as a horizontal scrollable strip - Sticky at top */
+    /* Sidebar as a horizontal scrollable strip - NOT STICKY ON MOBILE as per user request */
     aside { 
         width: 100% !important; 
-        position: sticky !important; 
+        position: relative !important; /* Changed from sticky to avoid header overlap */
         top: 0 !important; 
-        z-index: 100 !important; 
+        z-index: 10 !important; 
         margin-bottom: 0 !important; 
         max-height: none !important; 
         border-radius: 0 !important; 
         border-left: 0 !important; 
         border-right: 0 !important; 
         border-top: 0 !important;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05) !important;
+        border-bottom: 1px solid #e2e8f0 !important;
         background: #fff !important;
     }
     aside [data-var="course_sidebar_heading"] { display: none !important; }
@@ -992,18 +990,18 @@ html { scroll-behavior: smooth; }
     div[style*="margin-bottom:12px"] { justify-content: flex-start !important; text-align: left !important; }
     h1[data-var="course_page_title"] { text-align: left !important; margin: 8px 0 20px 0 !important; font-size: 24px !important; }
 
-    /* Tabs - Sticky below the sidebar */
+    /* Tabs (Overview Part) - STICKY ON MOBILE */
     [data-content-tabs-bar] { 
         position: sticky !important; 
-        top: 47px !important; /* height of sidebar menu */
+        top: 80px !important; /* Matches site Header height (h-20 = 80px) */
         flex-wrap: nowrap !important; 
         overflow-x: auto !important; 
-        z-index: 99 !important; 
+        z-index: 40 !important; /* Lower than site header (z-50) */
         background: #fff !important; 
-        margin: -16px -16px 20px -16px !important; /* Negative margin to bleed to edges */
+        margin: -16px -16px 20px -16px !important; 
         padding: 0 16px !important;
         border-bottom: 1px solid #e2e8f0 !important;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.02) !important;
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05) !important;
     }
 }
 

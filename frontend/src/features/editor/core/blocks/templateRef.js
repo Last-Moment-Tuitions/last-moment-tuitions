@@ -1100,12 +1100,12 @@ export const loadTemplateRefBlock = (editor) => {
 
                         // Vibrant Highlight for the selected tab
                         if (isActive) {
-                            btn.style.borderBottom = '2px solid #063f78';
+                            btn.style.borderBottom = '3px solid #063f78';
                             btn.style.color = '#063f78';
                             btn.style.fontWeight = '700';
                             btn.style.background = '#f0f9ff';
                         } else {
-                            btn.style.borderBottom = '2px solid transparent';
+                            btn.style.borderBottom = '3px solid transparent';
                             btn.style.color = '#64748b';
                             btn.style.fontWeight = '600';
                             btn.style.background = 'transparent';
@@ -1228,11 +1228,11 @@ export const loadTemplateRefBlock = (editor) => {
                         /* Responsive Editor Preview Simulation */
                         @media (max-width: 991px) {
                             [style*="max-width:1400px"] { flex-direction: column !important; padding: 0 !important; }
-                            aside { width: 100% !important; margin-bottom: 0 !important; position: sticky !important; top: 0 !important; z-index: 100 !important; background: white !important; }
+                            aside { width: 100% !important; margin-bottom: 0 !important; position: relative !important; z-index: 10 !important; background: white !important; }
                             nav[data-sidebar-nav] { display: flex !important; flex-direction: row !important; flex-wrap: nowrap !important; overflow-x: auto !important; }
                             [data-sidebar-item] { flex-shrink: 0 !important; border-left: 0 !important; border-bottom: 3px solid transparent !important; }
                             main { width: 100% !important; padding: 16px !important; }
-                            [data-content-tabs-bar] { position: sticky !important; top: 47px !important; z-index: 99 !important; background: white !important; margin: -16px -16px 20px -16px !important; width: calc(100% + 32px) !important; }
+                            [data-content-tabs-bar] { position: sticky !important; top: 0 !important; z-index: 40 !important; background: white !important; margin: -16px -16px 20px -16px !important; width: calc(100% + 32px) !important; }
                         }
                         
                         /* But keep a subtle focus for the whole item */
