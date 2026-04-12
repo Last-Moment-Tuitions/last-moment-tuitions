@@ -68,3 +68,5 @@ export const EnrollmentSchema = SchemaFactory.createForClass(Enrollment);
 // Indexes
 EnrollmentSchema.index({ course_id: 1, user_id: 1 }, { unique: true });
 EnrollmentSchema.index({ user_id: 1, status: 1 });
+EnrollmentSchema.index({ enrolled_at: -1 });
+EnrollmentSchema.index({ status: 1 });

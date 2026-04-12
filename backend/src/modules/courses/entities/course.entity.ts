@@ -120,3 +120,5 @@ CourseSchema.index({ title: 'text', descriptions: 'text' });
 CourseSchema.index({ category: 1, status: 1 });
 CourseSchema.index({ created_by: 1, status: 1 });
 CourseSchema.index({ status: 1, published_at: -1 });
+CourseSchema.index({ updatedAt: -1 });
+CourseSchema.index({ level: 1 });

@@ -16,3 +16,7 @@ export class Folder {
 }
 
 export const FolderSchema = SchemaFactory.createForClass(Folder);
+
+// Indexes for performance
+FolderSchema.index({ type: 1 });
+FolderSchema.index({ parent: 1 });
