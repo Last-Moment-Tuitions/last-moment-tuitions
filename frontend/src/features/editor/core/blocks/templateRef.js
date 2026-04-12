@@ -803,7 +803,7 @@ export const loadTemplateRefBlock = (editor) => {
                                             <div data-testimonial style="flex:0 0 320px; background:#fff; border-radius:16px; padding:32px; box-shadow:0 10px 25px rgba(0,0,0,0.05); border:1px solid #f1f5f9; display:flex; flex-direction:column; min-height:280px; scroll-snap-align:start;">
                                                 <div style="display:flex; align-items:center; gap:12px; margin-bottom:24px;">
                                                     <img src="https://placehold.co/40" style="width:32px; height:32px; object-fit:contain; border-radius:50%;" />
-                                                    <span style="font-weight:700; font-size:18px; color:#334155; text-transform:uppercase;">STUDENT SUCCESS</span>
+                                                    <span style="font-weight:700; font-size:18px; color:#334155; text-transform:uppercase;" data-var="test_card${i + 1}_badge">${this.model.get(`prop_test_card${i + 1}_badge`) || 'STUDENT SUCCESS'}</span>
                                                 </div>
                                                 <p style="font-size:15px; color:#475569; line-height:1.6; flex:1; margin:0 0 32px 0;">${student.message || ''}</p>
                                                 <div style="display:flex; align-items:center; gap:16px;">

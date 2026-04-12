@@ -369,7 +369,24 @@ export const initEditor = (pageId) => {
                     try {
                         const newHtml = cmProps ? cmProps.getValue() : textarea.value;
 
-                        if (newHtml === formattedOriginalHtml) {
+                        // Helper to normalize HTML for comparison (ignores whitespace, case, and attribute order)
+                        const normalize = (html) => {
+                            const t = document.createElement('div');
+                            t.innerHTML = html.trim();
+                            // Remove all comments and normalize whitespace
+                            const walk = document.createTreeWalker(t, NodeFilter.SHOW_TEXT, null, false);
+                            let node;
+                            while (node = walk.nextNode()) {
+                                if (!node.textContent.trim()) {
+                                    node.parentNode.removeChild(node);
+                                } else {
+                                    node.textContent = node.textContent.trim();
+                                }
+                            }
+                            return t.innerHTML.replace(/\s+/g, ' ').toLowerCase();
+                        };
+
+                        if (normalize(newHtml) === normalize(formattedOriginalHtml)) {
                             editor.Modal.close();
                             return;
                         }
@@ -385,12 +402,16 @@ export const initEditor = (pageId) => {
                         newDocCheck.querySelectorAll('[data-var], [data-var-src]').forEach(el => { el.innerHTML = ''; el.removeAttribute('src'); });
 
                         // If they changed static tags or CSS styles, trigger a Confirm dialog
-                        if (origDoc.body.innerHTML !== newDocCheck.body.innerHTML) {
+                        if (normalize(origDoc.body.innerHTML) !== normalize(newDocCheck.body.innerHTML)) {
                             const wantsToUnlink = confirm(
-                                "⚠️ You changed static HTML or CSS styles!\n\n" +
-                                "Because this section is securely linked to a Main Template, you cannot change its layout or CSS styles here without breaking the link.\n\n" +
-                                "👉 Click 'OK' to DETACH this section from the Main Template and save your custom CSS for this page only.\n\n" +
-                                "👉 Click 'Cancel' to keep the link and ONLY save the text/image variables."
+                                "⚠️ CAUTION: STATIC LAYOUT CHANGE DETECTED\n\n" +
+                                "You modified HTML tags that aren't marked as variables. To save these changes, this section MUST be 'Unlinked' from its Master Template.\n\n" +
+                                "👉 UNLINKING WILL DISABLE:\n" +
+                                " - The '✨ Manage Students' testimonial picker\n" +
+                                " - Automated tab/sidebar logic\n" +
+                                " - Future updates from the Master Template\n\n" +
+                                "Click 'OK' to PERMANENTLY UNLINK and save your custom HTML.\n" +
+                                "Click 'Cancel' to keep the link and ONLY save text/image variables."
                             );
 
                             if (wantsToUnlink) {
@@ -419,24 +440,20 @@ export const initEditor = (pageId) => {
 
                         // 1. Extract mapped Text variables (innerHTML updates)
                         const varEls = doc.querySelectorAll('[data-var]');
-                        let foundTexts = 0;
                         varEls.forEach(el => {
                             const varName = el.getAttribute('data-var');
                             if (varName) {
                                 props[varName] = el.innerHTML.trim();
-                                foundTexts++;
                             }
                         });
 
                         // 2. Extract mapped Image variables (src updates)
                         const srcEls = doc.querySelectorAll('[data-var-src]');
-                        let foundImgs = 0;
                         srcEls.forEach(el => {
                             const varName = el.getAttribute('data-var-src');
                             const src = el.getAttribute('src');
                             if (varName && src) {
                                 props[varName] = src;
-                                foundImgs++;
                             }
                         });
 
@@ -451,8 +468,16 @@ export const initEditor = (pageId) => {
                             }
                         }
 
-                        // Force a re-render
+                        // Force a re-render and trait refresh
+                        selected.set('_force_trait_reset', true, { silent: true });
                         selected.trigger('change:templateContent');
+                        
+                        // Small delay to ensure render finishes, then toggle selection to refresh Sidebar UI
+                        setTimeout(() => {
+                            editor.select(null);
+                            editor.select(selected);
+                        }, 50);
+
                         editor.Modal.close();
 
                     } catch (err) {
