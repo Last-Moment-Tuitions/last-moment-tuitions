@@ -4,6 +4,9 @@ import { AuthService } from './auth.service';
 import { SignupDto } from './dto/signup.dto';
 import { LoginDto } from './dto/login.dto';
 import { GoogleLoginDto } from './dto/google-login.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
+import { VerifyOtpDto } from './dto/verify-otp.dto';
 import { AuthGuard } from './guards/auth.guard';
 import { Throttle } from '@nestjs/throttler';
 
@@ -57,10 +60,13 @@ export class AuthController {
     @HttpCode(HttpStatus.OK)
     async changePassword(
         @Req() req,
-        @Body('currentPassword') currentPassword: string,
-        @Body('newPassword') newPassword: string
+        @Body() changePasswordDto: ChangePasswordDto
     ) {
-        return this.authService.changePassword(req.user.userId, currentPassword, newPassword);
+        return this.authService.changePassword(
+            req.user.userId, 
+            changePasswordDto.currentPassword, 
+            changePasswordDto.newPassword
+        );
     }
 
     @Post('forgot-password')
@@ -72,30 +78,30 @@ export class AuthController {
     @Post('verify-otp')
     @HttpCode(HttpStatus.OK)
     async verifyOtp(
-        @Body('email') email: string,
-        @Body('otp') otp: string,
+        @Body() verifyOtpDto: VerifyOtpDto,
         @Req() req
     ) {
         const ip = req.ip || req.connection.remoteAddress;
         const userAgent = req.headers['user-agent'] || 'unknown';
-        return this.authService.verifyOtp(email, otp, ip, userAgent);
+        return this.authService.verifyOtp(verifyOtpDto.email, verifyOtpDto.otp, ip, userAgent);
     }
 
     @Post('verify-otp-for-reset')
     @HttpCode(HttpStatus.OK)
     async verifyOtpForReset(
-        @Body('email') email: string,
-        @Body('otp') otp: string
+        @Body() verifyOtpDto: VerifyOtpDto
     ) {
-        return this.authService.verifyOtpForReset(email, otp);
+        return this.authService.verifyOtpForReset(verifyOtpDto.email, verifyOtpDto.otp);
     }
 
     @Post('reset-password')
     @HttpCode(HttpStatus.OK)
     async resetPassword(
-        @Body('resetToken') resetToken: string,
-        @Body('newPassword') newPassword: string
+        @Body() resetPasswordDto: ResetPasswordDto
     ) {
-        return this.authService.resetPassword(resetToken, newPassword);
+        return this.authService.resetPassword(
+            resetPasswordDto.resetToken, 
+            resetPasswordDto.newPassword
+        );
     }
 }

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, ConflictException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Order, OrderDocument } from './schemas/order.schema';
@@ -12,6 +12,17 @@ export class OrdersService {
   ) { }
 
   async createOrder(createOrderDto: CreateOrderDto): Promise<Order> {
+    // Check if user already has an order for this course (excluding cancelled ones)
+    const existingOrder = await this.orderModel.findOne({
+      email: createOrderDto.email,
+      course_id: createOrderDto.course_id,
+      status: { $ne: 'cancelled' }
+    });
+
+    if (existingOrder && (existingOrder.status === 'completed' || existingOrder.status === 'paid')) {
+      throw new ConflictException('You are already enrolled in this course.');
+    }
+
     const order_id = `ORD-${uuidv4().split('-')[0].toUpperCase()}-${Date.now().toString().slice(-4)}`;
 
     const newOrder = new this.orderModel({
