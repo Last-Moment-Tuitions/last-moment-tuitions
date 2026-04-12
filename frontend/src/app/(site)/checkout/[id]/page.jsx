@@ -9,12 +9,15 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui.jsx';
+import { useAuth } from '@/context/AuthContext';
 import { coursesApi } from '@/services/courses.api';
 import { ordersApi } from '@/services/orders.api';
+import API_BASE_URL from '@/lib/config';
 
 export default function CheckoutPage({ params }) {
     const { id } = use(params);
     const router = useRouter();
+    const { user } = useAuth();
 
     const [course, setCourse] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -28,26 +31,59 @@ export default function CheckoutPage({ params }) {
         phone: ''
     });
 
+    useEffect(() => {
+        if (user) {
+            setFormData({
+                user_name: `${user.firstName || ''} ${user.lastName || ''}`.trim(),
+                email: user.email || '',
+                phone: user.phone || ''
+            });
+        }
+    }, [user]);
+
     // Coupon State
     const [couponCode, setCouponCode] = useState('');
     const [appliedCoupon, setAppliedCoupon] = useState(null);
     const [couponError, setCouponError] = useState('');
 
     useEffect(() => {
-        const fetchCourse = async () => {
+        const fetchData = async () => {
             try {
                 setLoading(true);
-                const response = await coursesApi.getCourseWithContent(id);
-                setCourse(response?.data || response);
+                // Fetch course details
+                const coursePromise = coursesApi.getCourseWithContent(id);
+                let enrollmentPromise = Promise.resolve(null);
+
+                // If logged in, check if already enrolled
+                if (user?.email) {
+                    enrollmentPromise = fetch(`${API_BASE_URL}/orders/user/${user.email}`).then(res => res.json());
+                }
+
+                const [courseRes, enrollmentData] = await Promise.all([coursePromise, enrollmentPromise]);
+                const courseData = courseRes?.data || courseRes;
+                setCourse(courseData);
+
+                if (enrollmentData) {
+                    const orders = enrollmentData.details || enrollmentData;
+                    if (Array.isArray(orders)) {
+                        const hasActiveOrder = orders.some(order => 
+                            order.course_id === id && 
+                            (order.status === 'completed' || order.status === 'paid')
+                        );
+                        if (hasActiveOrder) {
+                            setError('You are already enrolled in this course.');
+                        }
+                    }
+                }
             } catch (err) {
-                console.error('Failed to fetch course details:', err);
-                setError('Could not load course details. Please try again.');
+                console.error('Failed to fetch checkout details:', err);
+                setError('Could not load checkout details.');
             } finally {
                 setLoading(false);
             }
         };
-        if (id) fetchCourse();
-    }, [id]);
+        if (id) fetchData();
+    }, [id, user?.email]);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;

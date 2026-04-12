@@ -44,6 +44,7 @@ export default function ProfilePage() {
     const [allCourses, setAllCourses] = useState([]);
     const [myCourses, setMyCourses] = useState([]);
     const [coursesLoading, setCoursesLoading] = useState(false);
+    const [passwordErrors, setPasswordErrors] = useState({});
 
     useEffect(() => {
         if (!loading && !user) {
@@ -241,10 +242,32 @@ export default function ProfilePage() {
     };
 
     const handlePasswordChange = async () => {
-        if (!currentPassword) return toast.error('Current password is required');
-        if (!newPassword) return toast.error('New password is required');
-        if (newPassword !== confirmPassword) return toast.error('New passwords do not match');
+        const errors = {};
+        if (!currentPassword) errors.currentPassword = 'Current password is required';
+        if (!newPassword) {
+            errors.newPassword = 'New password is required';
+        } else if (newPassword.length < 8) {
+            errors.newPassword = "Password must be at least 8 characters long";
+        } else if (!/[A-Z]/.test(newPassword)) {
+            errors.newPassword = "Password must include at least one uppercase letter";
+        } else if (!/[a-z]/.test(newPassword)) {
+            errors.newPassword = "Password must include at least one lowercase letter";
+        } else if (!/\d/.test(newPassword)) {
+            errors.newPassword = "Password must include at least one number";
+        } else if (!/[@$!%*?&]/.test(newPassword)) {
+            errors.newPassword = "Password must include at least one special character";
+        }
 
+        if (newPassword !== confirmPassword) {
+            errors.confirmPassword = 'New passwords do not match';
+        }
+
+        if (Object.keys(errors).length > 0) {
+            setPasswordErrors(errors);
+            return;
+        }
+
+        setPasswordErrors({});
         setPasswordLoading(true);
         try {
             const sessionId = getSessionId();
@@ -262,17 +285,27 @@ export default function ProfilePage() {
 
             const data = await res.json();
             if (!res.ok) {
-                throw new Error(data.message || 'Failed to change password');
+                // If the error message is about the current password, show it inline
+                const message = data.message || 'Failed to change password';
+                if (message.toLowerCase().includes('current password')) {
+                    setPasswordErrors({ currentPassword: message });
+                    return;
+                }
+                throw new Error(message);
             }
 
             toast.success('Password changed! Please sign in again.');
             setCurrentPassword('');
             setNewPassword('');
             setConfirmPassword('');
+            setPasswordErrors({});
             // Log out and redirect to sign-in
             logout(() => router.push('/signin'));
         } catch (error) {
-            toast.error(error.message);
+            // General errors still use toast
+            if (!error.message.toLowerCase().includes('current password')) {
+                toast.error(error.message);
+            }
         } finally {
             setPasswordLoading(false);
         }
@@ -283,7 +316,7 @@ export default function ProfilePage() {
             {/* Top peach background area */}
             <div className="h-48 bg-[#eff6ff] w-full"></div>
 
-            <div className="container mx-auto px-4 -mt-24 max-w-6xl">
+            <div className="container mx-auto px-4 -mt-24 7xl">
                 {/* Profile Header Card */}
                 <div className="bg-white rounded-t-xl shadow-sm border-b border-gray-100">
                     <div className="p-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -313,10 +346,10 @@ export default function ProfilePage() {
 
                     <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6 mb-12 px-4 md:px-0">
                         {[
-                            { icon: <PlayCircle className="text-[#063f78]" size={22} />, value: '957', label: 'Enrolled Courses' },
-                            { icon: <MonitorPlay className="text-[#063f78]" size={22} />, value: '6', label: 'Active Courses' },
-                            { icon: <Trophy className="text-[#063f78]" size={22} />, value: '951', label: 'Completed' },
-                            { icon: <Users className="text-[#063f78]" size={22} />, value: '241', label: 'Instructors' },
+                            { icon: <MonitorPlay className="text-[#063f78]" size={22} />, value: myCourses.length || '0', label: 'Active Courses' },
+                            { icon: <ShoppingBag className="text-[#063f78]" size={22} />, value: purchaseHistory.length || '0', label: 'Total Orders' },
+                            { icon: <Trophy className="text-[#063f78]" size={22} />, value: '0', label: 'Certificates' },
+                            { icon: <Users className="text-[#063f78]" size={22} />, value: '241+', label: 'Mentors' },
                         ].map(({ icon, value, label }) => (
                             <div key={label} className="bg-[#ecfeff] rounded-sm p-3 md:p-6 flex flex-col md:flex-row items-center md:items-center gap-2 md:gap-4 text-center md:text-left">
                                 <div className="bg-white p-2 md:p-3 rounded-sm flex items-center justify-center h-10 w-10 md:h-14 md:w-14 shadow-sm flex-shrink-0">
@@ -416,95 +449,62 @@ export default function ProfilePage() {
                         </div>
                     ) : activeTab === 'Dashboard' ? (
                         <div className="w-full">
-
                             <div className="flex items-center justify-between mb-6">
-                                <h2 className="text-xl font-bold text-gray-900">Let's start learning, {user?.firstName}</h2>
+                                <h2 className="text-xl font-bold text-gray-900">
+                                    {myCourses.length > 0 ? `Let's start learning, ${user?.firstName}` : 'Ready to start your journey?'}
+                                </h2>
+                                {myCourses.length > 0 && (
+                                    <Link href="/profile?tab=Courses" className="text-sm font-bold text-[#063f78] hover:underline">
+                                        View all my courses
+                                    </Link>
+                                )}
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                                {/* Course 1 */}
-                                <div className="border border-gray-200 rounded-sm overflow-hidden flex flex-col relative bg-white pb-[2px]">
-                                    <div className="h-40 w-full relative">
-                                        <img src="https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=500&q=80" alt="Course" className="w-full h-full object-cover" />
-                                    </div>
-                                    <div className="p-4 flex-1 flex flex-col justify-between">
-                                        <div>
-                                            <h4 className="text-xs text-gray-500 mb-1 line-clamp-1">Reiki Level I, II and Master/Teacher Program</h4>
-                                            <p className="text-sm font-semibold text-gray-900 line-clamp-1">1. Introductions</p>
+                            {myCourses.length > 0 ? (
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                                    {myCourses.slice(0, 4).map((course) => (
+                                        <div key={course._id} className="border border-gray-200 rounded-sm overflow-hidden flex flex-col relative bg-white pb-[2px] transition-all hover:shadow-md">
+                                            <div className="h-40 w-full relative">
+                                                <img 
+                                                    src={course.thumbnail || "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=500&q=80"} 
+                                                    alt={course.title} 
+                                                    className="w-full h-full object-cover" 
+                                                />
+                                            </div>
+                                            <div className="p-4 flex-1 flex flex-col justify-between">
+                                                <div>
+                                                    <h4 className="text-xs text-gray-500 mb-1 line-clamp-1">{course.category || 'Course'}</h4>
+                                                    <p className="text-sm font-semibold text-gray-900 line-clamp-2 h-10">{course.title}</p>
+                                                </div>
+                                                <div className="mt-4">
+                                                    <Link href={`/courses/${course._id}/learn`}>
+                                                        <button className="w-full py-2 bg-[#eff6ff] text-[#063f78] font-medium text-sm rounded-sm hover:bg-[#063f78] hover:text-white transition-colors">
+                                                            Continue Learning
+                                                        </button>
+                                                    </Link>
+                                                </div>
+                                            </div>
+                                            {/* Progress bar placeholder */}
+                                            <div className="h-[2px] bg-gray-100 w-full absolute bottom-0 left-0">
+                                                <div className="h-full bg-[#063f78]" style={{ width: '0%' }}></div>
+                                            </div>
                                         </div>
-                                        <div className="mt-4">
-                                            <button className="w-full py-2 bg-[#eff6ff] text-[#063f78] font-medium text-sm rounded-sm hover:bg-[#ffe4da] transition-colors">
-                                                Watch Lecture
-                                            </button>
-                                        </div>
-                                    </div>
-                                    {/* Progress bar empty for first one */}
-                                    <div className="h-[2px] bg-gray-100 w-full absolute bottom-0 left-0"></div>
+                                    ))}
                                 </div>
-
-                                {/* Course 2 */}
-                                <div className="border border-gray-200 rounded-sm overflow-hidden flex flex-col relative bg-white pb-[2px]">
-                                    <div className="h-40 w-full relative">
-                                        <img src="https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=500&q=80" alt="Course" className="w-full h-full object-cover" />
+                            ) : (
+                                <div className="bg-white border-2 border-dashed border-gray-100 rounded-2xl p-12 text-center">
+                                    <div className="bg-gray-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
+                                        <BookOpen className="w-10 h-10 text-gray-300" />
                                     </div>
-                                    <div className="p-4 flex-1 flex flex-col justify-between">
-                                        <div>
-                                            <h4 className="text-xs text-gray-500 mb-1 line-clamp-1">The Complete 2021 Web Development Bootcamp</h4>
-                                            <p className="text-sm font-semibold text-gray-900 line-clamp-1">167. What You'll Need to Get Started - Se...</p>
-                                        </div>
-                                        <div className="mt-4 flex items-center justify-between gap-4">
-                                            <button className="flex-1 py-2 bg-[#063f78] text-[#fff] font-medium text-sm rounded-sm hover:bg-[#ffe4da] transition-colors">
-                                                Watch Lecture
-                                            </button>
-                                            <span className="text-xs font-semibold text-green-500 whitespace-nowrap">61% Completed</span>
-                                        </div>
-                                    </div>
-                                    <div className="h-[2px] w-full bg-gray-100 absolute bottom-0 left-0">
-                                        <div className="h-full bg-[#063f78]" style={{ width: '61%' }}></div>
-                                    </div>
+                                    <h3 className="text-xl font-bold text-gray-900 mb-2">You haven't enrolled in any courses yet</h3>
+                                    <p className="text-gray-500 max-w-sm mx-auto mb-8">Start your learning journey today by exploring our hand-picked courses designed just for you.</p>
+                                    <Link href="/courses">
+                                        <Button className="bg-[#063f78] text-white px-8 py-6 rounded-sm font-bold shadow-lg shadow-blue-900/20 hover:scale-105 transition-transform">
+                                            Explore Courses
+                                        </Button>
+                                    </Link>
                                 </div>
-
-                                {/* Course 3 */}
-                                <div className="border border-gray-200 rounded-sm overflow-hidden flex flex-col relative bg-white pb-[2px]">
-                                    <div className="h-40 w-full relative">
-                                        <img src="https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=500&q=80" alt="Course" className="w-full h-full object-cover" />
-                                    </div>
-                                    <div className="p-4 flex-1 flex flex-col justify-between">
-                                        <div>
-                                            <h4 className="text-xs text-gray-500 mb-1 line-clamp-1">Copywriting - Become a Freelance Copywriter...</h4>
-                                            <p className="text-sm font-semibold text-gray-900 line-clamp-1">1. How to get started with figma</p>
-                                        </div>
-                                        <div className="mt-4">
-                                            <button className="w-full py-2 bg-[#eff6ff] text-[#063f78] font-medium text-sm rounded-sm hover:bg-[#ffe4da] transition-colors">
-                                                Watch Lecture
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <div className="h-[2px] bg-gray-100 w-full absolute bottom-0 left-0"></div>
-                                </div>
-
-                                {/* Course 4 */}
-                                <div className="border border-gray-200 rounded-sm overflow-hidden flex flex-col relative bg-white pb-[2px]">
-                                    <div className="h-40 w-full relative">
-                                        <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=500&q=80" alt="Course" className="w-full h-full object-cover" />
-                                    </div>
-                                    <div className="p-4 flex-1 flex flex-col justify-between">
-                                        <div>
-                                            <h4 className="text-xs text-gray-500 mb-1 line-clamp-1">2021 Complete Python Bootcamp From Zero to...</h4>
-                                            <p className="text-sm font-semibold text-gray-900 line-clamp-1">9. Advanced CSS - Selector Priority</p>
-                                        </div>
-                                        <div className="mt-4 flex items-center justify-between gap-4">
-                                            <button className="flex-1 py-2 bg-[#063f78] text-[#fff] font-medium text-sm rounded-sm hover:bg-[#e85535] transition-colors">
-                                                Watch Lecture
-                                            </button>
-                                            <span className="text-xs font-semibold text-green-500 whitespace-nowrap">12% Finish</span>
-                                        </div>
-                                    </div>
-                                    <div className="h-[2px] w-full bg-gray-100 absolute bottom-0 left-0">
-                                        <div className="h-full bg-[#063f78]" style={{ width: '12%' }}></div>
-                                    </div>
-                                </div>
-                            </div>
+                            )}
                         </div>
                     ) : activeTab === 'Purchase History' ? (
                         <div className="w-full">
@@ -703,7 +703,7 @@ export default function ProfilePage() {
                                                 placeholder="Password"
                                                 value={currentPassword}
                                                 onChange={(e) => setCurrentPassword(e.target.value)}
-                                                className="rounded-sm border-gray-200 pr-10 focus-visible:ring-primary-500 focus-visible:border-primary-500"
+                                                className={`rounded-sm border-gray-200 pr-10 focus-visible:ring-primary-500 focus-visible:border-primary-500 ${passwordErrors.currentPassword ? 'border-red-500' : ''}`}
                                             />
                                             <button
                                                 type="button"
@@ -713,6 +713,7 @@ export default function ProfilePage() {
                                                 {showCurrentPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                                             </button>
                                         </div>
+                                        {passwordErrors.currentPassword && <p className="text-red-500 text-xs mt-1">{passwordErrors.currentPassword}</p>}
                                     </div>
 
                                     <div>
@@ -723,7 +724,7 @@ export default function ProfilePage() {
                                                 placeholder="Password"
                                                 value={newPassword}
                                                 onChange={(e) => setNewPassword(e.target.value)}
-                                                className="rounded-sm border-gray-200 pr-10 focus-visible:ring-primary-500 focus-visible:border-primary-500"
+                                                className={`rounded-sm border-gray-200 pr-10 focus-visible:ring-primary-500 focus-visible:border-primary-500 ${passwordErrors.newPassword ? 'border-red-500' : ''}`}
                                             />
                                             <button
                                                 type="button"
@@ -733,6 +734,7 @@ export default function ProfilePage() {
                                                 {showNewPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                                             </button>
                                         </div>
+                                        {passwordErrors.newPassword && <p className="text-red-500 text-xs mt-1">{passwordErrors.newPassword}</p>}
                                     </div>
 
                                     <div>
@@ -743,7 +745,7 @@ export default function ProfilePage() {
                                                 placeholder="Confirm new password"
                                                 value={confirmPassword}
                                                 onChange={(e) => setConfirmPassword(e.target.value)}
-                                                className="rounded-sm border-gray-200 pr-10 focus-visible:ring-primary-500 focus-visible:border-primary-500"
+                                                className={`rounded-sm border-gray-200 pr-10 focus-visible:ring-primary-500 focus-visible:border-primary-500 ${passwordErrors.confirmPassword ? 'border-red-500' : ''}`}
                                             />
                                             <button
                                                 type="button"
@@ -753,6 +755,7 @@ export default function ProfilePage() {
                                                 {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                                             </button>
                                         </div>
+                                        {passwordErrors.confirmPassword && <p className="text-red-500 text-xs mt-1">{passwordErrors.confirmPassword}</p>}
                                     </div>
 
                                     <div>

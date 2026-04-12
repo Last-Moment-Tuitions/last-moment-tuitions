@@ -209,7 +209,7 @@ export function Header() {
                             <>
                                 {/* Mobile: Profile Card */}
                                 <Link href="/profile" onClick={() => setIsMobileMenuOpen(false)}>
-                                    <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-primary-50 to-accent-50 border border-primary-100">
+                                    <div className="flex items-center gap-3 px-4 py-3 rounded-xl border border-transparent hover:bg-gradient-to-r hover:from-primary-50 hover:to-accent-50 hover:border-primary-100 active:bg-primary-100 active:border-primary-200 transition-all duration-200 group cursor-pointer">
                                         <img
                                             src={user?.profilePhoto || "/assets/default-avatar.svg"}
                                             alt="Profile"
