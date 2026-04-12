@@ -11,9 +11,9 @@ async function getPageData(slugArray) {
 
     try {
         // Use the new slug-specific endpoint
+        // Revalidate every 0 seconds for testing - force fresh data
         const res = await fetch(`${API_BASE_URL}/pages/slug/${slug}`, {
-            // Revalidate every 60 seconds (ISR)
-            next: { revalidate: 60 }
+            next: { revalidate: 0 }
         });
 
         if (!res.ok) return null;
@@ -60,12 +60,33 @@ const BlockRenderer = ({ block }) => {
 // Helper to fetch template content by ID
 async function getTemplateContent(id) {
     try {
-        const res = await fetch(`${API_BASE_URL}/pages/id/${id}`, { next: { revalidate: 60 } });
+        const res = await fetch(`${API_BASE_URL}/pages/id/${id}`, { next: { revalidate: 0 } });
         if (!res.ok) return null;
         const json = await res.json();
         return json.success ? json.data : null;
     } catch (e) {
         console.error(`Failed to fetch template ${id}`, e);
+        return null;
+    }
+}
+
+// Helper to fetch testimonial data by ID
+async function getTestimonialContent(id) {
+    try {
+        const res = await fetch(`${API_BASE_URL}/testimonials/${id}`, { next: { revalidate: 0 } });
+        if (!res.ok) return null;
+        const json = await res.json();
+        
+        // FLEXIBLE UNWRAP: Handle both { success, details/data } wrappers and raw objects
+        if (json && typeof json === 'object') {
+            if (json.success === true) {
+                return json.details || json.data || json;
+            }
+            return json; // Backend returns the raw student object directly
+        }
+        return null;
+    } catch (e) {
+        console.error(`[Hydration] Failed to fetch testimonial ${id}:`, e.message);
         return null;
     }
 }
@@ -91,44 +112,61 @@ function applyTemplateProps(templateHtml, propsObj) {
 
     let hydratedHtml = templateHtml;
 
+    // First pass: {{ Mustache }} style replacement
     for (const [key, rawValue] of Object.entries(propsObj)) {
         if (rawValue === undefined || rawValue === null) continue;
         const value = String(rawValue);
-        const safeKey = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        const propRegex = new RegExp(`{{\\s*${safeKey}\\s*}}`, 'g');
-        hydratedHtml = hydratedHtml.replace(propRegex, value);
+        
+        // Try both key and key without prop_ prefix
+        const varName = key.replace(/^prop_/, '');
+        [key, varName].forEach(k => {
+            const safeK = k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const propRegex = new RegExp(`{{\\s*${safeK}\\s*}}`, 'g');
+            hydratedHtml = hydratedHtml.replace(propRegex, value);
+        });
     }
 
+    // Second pass: data-var/data-var-src etc. attributes
     for (const [key, rawValue] of Object.entries(propsObj)) {
         if (rawValue === undefined || rawValue === null) continue;
         const value = String(rawValue);
-        const safeKey = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const varName = key.replace(/^prop_/, '');
 
-        const textRegex = new RegExp(`(<[^>]+data-var=["']${safeKey}["'][^>]*>)([\\s\\S]*?)(<\\/[a-z0-9-]+>)`, 'gi');
-        hydratedHtml = hydratedHtml.replace(textRegex, (_m, openTag, _inner, closeTag) => `${openTag}${value}${closeTag}`);
+        // Support both names in regex
+        const searchNames = key === varName ? [key] : [key, varName];
+        searchNames.forEach(k => {
+            const safeK = k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-        const srcRegex = new RegExp(`(<[^>]+data-var-src=["']${safeKey}["'][^>]*>)`, 'gi');
-        hydratedHtml = hydratedHtml.replace(srcRegex, (tag) => {
-            if (/(src=["'][^"']*["'])/i.test(tag)) {
-                return tag.replace(/src=["'][^"']*["']/i, `src="${value}"`);
-            }
-            return tag.replace(/>$/, ` src="${value}">`);
-        });
+            // Text content
+            const textRegex = new RegExp(`(<[^>]+data-var=["']${safeK}["'][^>]*>)([\\s\\S]*?)(<\\/[a-z0-9-]+>)`, 'gi');
+            hydratedHtml = hydratedHtml.replace(textRegex, (_m, openTag, _inner, closeTag) => `${openTag}${value}${closeTag}`);
 
-        const videoRegex = new RegExp(`(<[^>]+data-var-video=["']${safeKey}["'][^>]*>)`, 'gi');
-        hydratedHtml = hydratedHtml.replace(videoRegex, (tag) => {
-            if (/(src=["'][^"']*["'])/i.test(tag)) {
-                return tag.replace(/src=["'][^"']*["']/i, `src="${value}"`);
-            }
-            return tag.replace(/>$/, ` src="${value}">`);
-        });
+            // Image Src
+            const srcRegex = new RegExp(`(<[^>]+data-var-src=["']${safeK}["'][^>]*>)`, 'gi');
+            hydratedHtml = hydratedHtml.replace(srcRegex, (tag) => {
+                if (/(src=["'][^"']*["'])/i.test(tag)) {
+                    return tag.replace(/src=["'][^"']*["']/i, `src="${value}"`);
+                }
+                return tag.replace(/>$/, ` src="${value}">`);
+            });
 
-        const linkRegex = new RegExp(`(<[^>]+data-var-link=["']${safeKey}["'][^>]*>)`, 'gi');
-        hydratedHtml = hydratedHtml.replace(linkRegex, (tag) => {
-            if (/(href=["'][^"']*["'])/i.test(tag)) {
-                return tag.replace(/href=["'][^"']*["']/i, `href="${value}"`);
-            }
-            return tag.replace(/>$/, ` href="${value}">`);
+            // Video Src
+            const videoRegex = new RegExp(`(<[^>]+data-var-video=["']${safeK}["'][^>]*>)`, 'gi');
+            hydratedHtml = hydratedHtml.replace(videoRegex, (tag) => {
+                if (/(src=["'][^"']*["'])/i.test(tag)) {
+                    return tag.replace(/src=["'][^"']*["']/i, `src="${value}"`);
+                }
+                return tag.replace(/>$/, ` src="${value}">`);
+            });
+
+            // Link Href
+            const linkRegex = new RegExp(`(<[^>]+data-var-link=["']${safeK}["'][^>]*>)`, 'gi');
+            hydratedHtml = hydratedHtml.replace(linkRegex, (tag) => {
+                if (/(href=["'][^"']*["'])/i.test(tag)) {
+                    return tag.replace(/href=["'][^"']*["']/i, `href="${value}"`);
+                }
+                return tag.replace(/>$/, ` href="${value}">`);
+            });
         });
     }
 
@@ -190,7 +228,98 @@ async function resolveTemplateRefs(html, templateCache = new Map(), seenIds = ne
                 ...overrideProps,
             };
 
-            const hydratedHtml = applyTemplateProps(templateData.gjsHtml || '', mergedProps);
+            let templateHtml = templateData.gjsHtml || '';
+
+            // ─── START: Dynamic Testimonial Hydration ───
+            const isTestimonials = templateData.slug === 'lmt-testimonials' || 
+                                 templateData.title?.toLowerCase().includes('testimonials') ||
+                                 templateId === '69bedd85babf20277b80c00639a60a20';
+
+            if (isTestimonials) {
+                console.log(`[Hydration] Detected Testimonial Template: slug="${templateData.slug}", id=${templateId}`);
+                const selectedIdsStr = mergedProps.prop_selected_ids || mergedProps.selected_ids || '';
+                const selectedIds = selectedIdsStr.split(',').filter(Boolean);
+                
+                console.log(`[Hydration] Selected IDs: [${selectedIds.join(', ')}]`);
+
+                if (selectedIds.length > 0) {
+                    try {
+                        const studentData = await Promise.all(selectedIds.map(id => getTestimonialContent(id)));
+                        const validStudents = studentData.filter(Boolean);
+                        
+                        console.log(`[Hydration] Successfully fetched ${validStudents.length}/${selectedIds.length} students`);
+                        
+                        let cardsHtml = '';
+                        validStudents.forEach((student, i) => {
+                            // Mirroring exact HTML structure from templateRef.js
+                            cardsHtml += `
+                                <div data-testimonial style="flex:0 0 320px; background:#fff; border-radius:16px; padding:32px; box-shadow:0 10px 25px rgba(0,0,0,0.05); border:1px solid #f1f5f9; display:flex; flex-direction:column; min-height:280px; scroll-snap-align:start;">
+                                    <div style="display:flex; align-items:center; gap:12px; margin-bottom:24px;">
+                                        <img src="https://placehold.co/40" style="width:32px; height:32px; object-fit:contain; border-radius:50%;" />
+                                        <span style="font-weight:700; font-size:18px; color:#334155; text-transform:uppercase;" data-var="test_card${i + 1}_badge">{{test_card${i + 1}_badge}}</span>
+                                    </div>
+                                    <p style="font-size:15px; color:#475569; line-height:1.6; flex:1; margin:0 0 32px 0;">${student.message || ''}</p>
+                                    <div style="display:flex; align-items:center; gap:16px;">
+                                        <img src="${student.image || `https://i.pravatar.cc/60?img=${i + 10}`}" style="width:48px; height:48px; border-radius:50%; object-fit:cover;" />
+                                        <div>
+                                            <div style="font-weight:700; font-size:15px; color:#1e293b;">${student.name || ''}</div>
+                                            <div style="font-size:13px; color:#64748b;">${(student.target_pages || []).join(', ') || 'Learner'}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        });
+
+                        // Inject the generated cards into the track
+                        if (templateHtml.includes('test-track')) {
+                            console.log(`[Hydration] Injecting cards into test-track...`);
+                            
+                            const trackMarkers = ['class="test-track"', 'class=\'test-track\'', 'test-track'];
+                            let startIndex = -1;
+                            for (const m of trackMarkers) {
+                                startIndex = templateHtml.indexOf(m);
+                                if (startIndex !== -1) break;
+                            }
+
+                            if (startIndex !== -1) {
+                                const tagStart = templateHtml.lastIndexOf('<', startIndex);
+                                const openingTagEnd = templateHtml.indexOf('>', startIndex) + 1;
+                                
+                                // Find matching </div>
+                                let depth = 1;
+                                let currentIndex = openingTagEnd;
+                                while (depth > 0 && currentIndex < templateHtml.length) {
+                                    const nextOpen = templateHtml.indexOf('<div', currentIndex);
+                                    const nextClose = templateHtml.indexOf('</div>', currentIndex);
+                                    if (nextClose === -1) break;
+                                    if (nextOpen !== -1 && nextOpen < nextClose) {
+                                        depth++;
+                                        currentIndex = nextOpen + 4;
+                                    } else {
+                                        depth--;
+                                        currentIndex = nextClose + 6;
+                                    }
+                                }
+                                const closingTagStart = currentIndex - 6;
+                                templateHtml = templateHtml.substring(0, openingTagEnd) + cardsHtml + templateHtml.substring(closingTagStart);
+                                console.log(`[Hydration] HTML replacement complete. New length: ${templateHtml.length}`);
+                            }
+                        } else {
+                            console.warn('[Hydration] .test-track container NOT FOUND in template HTML!');
+                        }
+                    } catch (err) {
+                        console.error('[Hydration] FATAL ERROR during card generation:', err);
+                    }
+                } else {
+                    console.log('[Hydration] NO SELECTED IDs FOUND in mergedProps');
+                }
+            } else {
+                // Not a testimonials template, skip hydration
+            }
+            // ─── END: Dynamic Testimonial Hydration ───
+            // ─── END: Dynamic Testimonial Hydration ───
+
+            const hydratedHtml = applyTemplateProps(templateHtml, mergedProps);
             const resolvedNestedHtml = await resolveTemplateRefs(
                 hydratedHtml,
                 templateCache,
