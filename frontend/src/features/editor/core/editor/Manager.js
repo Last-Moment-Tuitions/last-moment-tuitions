@@ -3,6 +3,7 @@ import { gjsConfig } from './config';
 import API_BASE_URL from '@/lib/config';
 import gjsCustomCode from 'grapesjs-custom-code';
 import gjsCkeditor from 'grapesjs-plugin-ckeditor';
+import { adminService } from '@/services/adminService';
 // Import 'grapesjs/dist/css/grapes.min.css'; // This normally needs to be imported in global CSS or locally
 
 const ensureCodeMirror = () => {
@@ -121,6 +122,136 @@ export const initEditor = (pageId) => {
     };
 
     const editor = grapesjs.init(config);
+
+    // ── Register Custom Traits ───────────────────────────────────────────────
+    editor.Traits.addType('select-api', {
+        createInput({ trait }) {
+            const el = document.createElement('div');
+            el.innerHTML = `
+                <select class="gjs-field gjs-field-select" style="width:100%; cursor:pointer;">
+                    <option value="">Loading...</option>
+                </select>
+            `;
+            const input = el.querySelector('select');
+            const apiMethod = trait.get('apiMethod') || 'getTestimonials';
+
+            const loadOptions = async () => {
+                try {
+                    const data = await adminService[apiMethod]();
+                    input.innerHTML = '<option value="">-- Select --</option>';
+                    data.forEach(item => {
+                        const option = document.createElement('option');
+                        option.value = item._id;
+                        option.textContent = item.name || item.title || item.slug || item._id;
+                        input.appendChild(option);
+                    });
+                    input.value = trait.getTarget().get(trait.getName()) || '';
+                } catch (err) {
+                    input.innerHTML = '<option value="">Error loading</option>';
+                    console.error('Failed to load trait options', err);
+                }
+            };
+
+            loadOptions();
+            return el;
+        },
+        onEvent({ elInput, component, trait }) {
+            const value = elInput.querySelector('select').value;
+            component.set(trait.getName(), value);
+        },
+        onUpdate({ elInput, component, trait }) {
+            const value = component.get(trait.getName());
+            elInput.querySelector('select').value = value || '';
+        }
+    });
+
+    // ── Testimonial Picker Trait (Multi-Select Modal) ────────────────────────
+    editor.Traits.addType('testimonial-picker', {
+        noLabel: true,
+        createInput({ component }) {
+            const el = document.createElement('div');
+            el.style.padding = '10px 0';
+            el.innerHTML = `
+                <button class="gjs-btn-prim" style="width:100%; padding:10px; font-weight:700; background:#f97316; border:none; border-radius:4px; cursor:pointer;">
+                    ✨ Manage Students
+                </button>
+                <div style="font-size:11px; margin-top:6px; color:#9ca3af; text-align:center;">
+                    Select which students appear in the slider
+                </div>
+            `;
+            
+            el.querySelector('button').onclick = async () => {
+                const modal = editor.Modal;
+                modal.setTitle('Select Testimonials');
+                
+                // Show loading in modal
+                modal.setContent('<div style="padding:40px; text-align:center; color:#fff;">Loading students...</div>');
+                modal.open();
+                
+                try {
+                    const students = await adminService.getTestimonials();
+                    const currentIds = (component.get('prop_selected_ids') || '').split(',').filter(Boolean);
+                    
+                    const container = document.createElement('div');
+                    container.style.padding = '20px';
+                    container.style.color = '#fff';
+                    container.style.fontFamily = 'sans-serif';
+                    
+                    let html = `
+                        <div style="margin-bottom:20px; display:flex; justify-content:space-between; align-items:center;">
+                            <span style="font-size:14px; color:#9ca3af;">Checking a student adds them to the slider</span>
+                            <button id="modal-apply" class="gjs-btn-prim" style="padding:8px 24px; font-weight:700;">Apply Selection</button>
+                        </div>
+                        <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap:12px; max-height:400px; overflow-y:auto; padding-right:10px;">
+                    `;
+                    
+                    students.forEach(student => {
+                        const isChecked = currentIds.includes(student._id);
+                        html += `
+                            <label style="display:flex; align-items:center; gap:12px; padding:12px; background:#1e293b; border-radius:8px; cursor:pointer; border:1px solid ${isChecked ? '#f97316' : '#334155'}; transition:all 0.2s;">
+                                <input type="checkbox" value="${student._id}" ${isChecked ? 'checked' : ''} style="width:18px; height:18px; accent-color:#f97316; cursor:pointer;" />
+                                <div style="flex:1;">
+                                    <div style="font-weight:600; font-size:14px;">${student.name}</div>
+                                    <div style="font-size:11px; color:#9ca3af;">${student.target_pages?.join(', ') || 'Student'}</div>
+                                </div>
+                            </label>
+                        `;
+                    });
+                    
+                    html += `</div>`;
+                    container.innerHTML = html;
+                    
+                    // Add interactivity
+                    container.querySelectorAll('label').forEach(label => {
+                        const checkbox = label.querySelector('input');
+                        checkbox.onchange = () => {
+                            label.style.borderColor = checkbox.checked ? '#f97316' : '#334155';
+                            label.style.background = checkbox.checked ? '#0f172a' : '#1e293b';
+                        };
+                    });
+                    
+                    container.querySelector('#modal-apply').onclick = () => {
+                        const selected = Array.from(container.querySelectorAll('input:checked')).map(cb => cb.value);
+                        component.set('prop_selected_ids', selected.join(','));
+                        
+                        // Force a complete refresh of the sidebar traits to ensure the button persists
+                        component.set('_force_trait_reset', true, { silent: true });
+                        
+                        modal.close();
+                        // Trigger re-render of the component
+                        component.view.renderTemplate();
+                    };
+                    
+                    modal.setContent(container);
+                    
+                } catch (err) {
+                    modal.setContent(`<div style="padding:40px; color:#ef4444; text-align:center;">Failed to load students: ${err.message}</div>`);
+                }
+            };
+            
+            return el;
+        }
+    });
 
     // Add Direct Raw Code Editing Feature
     editor.Commands.add('core:custom-edit-code', {

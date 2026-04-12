@@ -381,6 +381,19 @@ export const loadTemplateRefBlock = (editor) => {
                 this.on('change', (model) => {
                     const changed = model.changedAttributes();
                     if (!changed) return;
+                    
+                    // ── Auto-populate Testimonials ────────────────────────────
+                    // Detect if a prop_test_t#_id changed
+                    const testimonialIdKey = Object.keys(changed).find(k => k.startsWith('prop_test_t') && k.endsWith('_id'));
+                    if (testimonialIdKey) {
+                        const id = changed[testimonialIdKey];
+                        const slotMatch = testimonialIdKey.match(/prop_test_t(\d+)_id/);
+                        if (id && slotMatch) {
+                            const slotIdx = slotMatch[1];
+                            this.syncTestimonialData(id, slotIdx);
+                        }
+                    }
+
                     const hasVarChange = Object.keys(changed).some(k => k.startsWith('prop_'));
                     if (hasVarChange) {
                         this.trigger('change:templateContent');
@@ -389,7 +402,7 @@ export const loadTemplateRefBlock = (editor) => {
                 });
 
                 // Handle sidebar duplication (Cloning items in the canvas)
-                const em = this.model.opt.em;
+                const em = this.opt.em;
                 if (em) {
                     em.on('component:clone', (cloned) => {
                         const el = cloned.getEl ? cloned.getEl() : null;
@@ -433,6 +446,26 @@ export const loadTemplateRefBlock = (editor) => {
                 }
             },
 
+            async syncTestimonialData(id, slotIdx) {
+                try {
+                    const { adminService } = await import('@/services/adminService');
+                    const data = await adminService.getTestimonial(id);
+                    if (data) {
+                        const prefix = `prop_test_t${slotIdx}_`;
+                        this.set({
+                            [`${prefix}name`]: data.name || '',
+                            [`${prefix}desc`]: data.message || '',
+                            [`${prefix}role`]: data.target_pages?.join(', ') || 'Student',
+                            [`${prefix}avatar`]: data.image || `https://i.pravatar.cc/60?img=${parseInt(slotIdx) + 10}`,
+                        });
+                        // Trigger render
+                        this.trigger('change:templateContent');
+                    }
+                } catch (err) {
+                    console.error('Failed to sync testimonial data', err);
+                }
+            },
+
             handleTemplateChange() {
                 this.trigger('change:templateContent');
             }
@@ -443,6 +476,17 @@ export const loadTemplateRefBlock = (editor) => {
 
             init() {
                 this.listenTo(this.model, 'change:templateContent', this.renderTemplate);
+                
+                // ── Selection Proxy ──────────────────────────────────────────
+                // Force selection of the component model when any part of the 
+                // rendered section is clicked. This prevents users from 
+                // accidentally selecting inner Divs and losing their Traits.
+                this.el.addEventListener('click', (e) => {
+                    const editor = this.model.opt.em.get('Editor');
+                    if (editor && editor.select) {
+                        editor.select(this.model);
+                    }
+                }, true); // Use capture phase to catch clicks before they reach inner elements
             },
 
             onRender() {
@@ -639,24 +683,36 @@ export const loadTemplateRefBlock = (editor) => {
                         });
                     });
                 }
+
+                // ── 6. Global Link Prevention ──────────────────────────────────
+                // Prevent ALL links from navigating the parent window while in editor
+                contentDiv.querySelectorAll('a').forEach(link => {
+                    link.style.pointerEvents = 'auto'; // allow click to happen
+                    link.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                    });
+                });
             },
 
             async renderTemplate() {
                 const attrs = this.model.getAttributes();
                 const templateId = attrs['data-template-id'];
+                const templateSlug = attrs['data-template-slug'];
+                const cacheKey = templateId || templateSlug;
 
                 // ── Loading state ──────────────────────────────────────────────
-                if (!templateId) {
+                if (!cacheKey) {
                     this.el.innerHTML = `
                         <div style="padding:20px; border:2px dashed #60a5fa; background:#eff6ff; text-align:center; color:#1e3a8a; font-family:sans-serif; border-radius:8px;">
                             <strong style="display:block; margin-bottom:4px;">Section Block</strong>
-                            <span style="font-size:12px; color:#3b82f6;">Select a Template ID in the Settings panel</span>
+                            <span style="font-size:12px; color:#3b82f6;">Select a Template ID or Slug</span>
                         </div>`;
                     return;
                 }
 
                 // If not in cache, show loading
-                if (!_templateCache.has(templateId)) {
+                if (!_templateCache.has(cacheKey)) {
                     this.el.innerHTML = `
                         <div style="padding:20px; border:2px dashed #d1d5db; background:#f9fafb; text-align:center; color:#6b7280; font-family:sans-serif; border-radius:8px;">
                             <div style="display:inline-block; width:20px; height:20px; border:2px solid #9ca3af; border-top-color:#f97316; border-radius:50%; animation:spin 0.8s linear infinite; margin-bottom:8px;"></div>
@@ -668,18 +724,19 @@ export const loadTemplateRefBlock = (editor) => {
                 try {
                     // ── Fetch with cache / timestamp ───────────────────────────
                     let templateData;
-                    // Provide a way to bypass cache: just clear local _templateCache
-                    // or append timestamp if we want global bypass. For now, rely on _templateCache
-                    if (_templateCache.has(templateId)) {
-                        templateData = _templateCache.get(templateId);
+                    if (_templateCache.has(cacheKey)) {
+                        templateData = _templateCache.get(cacheKey);
                     } else {
                         const { adminService } = await import('@/services/adminService');
-                        // Bypassing browser-level cache for template fetches can be done via query 
-                        // if needed, but adminService.getPage uses standard fetch
-                        templateData = await adminService.getPage(templateId);
+                        
+                        if (templateId) {
+                            templateData = await adminService.getPage(templateId);
+                        } else if (templateSlug) {
+                            templateData = await adminService.getPageBySlug(templateSlug);
+                        }
 
                         if (!templateData) {
-                            throw new Error(`No data for template ${templateId}`);
+                            throw new Error(`No data for ${templateId ? 'ID ' + templateId : 'Slug ' + templateSlug}`);
                         }
 
                         // Handle the case where the backend wraps it in 'data'
@@ -687,7 +744,7 @@ export const loadTemplateRefBlock = (editor) => {
                             templateData = templateData.data;
                         }
 
-                        _templateCache.set(templateId, templateData);
+                        _templateCache.set(cacheKey, templateData);
                     }
 
                     let html = templateData.gjsHtml || '';
@@ -724,6 +781,53 @@ export const loadTemplateRefBlock = (editor) => {
                             section.setAttribute('data-hidden-section', 'true');
                         }
                     });
+
+                    // ── Dynamic Testimonial Injection ─────────────────────────
+                    if (templateSlug === 'lmt-testimonials') {
+                        const selectedIdsStr = this.model.get('prop_selected_ids') || '';
+                        const selectedIds = selectedIdsStr.split(',').filter(Boolean);
+                        
+                        // Locate the card track
+                        const track = doc.querySelector('.test-track');
+                        if (track) {
+                            if (selectedIds.length > 0) {
+                                try {
+                                    const { adminService } = await import('@/services/adminService');
+                                    // Fetch all selected students in parallel
+                                    const studentData = await Promise.all(selectedIds.map(id => adminService.getTestimonial(id)));
+                                    
+                                    let cardsHtml = '';
+                                    studentData.forEach((student, i) => {
+                                        if (!student) return;
+                                        cardsHtml += `
+                                            <div data-testimonial style="flex:0 0 320px; background:#fff; border-radius:16px; padding:32px; box-shadow:0 10px 25px rgba(0,0,0,0.05); border:1px solid #f1f5f9; display:flex; flex-direction:column; min-height:280px; scroll-snap-align:start;">
+                                                <div style="display:flex; align-items:center; gap:12px; margin-bottom:24px;">
+                                                    <img src="https://placehold.co/40" style="width:32px; height:32px; object-fit:contain; border-radius:50%;" />
+                                                    <span style="font-weight:700; font-size:18px; color:#334155; text-transform:uppercase;">STUDENT SUCCESS</span>
+                                                </div>
+                                                <p style="font-size:15px; color:#475569; line-height:1.6; flex:1; margin:0 0 32px 0;">${student.message || ''}</p>
+                                                <div style="display:flex; align-items:center; gap:16px;">
+                                                    <img src="${student.image || `https://i.pravatar.cc/60?img=${i + 10}`}" style="width:48px; height:48px; border-radius:50%; object-fit:cover;" />
+                                                    <div>
+                                                        <div style="font-weight:700; font-size:15px; color:#1e293b;">${student.name || ''}</div>
+                                                        <div style="font-size:13px; color:#64748b;">${student.target_pages?.join(', ') || 'Learner'}</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        `;
+                                    });
+                                    track.innerHTML = cardsHtml;
+                                } catch (err) {
+                                    console.error('Failed to populate testimonials', err);
+                                    track.innerHTML = '<div style="padding:20px; color:#94a3b8;">Error loading selected testimonials</div>';
+                                }
+                            } else {
+                                track.innerHTML = '<div style="padding:40px; border:2px dashed #e2e8f0; border-radius:12px; text-align:center; color:#94a3b8; width:100%;">No students selected. Click "Manage Testimonials" in the sidebar to add them.</div>';
+                            }
+                        }
+                    }
+
+                    html = doc.body.innerHTML;
 
                     // Helper: only show form controls for variables in visible panes
                     const isVisible = (el) => {
@@ -846,6 +950,15 @@ export const loadTemplateRefBlock = (editor) => {
                     // ✅ CRITICAL FIX: use .reset() not .set('traits', ...)
                     const newTraits = [];
 
+                    // Testimonial Picker Trait (Special handling for testimonials slider)
+                    if (templateSlug === 'lmt-testimonials') {
+                        newTraits.push({
+                            type: 'testimonial-picker',
+                            name: 'prop_selected_ids',
+                            label: '✨ Manage Students',
+                        });
+                    }
+
                     // Standard control traits first
                     newTraits.push({ type: 'text', name: 'data-template-id', label: 'Template ID' });
 
@@ -950,43 +1063,6 @@ export const loadTemplateRefBlock = (editor) => {
                         }
                     }
 
-                    // ── Dynamic Testimonial Count Support ───────────────────────────
-                    const testimonialEls = doc.querySelectorAll('[data-testimonial]');
-                    const baseTestCount = testimonialEls.length;
-
-                    if (baseTestCount > 0) {
-                        const propKey = 'prop_testimonials_count';
-                        if (!this.model.get(propKey)) {
-                            this.model.set(propKey, fetchedDefaultProps[propKey] || baseTestCount, { silent: true });
-                        }
-                        newTraits.push({
-                            type: 'number',
-                            name: propKey,
-                            label: '💬 Slider Count',
-                            changeProp: 1,
-                            min: 1,
-                            max: 20,
-                        });
-
-                        const currentCount = parseInt(this.model.get(propKey) || baseTestCount, 10);
-                        for (let i = baseTestCount + 1; i <= currentCount; i++) {
-                            const prefix = `test_t${i}_`;
-                            if (!this.model.get(`prop_${prefix}name`)) {
-                                this.model.set(`prop_${prefix}name`, `John Doe ${i}`, { silent: true });
-                                this.model.set(`prop_${prefix}company`, `Company ${i}`, { silent: true });
-                                this.model.set(`prop_${prefix}role`, `Manager`, { silent: true });
-                                this.model.set(`prop_${prefix}desc`, `Description ${i}...`, { silent: true });
-                                this.model.set(`prop_${prefix}logo`, `https://placehold.co/40x40/475569/ffffff?text=C${i}`, { silent: true });
-                                this.model.set(`prop_${prefix}avatar`, `https://i.pravatar.cc/60?img=${i + 10}`, { silent: true });
-                            }
-                            newTraits.push({ type: 'text', name: `prop_${prefix}company`, label: `T${i}: Company`, changeProp: 1 });
-                            newTraits.push({ type: 'text', name: `prop_${prefix}desc`, label: `T${i}: Quote (Text)`, changeProp: 1 });
-                            newTraits.push({ type: 'text', name: `prop_${prefix}name`, label: `T${i}: Name`, changeProp: 1 });
-                            newTraits.push({ type: 'text', name: `prop_${prefix}role`, label: `T${i}: Role`, changeProp: 1 });
-                            newTraits.push({ type: 'image-picker', name: `prop_${prefix}logo`, label: `T${i}: Logo (Img)`, changeProp: 1, defaultSrc: 'https://placehold.co/40' });
-                            newTraits.push({ type: 'image-picker', name: `prop_${prefix}avatar`, label: `T${i}: Avatar (Img)`, changeProp: 1, defaultSrc: 'https://i.pravatar.cc/60' });
-                        }
-                    }
 
                     // ── Dynamic Sidebar Item Count Support ──────────────────────────
                     const sidebarItemEls = doc.querySelectorAll('[data-sidebar-item]');
@@ -1302,46 +1378,6 @@ export const loadTemplateRefBlock = (editor) => {
                         }
                     }
 
-                    // ── Dynamic testimonial row expansion ───────────────────────────
-                    if (baseTestCount > 0) {
-                        const currentCount = parseInt(this.model.get('prop_testimonials_count') || baseTestCount, 10);
-                        if (currentCount > baseTestCount) {
-                            const tempDoc = parser.parseFromString(htmlToRender, 'text/html');
-                            const list = tempDoc.querySelectorAll('[data-testimonial]');
-                            const parentList = list[list.length - 1]?.parentElement;
-                            if (parentList) {
-                                for (let i = baseTestCount + 1; i <= currentCount; i++) {
-                                    const prefix = `prop_test_t${i}_`;
-                                    const company = this.model.get(prefix + 'company') || 'Company';
-                                    const desc = this.model.get(prefix + 'desc') || '';
-                                    const name = this.model.get(prefix + 'name') || 'Name';
-                                    const role = this.model.get(prefix + 'role') || 'Role';
-                                    const logoSrc = this.model.get(prefix + 'logo') || `https://placehold.co/40x40/475569/ffffff?text=C${i}`;
-                                    const avatarSrc = this.model.get(prefix + 'avatar') || `https://i.pravatar.cc/60?img=${i + 10}`;
-
-                                    const newRow = document.createElement('div');
-                                    newRow.setAttribute('data-testimonial', '');
-                                    newRow.style.cssText = 'flex:0 0 320px; background:#fff; border-radius:16px; padding:32px; box-shadow:0 10px 25px rgba(0,0,0,0.05); border:1px solid #f1f5f9; display:flex; flex-direction:column; min-height:280px; scroll-snap-align:start;';
-                                    newRow.innerHTML = `
-                                    <div style="display:flex; align-items:center; gap:12px; margin-bottom:24px;">
-                                        <img data-var-src="test_t${i}_logo" src="${logoSrc}" style="width:32px; height:32px; object-fit:contain; border-radius:50%;" />
-                                        <span style="font-weight:700; font-size:18px; color:#334155; text-transform:uppercase;" data-var="test_t${i}_company">${company}</span>
-                                    </div>
-                                    <p style="font-size:15px; color:#475569; line-height:1.6; flex:1; margin:0 0 32px 0;" data-var="test_t${i}_desc">${desc}</p>
-                                    <div style="display:flex; align-items:center; gap:16px;">
-                                        <img data-var-src="test_t${i}_avatar" src="${avatarSrc}" style="width:48px; height:48px; border-radius:50%; object-fit:cover;" />
-                                        <div>
-                                            <div style="font-weight:700; font-size:15px; color:#1e293b;" data-var="test_t${i}_name">${name}</div>
-                                            <div style="font-size:13px; color:#64748b;" data-var="test_t${i}_role">${role}</div>
-                                        </div>
-                                    </div>
-                                `;
-                                    parentList.appendChild(newRow);
-                                }
-                            }
-                            htmlToRender = tempDoc.body.innerHTML;
-                        }
-                    }
 
                     // ── Dynamic Sidebar Item Expansion ─────────────────────────
                     if (baseSidebarCount > 0) {
