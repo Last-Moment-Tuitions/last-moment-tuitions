@@ -16,7 +16,7 @@ api.interceptors.request.use((config) => {
     // AuthContext manages this, but adding it for robustness
     const sessionId = getCookie('sessionId');
     if (sessionId) {
-        config.headers['x-session-id'] = sessionId;
+        config.headers['X-Session-Id'] = sessionId;
     }
 
     // In case the frontend passes token in localstorage

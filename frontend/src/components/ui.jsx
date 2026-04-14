@@ -420,6 +420,29 @@ export const Label = React.forwardRef(({ className, ...props }, ref) => (
 Label.displayName = "Label"
 
 // Google Button Component
+// Premium Breadcrumb Component
+export function Breadcrumb({ items, className }) {
+    return (
+        <nav className={cn("flex items-center gap-2 text-sm font-medium", className)} aria-label="Breadcrumb">
+            {items.map((item, index) => (
+                <React.Fragment key={index}>
+                    {index > 0 && <span className="text-gray-400">/</span>}
+                    {item.href ? (
+                        <Link
+                            href={item.href}
+                            className="text-gray-500 hover:text-primary-600 transition-colors"
+                        >
+                            {item.label}
+                        </Link>
+                    ) : (
+                        <span className="text-gray-900 font-bold">{item.label}</span>
+                    )}
+                </React.Fragment>
+            ))}
+        </nav>
+    );
+}
+
 export function GoogleButton({ className, ...props }) {
     return (
         <button
