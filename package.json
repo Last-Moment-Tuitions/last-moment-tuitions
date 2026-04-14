@@ -5,10 +5,14 @@
     "dev": "concurrently \"npm run dev --prefix frontend\" \"npm run start:dev --prefix backend\""
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1004.0",
+    "@aws-sdk/s3-request-presigner": "^3.1004.0",
     "mongodb": "^7.0.0",
+    "multer": "^2.1.1",
     "redis": "^5.10.0"
   },
   "devDependencies": {
+    "@types/multer": "^2.1.0",
     "concurrently": "^8.2.2"
   }
 }

@@ -48,8 +48,17 @@ export default function SignUpPage() {
             newErrors.phone = "Invalid 10-digit mobile number";
         }
 
-        if (formData.password.length < 8) {
+        const password = formData.password;
+        if (password.length < 8) {
             newErrors.password = "Password must be at least 8 characters long";
+        } else if (!/[A-Z]/.test(password)) {
+            newErrors.password = "Password must include at least one uppercase letter";
+        } else if (!/[a-z]/.test(password)) {
+            newErrors.password = "Password must include at least one lowercase letter";
+        } else if (!/\d/.test(password)) {
+            newErrors.password = "Password must include at least one number";
+        } else if (!/[@$!%*?&]/.test(password)) {
+            newErrors.password = "Password must include at least one special character";
         }
 
         if (formData.password !== formData.confirmPassword) {
@@ -238,7 +247,7 @@ export default function SignUpPage() {
                                             required
                                             value={formData.password}
                                             onChange={handleChange}
-                                            className="rounded-md border-gray-200 bg-white h-11 text-sm placeholder:text-gray-400 focus-visible:ring-primary-500 pr-10"
+                                            className={`rounded-md border-gray-200 bg-white h-11 text-sm placeholder:text-gray-400 focus-visible:ring-primary-500 pr-10 ${errors.password ? "border-red-500" : ""}`}
                                         />
                                         <button
                                             type="button"
@@ -248,6 +257,7 @@ export default function SignUpPage() {
                                             {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                                         </button>
                                     </div>
+                                    {errors.password && <p className="text-xs text-red-500 font-medium ml-1 mt-1">{errors.password}</p>}
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="confirmPassword" className="text-sm font-medium text-gray-700">Confirm Password *</Label>
@@ -259,7 +269,7 @@ export default function SignUpPage() {
                                             required
                                             value={formData.confirmPassword}
                                             onChange={handleChange}
-                                            className="rounded-md border-gray-200 bg-white h-11 text-sm placeholder:text-gray-400 focus-visible:ring-primary-500 pr-10"
+                                            className={`rounded-md border-gray-200 bg-white h-11 text-sm placeholder:text-gray-400 focus-visible:ring-primary-500 pr-10 ${errors.confirmPassword ? "border-red-500" : ""}`}
                                         />
                                         <button
                                             type="button"
@@ -269,9 +279,9 @@ export default function SignUpPage() {
                                             {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                                         </button>
                                     </div>
+                                    {errors.confirmPassword && <p className="text-xs text-red-500 font-medium ml-1 mt-1">{errors.confirmPassword}</p>}
                                 </div>
                             </div>
-                            {errors.confirmPassword && <p className="text-xs text-red-500 font-medium ml-1">{errors.confirmPassword}</p>}
                         </div>
 
                         {/* Terms Checkbox */}

@@ -31,6 +31,7 @@ import { FaqSection } from '@/components/FaqSection';
 // import TestimonialSection from '@/components/TestimonialSection';
 import { testimonialService } from '@/services/testimonialService';
 import AnimatedTestimonials from '@/components/AnimatedTestimonials';
+import { fallbackTestimonials, TESTIMONIAL_THRESHOLD } from '@/data/fallbackTestimonials';
 import { StickyScroll } from '@/components/StickyScrollLayout';
 
 
@@ -43,11 +44,24 @@ export default function HomePage() {
     useEffect(() => {
         const fetchTestimonials = async () => {
             try {
-                // This call hits NestJS -> Redis (Fast) -> MongoDB (Fallback)
+                // Hits NestJS -> Redis (fast) -> MongoDB (fallback)
                 const data = await testimonialService.getByPage('Homepage');
-                setTestimonials(data);
+
+                // Hybrid fallback: DB entries first, fill remainder with curated fallback
+                const dbList = Array.isArray(data) ? data : [];
+                const finalList =
+                    dbList.length >= TESTIMONIAL_THRESHOLD
+                        ? dbList
+                        : [
+                            ...dbList,
+                            ...fallbackTestimonials.slice(0, TESTIMONIAL_THRESHOLD - dbList.length),
+                        ];
+
+                setTestimonials(finalList);
             } catch (error) {
                 console.error("Failed to fetch testimonials:", error);
+                // On network error, always show fallback so section is never empty
+                setTestimonials(fallbackTestimonials);
             } finally {
                 setLoading(false);
             }
@@ -361,19 +375,19 @@ export default function HomePage() {
                         </FadeIn>
                     </div>
 
-                    {/* Only render if we have data to prevent errors */}
-                    {!loading && testimonials.length > 0 ? (
+                    {/* Always renders — hybrid fallback guarantees at least 5 items */}
+                    {!loading && testimonials.length > 0 && (
                         <AnimatedTestimonials
                             testimonials={testimonials.map(t => ({
                                 src: t.image,
                                 name: t.name,
-                                designation: `Verified Student of Last Moment Tuitions`,
+                                designation: 'Verified Student of Last Moment Tuitions',
                                 quote: t.message,
                                 rating: t.rating
                             }))}
                             autoplay={true}
                         />
-                    ) : null}
+                    )}
                 </div>
             </section>
 

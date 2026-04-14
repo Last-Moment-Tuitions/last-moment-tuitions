@@ -19,6 +19,7 @@ export default function ForgotPasswordPage() {
     const [loading, setLoading] = useState(false);
     const [mount, setMounted] = useState(false);
     const [resendTimer, setResendTimer] = useState(0);
+    const [errors, setErrors] = useState({});
 
     const router = useRouter();
     const { toast } = useToast();
@@ -100,16 +101,30 @@ export default function ForgotPasswordPage() {
 
     const handleResetPassword = async (e) => {
         e.preventDefault();
+        const newErrors = {};
+
+        if (newPassword.length < 8) {
+            newErrors.newPassword = "Password must be at least 8 characters long";
+        } else if (!/[A-Z]/.test(newPassword)) {
+            newErrors.newPassword = "Password must include at least one uppercase letter";
+        } else if (!/[a-z]/.test(newPassword)) {
+            newErrors.newPassword = "Password must include at least one lowercase letter";
+        } else if (!/\d/.test(newPassword)) {
+            newErrors.newPassword = "Password must include at least one number";
+        } else if (!/[@$!%*?&]/.test(newPassword)) {
+            newErrors.newPassword = "Password must include at least one special character";
+        }
 
         if (newPassword !== confirmPassword) {
-            toast.error('Passwords do not match');
-            return;
+            newErrors.confirmPassword = 'Passwords do not match';
         }
-        if (newPassword.length < 8) {
-            toast.error('Password must be at least 8 characters long');
+
+        if (Object.keys(newErrors).length > 0) {
+            setErrors(newErrors);
             return;
         }
 
+        setErrors({});
         setLoading(true);
         try {
             const res = await fetch(`${API_BASE_URL}/auth/reset-password`, {
@@ -264,12 +279,13 @@ export default function ForgotPasswordPage() {
                                             required
                                             value={newPassword}
                                             onChange={(e) => setNewPassword(e.target.value)}
-                                            className="rounded-xl border-gray-100 bg-gray-50/50 h-12 focus-visible:ring-primary-500 pr-12"
+                                            className={`rounded-xl border-gray-100 bg-gray-50/50 h-12 focus-visible:ring-primary-500 pr-12 ${errors.newPassword ? 'border-red-500' : ''}`}
                                         />
                                         <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                                             {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                                         </button>
                                     </div>
+                                    {errors.newPassword && <p className="text-red-500 text-xs mt-1">{errors.newPassword}</p>}
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="confirmPassword" className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Confirm Password</Label>
@@ -280,8 +296,9 @@ export default function ForgotPasswordPage() {
                                         required
                                         value={confirmPassword}
                                         onChange={(e) => setConfirmPassword(e.target.value)}
-                                        className="rounded-xl border-gray-100 bg-gray-50/50 h-12 focus-visible:ring-primary-500"
+                                        className={`rounded-xl border-gray-100 bg-gray-50/50 h-12 focus-visible:ring-primary-500 ${errors.confirmPassword ? 'border-red-500' : ''}`}
                                     />
+                                    {errors.confirmPassword && <p className="text-red-500 text-xs mt-1">{errors.confirmPassword}</p>}
                                 </div>
                             </div>
                             <button

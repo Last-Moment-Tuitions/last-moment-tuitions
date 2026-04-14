@@ -9,8 +9,10 @@ import {
     Video, BookOpen, ClipboardList
 } from 'lucide-react';
 import Link from 'next/link';
+import { useAuth } from '@/context/AuthContext';
 import { Button, Badge, Accordion, AccordionItem, AccordionTrigger, AccordionContent, CourseCard } from '@/components/ui';
 import { coursesApi } from '@/services/courses.api';
+import API_BASE_URL from '@/lib/config';
 
 // Helper: format seconds → "Xh Ym" or "Xm"
 function formatDuration(seconds) {
@@ -61,28 +63,51 @@ function ContentTypeIcon({ type, className }) {
 
 export default function CourseDetailPage({ params }) {
     const { id } = use(params);
+    const { user } = useAuth();
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [isEnrolled, setIsEnrolled] = useState(false);
     const [error, setError] = useState(null);
     const [activeTab, setActiveTab] = useState('overview');
 
     useEffect(() => {
-        const fetchCourse = async () => {
+        const fetchCourseData = async () => {
             try {
                 setLoading(true);
-                const response = await coursesApi.getCourseWithContent(id);
-                const course = response?.data || response;
+                // Parallel fetch course and enrollment status if user is logged in
+                const coursePromise = coursesApi.getCourseWithContent(id);
+                let enrollmentPromise = Promise.resolve(null);
+
+                if (user?.email) {
+                    enrollmentPromise = fetch(`${API_BASE_URL}/orders/user/${user.email}`).then(res => res.json());
+                }
+
+                const [courseRes, enrollmentData] = await Promise.all([coursePromise, enrollmentPromise]);
+                
+                const course = courseRes?.data || courseRes;
                 setData(course);
+
+                if (enrollmentData) {
+                    const orders = enrollmentData.details || enrollmentData;
+                    if (Array.isArray(orders)) {
+                        const hasActiveOrder = orders.some(order => 
+                            order.course_id === id && 
+                            (order.status === 'completed' || order.status === 'paid' || order.status === 'pending_payment')
+                        );
+                        setIsEnrolled(hasActiveOrder);
+                    }
+                }
+                
                 setError(null);
             } catch (err) {
-                console.error('Failed to fetch course:', err);
-                setError('Failed to load course. Please try again.');
+                console.error('Failed to fetch course data:', err);
+                setError('Failed to load course details.');
             } finally {
                 setLoading(false);
             }
         };
-        if (id) fetchCourse();
-    }, [id]);
+        if (id) fetchCourseData();
+    }, [id, user?.email]);
 
     // Loading
     if (loading) {
@@ -326,12 +351,12 @@ export default function CourseDetailPage({ params }) {
                                                                             {item.title}
                                                                         </div>
                                                                         {(item.children || []).map((subItem) => (
-                                                                            <LessonRow key={subItem.id} item={subItem} courseId={id} />
+                                                                            <LessonRow key={subItem.id} item={subItem} courseId={id} isEnrolled={isEnrolled} />
                                                                         ))}
                                                                     </div>
                                                                 );
                                                             }
-                                                            return <LessonRow key={item.id} item={item} courseId={id} />;
+                                                            return <LessonRow key={item.id} item={item} courseId={id} isEnrolled={isEnrolled} />;
                                                         })}
                                                     </div>
                                                 </AccordionContent>
@@ -456,13 +481,28 @@ export default function CourseDetailPage({ params }) {
                             </div>
 
                             {/* CTA */}
-                            <div className="flex gap-3 mb-6">
-                                <Button className="flex-1 h-12 text-base font-bold bg-white text-primary-600 border-2 border-primary-100 hover:border-primary-600 hover:bg-primary-50 transition-colors">
-                                    Add To Cart
-                                </Button>
-                                <Button className="flex-1 h-12 text-base font-bold bg-primary-600 text-white hover:bg-primary-700 shadow-lg shadow-primary-500/30 transition-all hover:scale-[1.02]">
-                                    Buy Now
-                                </Button>
+                            <div className="flex flex-col gap-3 mb-6">
+                                {isEnrolled ? (
+                                    <Link href={`/courses/${id}/learn`} className="w-full">
+                                        <Button className="w-full h-12 text-base font-bold bg-green-600 text-white hover:bg-green-700 shadow-lg shadow-green-500/30 transition-all hover:scale-[1.02] flex items-center justify-center gap-2">
+                                            <PlayCircle size={20} />
+                                            Go to Course
+                                        </Button>
+                                    </Link>
+                                ) : (
+                                    <>
+                                        <div className="flex gap-3 w-full">
+                                            <Button className="flex-1 h-12 text-sm font-bold bg-white text-primary-600 border-2 border-primary-100 hover:border-primary-600 hover:bg-primary-50 transition-colors">
+                                                Add To Cart
+                                            </Button>
+                                            <Link href={`/checkout/${id}`} className="flex-1">
+                                                <Button className="w-full h-12 text-sm font-bold bg-primary-600 text-white hover:bg-primary-700 shadow-lg shadow-primary-500/30 transition-all hover:scale-[1.02]">
+                                                    Buy Now
+                                                </Button>
+                                            </Link>
+                                        </div>
+                                    </>
+                                )}
                             </div>
 
                             <hr className="border-gray-100 mb-6" />
@@ -500,8 +540,8 @@ export default function CourseDetailPage({ params }) {
 }
 
 // Lesson row component for curriculum
-function LessonRow({ item, courseId }) {
-    const isLocked = item.data?.isLocked !== false; // default locked
+function LessonRow({ item, courseId, isEnrolled }) {
+    const isLocked = !isEnrolled && item.data?.isLocked !== false; // unlocked if enrolled or specifically marked free
     const isFree = !isLocked;
     const contentType = item.data?.type || 'video';
     const duration = item.data?.duration ? formatLectureDuration(item.data.duration) : '';

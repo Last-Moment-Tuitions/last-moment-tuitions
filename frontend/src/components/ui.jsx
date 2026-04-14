@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { cn } from '../lib/utils';
 import * as AccordionPrimitive from '@radix-ui/react-accordion';
 import * as TabsPrimitive from '@radix-ui/react-tabs';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, ArrowRight, ChevronRight, Star } from 'lucide-react';
 
 // Enhanced Accordion Component
 export const Accordion = AccordionPrimitive.Root;
@@ -292,45 +292,60 @@ export function CategoryCard({ icon, label, count, color, className }) {
     );
 }
 
-export function CourseCard({ id, image, category, title, rating, students, price, oldPrice, instructor, className }) {
+export function CourseCard({ id, image, category, title, rating, students, price, oldPrice, instructor, level, isPurchased, className }) {
     return (
-        <Link href={`/courses/${id}`} className={cn("block bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300 group", className)}>
-            <div className="relative h-48 overflow-hidden">
-                <img src={image} alt={title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
-                <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-md text-xs font-bold text-primary-700 uppercase tracking-wide">
-                    {category}
-                </div>
-            </div>
-            <div className="p-5">
-                <div className="flex items-center justify-between mb-2 text-xs text-gray-500 font-medium">
-                    <div className="flex items-center gap-1">
-                        <div className="w-2 h-2 rounded-full bg-primary-500"></div>
+        <div className={cn("border border-gray-100 rounded-sm overflow-hidden flex flex-col group hover:shadow-md transition-shadow bg-white", className)}>
+            <div className="h-44 w-full relative overflow-hidden">
+                <img
+                    src={image || "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=1000&auto=format&fit=crop"}
+                    alt={title}
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                />
+                <div className="absolute inset-0 bg-black/5 group-hover:bg-transparent transition-colors"></div>
+                {isPurchased ? (
+                    <div className="absolute top-3 left-3 bg-green-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-sm uppercase">Purchased</div>
+                ) : category && (
+                    <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-2 py-0.5 rounded-sm text-[10px] font-bold text-[#063f78] uppercase tracking-wide">
                         {category}
                     </div>
-                    <div className="flex items-center gap-1 text-amber-500">
-                        <span>★</span>
-                        <span className="text-gray-700">{rating}</span>
-                    </div>
-                </div>
-                <h3 className="font-bold text-gray-900 text-lg mb-3 line-clamp-2 group-hover:text-primary-600 transition-colors">
-                    {title}
-                </h3>
-                <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-                    <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-full bg-gray-200 overflow-hidden">
-                            {/* Placeholder for instructor image */}
-                            <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${instructor}`} alt={instructor} />
-                        </div>
-                        <span className="text-sm font-medium text-gray-600">{instructor}</span>
-                    </div>
+                )}
+            </div>
 
-                    <div className="text-right">
-                        <span className="block text-lg font-bold text-primary-600">₹{price}</span>
-                        {oldPrice && <span className="block text-xs text-gray-400 line-through">₹{oldPrice}</span>}
+            <div className="p-5 flex-1 flex flex-col justify-between border-t border-gray-50">
+                <div>
+                    <div className="flex items-center justify-between mb-2">
+                        <span className="text-[10px] font-bold text-gray-400 capitalize bg-gray-50 px-2 py-0.5 rounded-sm">{level || 'Beginner'}</span>
+                        <div className="flex flex-col items-end">
+                            <span className="text-sm font-bold text-[#063f78]">₹{price?.toLocaleString() || '499'}</span>
+                            {oldPrice && <span className="text-[10px] text-gray-400 line-through mt-[-2px]">₹{oldPrice.toLocaleString()}</span>}
+                        </div>
                     </div>
+                    <Link href={`/courses/${id}`}>
+                        <h4 className="text-base font-bold text-gray-900 mb-2 line-clamp-2 min-h-[3rem] group-hover:text-[#063f78] transition-colors">
+                            {title}
+                        </h4>
+                    </Link>
+                </div>
+
+                <div className="mt-4">
+                    {isPurchased ? (
+                        <Link
+                            href={`/courses/${id}/learn`}
+                            className="w-full py-2.5 bg-[#eff6ff] text-[#063f78] font-bold text-sm rounded-sm hover:bg-[#ffdfd4] transition-colors flex items-center justify-center gap-2"
+                        >
+                            Start Learning <ChevronRight size={16} />
+                        </Link>
+                    ) : (
+                        <Link
+                            href={`/courses/${id}`}
+                            className="w-full py-2.5 bg-gray-900 text-white font-bold text-sm rounded-sm hover:bg-black transition-colors flex items-center justify-center gap-2"
+                        >
+                            Enroll Now <ArrowRight size={16} />
+                        </Link>
+                    )}
                 </div>
             </div>
-        </Link>
+        </div>
     );
 }
 
