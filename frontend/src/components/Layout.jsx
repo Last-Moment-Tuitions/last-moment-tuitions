@@ -40,8 +40,8 @@ export function Header() {
     const isGroupActive = (items) => items.some(item => pathname === item.href);
 
     return (
-        <header className="sticky top-0 z-50 bg-white border-b border-gray-100 shadow-sm font-sans">
-            <div className="container mx-auto px-4 h-20 flex items-center justify-between gap-4">
+        <header className="sticky top-0 z-50 bg-white border-b border-gray-100 shadow-sm font-sans flex justify-center">
+            <div className="w-full max-w-[1440px] px-6 sm:px-10 h-20 flex items-center justify-between gap-4">
 
                 {/* Left Section: Logo & Search */}
                 <div className="flex items-center gap-4 xl:gap-8">
@@ -69,8 +69,6 @@ export function Header() {
                         />
                     </div>
                 </div>
-
-                {/* Center Section: Navigation */}
                 <ul className="hidden lg:flex items-center gap-1 xl:gap-2">
                     <NavLink href="/" active={isActive('/')}>
                         Home

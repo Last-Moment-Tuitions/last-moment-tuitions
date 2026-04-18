@@ -82,9 +82,11 @@ export const CircleIcon = ({ className, delay }) => {
 export const HeroMerged = ({ children }) => {
     return (
         <div className="relative min-h-[40rem] flex flex-col justify-center items-center w-full bg-white pt-20 pb-32">
-            <div className="container mx-auto px-4 text-center">
+            {/* <div className="container mx-auto px-4 text-center"> */}
+            <div className="w-full">
                 {children}
             </div>
+            {/* </div> */}
         </div>
     )
 }
