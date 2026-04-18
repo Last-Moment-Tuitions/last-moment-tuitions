@@ -60,3 +60,9 @@ export class Page {
 }
 
 export const PageSchema = SchemaFactory.createForClass(Page);
+
+// Indexes for performance
+PageSchema.index({ type: 1, status: 1 });
+PageSchema.index({ folder: 1, type: 1 });
+PageSchema.index({ category: 1 });
+PageSchema.index({ updatedAt: -1 });

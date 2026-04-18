@@ -159,7 +159,7 @@ export function Header() {
                         >
                             Home
                         </Link>
-                        
+
                         {navItems.map((item, idx) => (
                             <div key={idx} className="flex flex-col">
                                 {item.type === 'link' ? (
@@ -278,110 +278,159 @@ function NavDropdown({ label, active, items }) {
     );
 }
 
-import { Facebook, Twitter, Instagram, Linkedin, Youtube } from 'lucide-react';
+import { Facebook, Twitter, Instagram, Linkedin, Youtube, Mail, MessageCircle } from 'lucide-react';
 import { Button } from './ui';
 
 export function Footer() {
     return (
-        <footer className="bg-gray-900 text-white pt-20 pb-10 mt-auto flex flex-col items-center">
-            {/* <footer className="bg-gray-900 text-white pt-20 pb-10 mt-auto"> */}
-            {/* <div className="container mx-auto px-4"> */}
-            <div className="w-full max-w-[1440px] px-6 sm:px-10">
-                <div className="flex flex-col md:flex-row justify-between items-center mb-16 gap-8">
-                    <div className="md:w-1/2">
-                        <h2 className="text-3xl font-bold mb-2">Start learning with 67.1k</h2>
-                        <h2 className="text-3xl font-bold mb-6">students around the world.</h2>
-                        <div className="flex gap-4">
-                            <Button variant="primary" className="rounded-md px-6">Join the Family</Button>
-                            <Button variant="outline" className="rounded-md px-6 border-gray-700 text-white hover:bg-gray-800">Browse Course</Button>
-                        </div>
-                    </div>
-                    <div className="md:w-1/2 flex justify-end gap-12">
-                        <div className="text-center md:text-left">
-                            <div className="text-3xl font-bold mb-1">6.3k</div>
-                            <div className="text-sm text-gray-400">Online Courses</div>
-                        </div>
-                        <div className="text-center md:text-left">
-                            <div className="text-3xl font-bold mb-1">26k</div>
-                            <div className="text-sm text-gray-400">Certified Instructor</div>
-                        </div>
-                        <div className="text-center md:text-left">
-                            <div className="text-3xl font-bold mb-1">99.9%</div>
-                            <div className="text-sm text-gray-400">Success Rate</div>
-                        </div>
-                    </div>
-                </div>
+        <footer className="bg-gray-950 text-gray-300 pt-12 pb-6 mt-auto relative overflow-hidden border-t border-gray-900" style={{ fontFamily: "'Inter', sans-serif" }}>
+            {/* Background glowing effects for premium feel */}
+            <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary-900/10 rounded-full blur-[120px] pointer-events-none"></div>
+            <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-accent-900/10 rounded-full blur-[120px] pointer-events-none"></div>
 
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-12 border-t border-gray-800 pt-16">
-                    <div className="space-y-6">
-                        <Link href="/" className="flex items-center gap-2">
-                            <div className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center overflow-hidden border border-gray-700">
-                                <GraduationCap className="w-5 h-5 text-white" />
+            <div className="container mx-auto px-6 relative z-10">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-12 xl:gap-8">
+                    {/* Brand & Socials */}
+                    <div className="lg:col-span-4 space-y-8">
+                        <Link href="/" className="flex items-center gap-3 group">
+                            <div className="w-12 h-12 rounded-xl overflow-hidden border border-gray-800 shadow-xl group-hover:border-primary-500/50 transition-all duration-300">
+                                <img
+                                    src="https://play-lh.googleusercontent.com/APeEZa4FLR80Q2huR4dQmpElLaBz_jw7kkkpFF38Kjm6Y_ehZjg3XIqH_8Vvo0WZBg"
+                                    alt="Last Moment Tuitions Logo"
+                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                                />
                             </div>
-                            <span className="text-xl font-bold text-white">Last Moment Tuitions</span>
+                            <span className="text-xl font-extrabold text-white tracking-tight">
+                                Last Moment Tuitions
+                            </span>
                         </Link>
-                        <p className="text-gray-400 text-sm leading-relaxed">
-                            Aliquam rhoncus ligula est, vel facilisis ligula tincidunt ac. Vivamus et sem ac nulla tincidunt.
+                        <p className="text-gray-400 text-sm leading-relaxed max-w-sm">
+                            Empowering students with high-quality, practical learning. From engineering to placements, we help you ace your exams and career with ease.
                         </p>
-                        <div className="flex gap-4">
-                            <a href="#" className="w-10 h-10 bg-gray-800 rounded-md flex items-center justify-center text-gray-400 hover:bg-primary-500 hover:text-white transition-colors"><Facebook className="w-5 h-5" /></a>
-                            <a href="#" className="w-10 h-10 bg-gray-800 rounded-md flex items-center justify-center text-gray-400 hover:bg-primary-500 hover:text-white transition-colors"><Twitter className="w-5 h-5" /></a>
-                            <a href="#" className="w-10 h-10 bg-gray-800 rounded-md flex items-center justify-center text-gray-400 hover:bg-primary-500 hover:text-white transition-colors"><Instagram className="w-5 h-5" /></a>
-                            <a href="#" className="w-10 h-10 bg-gray-800 rounded-md flex items-center justify-center text-gray-400 hover:bg-primary-500 hover:text-white transition-colors"><Linkedin className="w-5 h-5" /></a>
-                            <a href="#" className="w-10 h-10 bg-gray-800 rounded-md flex items-center justify-center text-gray-400 hover:bg-primary-500 hover:text-white transition-colors"><Youtube className="w-5 h-5" /></a>
+
+                        <div className="flex flex-wrap gap-3 pt-2 justify-center lg:justify-start">
+                            <a href="mailto:lastmomenttuitions@gmail.com" className="w-10 h-10 bg-gray-900 border border-gray-800 rounded-[5px] flex items-center justify-center text-gray-400 hover:bg-primary-500 hover:text-white hover:border-primary-500 transition-all duration-300 shadow-sm hover:shadow-primary-500/25">
+                                <Mail className="w-4 h-4" />
+                            </a>
+                            <a href="https://wa.me/+917038604912" target="_blank" rel="noopener noreferrer" className="w-10 h-10 bg-gray-900 border border-gray-800 rounded-[5px] flex items-center justify-center text-gray-400 hover:bg-[#25D366] hover:text-white hover:border-[#25D366] transition-all duration-300 shadow-sm hover:shadow-[#25D366]/25">
+                                <MessageCircle className="w-4 h-4" />
+                            </a>
+                            <a href="https://www.instagram.com/lastmomenttuition" target="_blank" rel="noopener noreferrer" className="w-10 h-10 bg-gray-900 border border-gray-800 rounded-[5px] flex items-center justify-center text-gray-400 hover:bg-gradient-to-tr hover:from-yellow-500 hover:via-pink-500 hover:to-purple-500 hover:text-white hover:border-transparent transition-all duration-300 shadow-sm hover:shadow-pink-500/25">
+                                <Instagram className="w-4 h-4" />
+                            </a>
+                            <a href="https://www.linkedin.com/in/last-moment-tuitions/" target="_blank" rel="noopener noreferrer" className="w-10 h-10 bg-gray-900 border border-gray-800 rounded-[5px] flex items-center justify-center text-gray-400 hover:bg-[#0A66C2] hover:text-white hover:border-[#0A66C2] transition-all duration-300 shadow-sm hover:shadow-[#0A66C2]/25">
+                                <Linkedin className="w-4 h-4" />
+                            </a>
+                            <a href="https://www.youtube.com/@Lastmomenttuitions" target="_blank" rel="noopener noreferrer" className="w-10 h-10 bg-gray-900 border border-gray-800 rounded-[5px] flex items-center justify-center text-gray-400 hover:bg-[#FF0000] hover:text-white hover:border-[#FF0000] transition-all duration-300 shadow-sm hover:shadow-[#FF0000]/25">
+                                <Youtube className="w-4 h-4" />
+                            </a>
                         </div>
                     </div>
 
-                    <div>
-                        <h4 className="text-lg font-bold mb-6 text-white">Quick Links</h4>
-                        <ul className="space-y-3 text-sm text-gray-400">
-                            <li><Link href="#" className="hover:text-primary-500 transition-colors">About</Link></li>
-                            <li><Link href="#" className="hover:text-primary-500 transition-colors">Become Instructor</Link></li>
-                            <li><Link href="#" className="hover:text-primary-500 transition-colors">Contact</Link></li>
-                            <li><Link href="#" className="hover:text-primary-500 transition-colors">Career</Link></li>
-                        </ul>
+                    {/* Quick Links Group */}
+                    <div className="lg:col-span-5 flex justify-center w-full">
+                        <div className="grid grid-cols-3 sm:grid-cols-4 gap-4 sm:gap-8 text-center w-full xl:w-11/12 lg:mx-auto">
+                            <div className="space-y-5">
+                                <h4 className="text-white font-bold tracking-wide uppercase text-[10px] sm:text-xs">Courses</h4>
+                                <ul className="space-y-3">
+                                    {['Engineering', 'Placement', 'Company', 'Entrance', 'Government'].map((item) => (
+                                        <li key={item}>
+                                            <Link href="#" className="text-xs sm:text-sm text-gray-400 hover:text-primary-400 hover:translate-x-1 inline-block transition-transform duration-200">
+                                                {item}
+                                            </Link>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+
+                            <div className="space-y-5">
+                                <h4 className="text-white font-bold tracking-wide uppercase text-[10px] sm:text-xs">Company</h4>
+                                <ul className="space-y-3">
+                                    {['About', 'Team', 'Blog'].map((item) => (
+                                        <li key={item}>
+                                            <Link href="#" className="text-xs sm:text-sm text-gray-400 hover:text-primary-400 hover:translate-x-1 inline-block transition-transform duration-200">
+                                                {item}
+                                            </Link>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+
+                            <div className="space-y-5">
+                                <h4 className="text-white font-bold tracking-wide uppercase text-[10px] sm:text-xs">Support</h4>
+                                <ul className="space-y-3">
+                                    {['Help Center', 'FAQs', 'Contact'].map((item) => (
+                                        <li key={item}>
+                                            <Link href="#" className="text-xs sm:text-sm text-gray-400 hover:text-primary-400 hover:translate-x-1 inline-block transition-transform duration-200">
+                                                {item}
+                                            </Link>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+
+                            <div className="space-y-5 hidden sm:block">
+                                <h4 className="text-white font-bold tracking-wide uppercase text-[10px] sm:text-xs">Legal</h4>
+                                <ul className="space-y-3">
+                                    {['Terms', 'Privacy', 'Refund'].map((item) => (
+                                        <li key={item}>
+                                            <Link href="#" className="text-xs sm:text-sm text-gray-400 hover:text-primary-400 hover:translate-x-1 inline-block transition-transform duration-200">
+                                                {item}
+                                            </Link>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        </div>
                     </div>
 
-                    <div>
-                        <h4 className="text-lg font-bold mb-6 text-white">Support</h4>
-                        <ul className="space-y-3 text-sm text-gray-400">
-                            <li><Link href="#" className="hover:text-primary-500 transition-colors">Help Center</Link></li>
-                            <li><Link href="#" className="hover:text-primary-500 transition-colors">FAQs</Link></li>
-                            <li><Link href="#" className="hover:text-primary-500 transition-colors">Terms & Condition</Link></li>
-                            <li><Link href="#" className="hover:text-primary-500 transition-colors">Privacy Policy</Link></li>
-                        </ul>
-                    </div>
+                    {/* App Download */}
+                    <div className="lg:col-span-3 flex flex-col items-center lg:items-end w-full">
+                        <div className="space-y-6 w-full sm:max-w-xs xl:max-w-[220px]">
+                            <h4 className="text-white font-bold tracking-wide uppercase text-xs text-center lg:text-center w-full">Download our App</h4>
+                            <div className="flex flex-row lg:flex-col gap-3 justify-center lg:justify-center w-full">
+                                <a
+                                    href="https://apps.apple.com/in/iphone/search?term=last%20moment%20tuitions"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center justify-center lg:justify-start gap-4 bg-gray-900 border border-gray-800 px-4 lg:px-6 py-3 rounded-xl hover:bg-gray-800 hover:border-gray-700 transition-all duration-300 w-full lg:w-[200px] flex-1 lg:flex-none group shadow-sm hover:shadow-primary-500/10 mx-auto"
+                                >
+                                    <svg viewBox="0 0 384 512" className="w-6 h-6 lg:w-7 lg:h-7 text-white group-hover:scale-105 transition-transform shrink-0" fill="currentColor">
+                                        <path d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 49.9-11.4 69.5-34.3z" />
+                                    </svg>
+                                    <div className="flex flex-col text-left overflow-hidden">
+                                        <span className="text-[10px] sm:text-xs text-gray-400 font-medium leading-none mb-1">Download on</span>
+                                        <span className="text-xs lg:text-sm font-semibold text-white leading-none whitespace-nowrap">App Store</span>
+                                    </div>
+                                </a>
 
-                    <div>
-                        <h4 className="text-lg font-bold mb-6 text-white">Download App</h4>
-                        <div className="space-y-4">
-                            <Link href="#" className="flex items-center gap-3 bg-gray-800 px-4 py-3 rounded-lg hover:bg-gray-700 transition-colors w-full">
-                                <span className="text-2xl"></span>
-                                <div className="text-left">
-                                    <div className="text-xs text-gray-400">Download on the</div>
-                                    <div className="text-sm font-bold">App Store</div>
-                                </div>
-                            </Link>
-                            <Link href="#" className="flex items-center gap-3 bg-gray-800 px-4 py-3 rounded-lg hover:bg-gray-700 transition-colors w-full">
-                                <span className="text-2xl">▶</span>
-                                <div className="text-left">
-                                    <div className="text-xs text-gray-400">Get it on</div>
-                                    <div className="text-sm font-bold">Google Play</div>
-                                </div>
-                            </Link>
+                                <a
+                                    href="https://play.google.com/store/apps/details?id=co.jones.cjzgt&hl=en_IN"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center justify-center lg:justify-start gap-4 bg-gray-900 border border-gray-800 px-4 lg:px-6 py-3 rounded-xl hover:bg-gray-800 hover:border-gray-700 transition-all duration-300 w-full lg:w-[200px] flex-1 lg:flex-none group shadow-sm hover:shadow-primary-500/10 mx-auto"
+                                >
+                                    <img src="https://upload.wikimedia.org/wikipedia/commons/d/d0/Google_Play_Arrow_logo.svg" alt="Play Store Icon" className="w-5 h-5 lg:w-6 lg:h-6 group-hover:scale-105 transition-transform shrink-0" />
+                                    <div className="flex flex-col text-left overflow-hidden">
+                                        <span className="text-[10px] sm:text-xs text-gray-400 font-medium leading-none mb-1">Get it on</span>
+                                        <span className="text-xs lg:text-sm font-semibold text-white leading-none whitespace-nowrap">Play Store</span>
+                                    </div>
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div className="border-t border-gray-800 mt-16 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-gray-500">
-                    <p>© 2024 LMT. All rights reserved.</p>
+                {/* Bottom Bar */}
+                <div className="border-t border-gray-900 mt-4 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-gray-500">
+                    <p className="flex items-center gap-1">© {new Date().getFullYear()} Last Moment Tuitions. All rights reserved.</p>
                     <div className="flex gap-6">
-                        <Link href="#" className="hover:text-white transition-colors">English</Link>
-                        <Link href="#" className="hover:text-white transition-colors">USD</Link>
+                        <Link href="#" className="hover:text-white transition-colors">Privacy Policy</Link>
+                        <Link href="#" className="hover:text-white transition-colors">Terms of Service</Link>
                     </div>
                 </div>
-            </div >
-        </footer >
+            </div>
+        </footer>
     );
 }
 

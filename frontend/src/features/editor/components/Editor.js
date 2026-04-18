@@ -153,6 +153,23 @@ export function Editor({ pageId }) {
         };
 
         fetchPage();
+        
+        // ── Selection Logic ───────────────────────────────────────────────
+        editor.on('component:selected', (model) => {
+            if (model && model.get('type') === 'template-ref') {
+                // Ensure the "Settings" section is visible in our custom sidebar
+                const traitsContainer = document.getElementById('traits-container');
+                if (traitsContainer) {
+                    traitsContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    // Visual feedback: highlight the Settings header briefly
+                    const settingsHeader = traitsContainer.previousElementSibling;
+                    if (settingsHeader) {
+                        settingsHeader.style.backgroundColor = '#1e40af';
+                        setTimeout(() => settingsHeader.style.backgroundColor = '', 1000);
+                    }
+                }
+            }
+        });
 
         return () => {
             isMounted = false;
@@ -243,7 +260,10 @@ export function Editor({ pageId }) {
             {/* Toolbar */}
             <div className={`bg-gray-900 border-b border-gray-800 text-white p-3 flex justify-between items-center z-50 relative ${isPreview ? 'hidden' : ''}`}>
                 <div className="flex items-center gap-4">
-                    <Link href="/admin/pages" className="text-gray-400 hover:text-white transition-colors">
+                    <Link 
+                        href={pageDetails?.type === 'template' ? '/admin/templates' : '/admin/pages'} 
+                        className="text-gray-400 hover:text-white transition-colors"
+                    >
                         <ArrowLeft className="w-5 h-5" />
                     </Link>
                     <div className="flex flex-col">

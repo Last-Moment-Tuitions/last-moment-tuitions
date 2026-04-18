@@ -292,9 +292,10 @@ export function CategoryCard({ icon, label, count, color, className }) {
     );
 }
 
-export function CourseCard({ id, image, category, title, rating, students, price, oldPrice, instructor, className }) {
+export function CourseCard({ id, image, category, title, rating, students, price, oldPrice, instructor, href, className }) {
+    const cardHref = href || `/courses/${id}`;
     return (
-        <Link href={`/courses/${id}`} className={cn("block bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300 group", className)}>
+        <Link href={cardHref} className={cn("block bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300 group", className)}>
             <div className="relative h-48 overflow-hidden">
                 <img src={image} alt={title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
                 <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-md text-xs font-bold text-primary-700 uppercase tracking-wide">

@@ -393,26 +393,6 @@ const WHY_JOIN_US_HTML = `
 
 // ─── Testimonials HTML ───────────────────────────────────────────────────────
 const buildTestimonialsHTML = () => {
-    let cardsHTML = '';
-    for (let i = 1; i <= 6; i++) {
-        cardsHTML += `
-            <div data-testimonial style="flex:0 0 320px; background:#fff; border-radius:16px; padding:32px; box-shadow:0 10px 25px rgba(0,0,0,0.05); border:1px solid #f1f5f9; display:flex; flex-direction:column; min-height:280px; scroll-snap-align:start;">
-                <div style="display:flex; align-items:center; gap:12px; margin-bottom:24px;">
-                    <img data-var-src="test_t${i}_logo" src="https://placehold.co/40x40/475569/ffffff?text=C${i}" style="width:32px; height:32px; object-fit:contain; border-radius:50%;" />
-                    <span style="font-weight:700; font-size:18px; color:#334155; text-transform:uppercase;" data-var="test_t${i}_company">Company ${i}</span>
-                </div>
-                <p style="font-size:15px; color:#475569; line-height:1.6; flex:1; margin:0 0 32px 0;" data-var="test_t${i}_desc">Aliquam ridiculus mi porta habitant vulputate rhoncus, mattis amet enim. Sit purus venenatis velit semper lectus sed ornare quam nulla.</p>
-                <div style="display:flex; align-items:center; gap:16px;">
-                    <img data-var-src="test_t${i}_avatar" src="https://i.pravatar.cc/60?img=${i + 10}" style="width:48px; height:48px; border-radius:50%; object-fit:cover;" />
-                    <div>
-                        <div style="font-weight:700; font-size:15px; color:#1e293b;" data-var="test_t${i}_name">John Doe ${i}</div>
-                        <div style="font-size:13px; color:#64748b;" data-var="test_t${i}_role">Co-founder</div>
-                    </div>
-                </div>
-            </div>
-        `;
-    }
-
     return `
     <section class="testimonial-section" style="background-color:#FDFBF7; padding:80px 0; font-family:'Inter', 'Segoe UI', sans-serif; overflow:hidden;">
         <style>
@@ -438,9 +418,9 @@ const buildTestimonialsHTML = () => {
             <div style="position:relative; width:100%; padding-bottom:32px;">
                 <div style="position:absolute; top:40px; left:-100vw; right:-100vw; bottom:0; background:#ecfdf5; z-index:0;"></div>
                 
-                <!-- Cards Container (Scrollable) -->
+                <!-- Cards Container (Dynamically Populated) -->
                 <div class="test-track" style="position:relative; z-index:1; display:flex; gap:24px; overflow-x:auto; padding:20px 4px 40px 4px; scroll-behavior:smooth;">
-                    ${cardsHTML}
+                    <!-- Testimonials will be injected here by the editor -->
                 </div>
             </div>
 
@@ -641,6 +621,34 @@ const SECTIONS: SectionDefinition[] = [
             cta1_desc: 'Egestas fringilla aliquam leo, habitasse arcu varius lorem elit. Neque pellentesque donec et tellus ac varius tortor, bibendum. Nulla felis ac turpis at amet. Purus malesuada placerat arcu at enim elit in accumsan.',
             cta1_btn_text: 'Sign Up Free',
             cta1_btn_link: '#',
+        },
+    },
+    {
+        slug: 'lmt-testimonial-card',
+        title: 'Single Testimonial Card',
+        category: 'testimonials',
+        html: `
+            <div style="background:#fff; border-radius:16px; padding:32px; box-shadow:0 10px 25px rgba(0,0,0,0.05); border:1px solid #f1f5f9; display:flex; flex-direction:column; min-height:280px; max-width:400px; margin:20px auto; font-family:'Inter', sans-serif;">
+                <div style="display:flex; align-items:center; gap:12px; margin-bottom:24px;">
+                    <img data-var-src="testimonial_logo" src="https://placehold.co/40" style="width:32px; height:32px; object-fit:contain; border-radius:50%;" />
+                    <span style="font-weight:700; font-size:18px; color:#334155; text-transform:uppercase;" data-var="testimonial_company">Company</span>
+                </div>
+                <p style="font-size:15px; color:#475569; line-height:1.6; flex:1; margin:0 0 32px 0;" data-var="testimonial_desc">Aliquam ridiculus mi porta habitant vulputate rhoncus, mattis amet enim. Sit purus venenatis velit semper lectus sed ornare quam nulla.</p>
+                <div style="display:flex; align-items:center; gap:16px;">
+                    <img data-var-src="testimonial_avatar" src="https://i.pravatar.cc/60" style="width:48px; height:48px; border-radius:50%; object-fit:cover;" />
+                    <div>
+                        <div style="font-weight:700; font-size:15px; color:#1e293b;" data-var="testimonial_name">John Doe</div>
+                        <div style="font-size:13px; color:#64748b;" data-var="testimonial_role">Student / Learner</div>
+                    </div>
+                </div>
+            </div>
+        `.trim(),
+        css: '',
+        defaultProps: {
+            testimonial_company: 'Success Story',
+            testimonial_desc: 'Enter the testimonial message here...',
+            testimonial_name: 'Student Name',
+            testimonial_role: 'Learner',
         },
     },
 ];

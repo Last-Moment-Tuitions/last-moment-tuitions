@@ -28,6 +28,14 @@ export class TestimonialsService {
             .exec();
     }
 
+    async findOne(id: string): Promise<Testimonial> {
+        const testimonial = await this.testimonialModel.findById(id).exec();
+        if (!testimonial) {
+            throw new NotFoundException(`Testimonial with ID ${id} not found`);
+        }
+        return testimonial;
+    }
+
     async update(id: string, data: Partial<CreateTestimonialDto>): Promise<Testimonial> {
         const updated = await this.testimonialModel
             .findByIdAndUpdate(id, data, { new: true })

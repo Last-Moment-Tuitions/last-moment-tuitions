@@ -114,6 +114,17 @@ export const adminService = {
         return response.data;
     },
 
+    // Testimonials
+    getTestimonials: async (params = {}) => {
+        const response = await api.get('/testimonials', { params });
+        return response.data;
+    },
+
+    getTestimonial: async (id) => {
+        const response = await api.get(`/testimonials/${id}`);
+        return response.data;
+    },
+
     // Folders
     getFolders: async (params = {}) => {
         const response = await api.get('/admin/folders', { params });
