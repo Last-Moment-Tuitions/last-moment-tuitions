@@ -284,6 +284,8 @@ import { Button } from './ui';
 export function Footer() {
     return (
         <footer className="bg-gray-900 text-white pt-20 pb-10 mt-auto flex flex-col items-center">
+            {/* <footer className="bg-gray-900 text-white pt-20 pb-10 mt-auto"> */}
+            {/* <div className="container mx-auto px-4"> */}
             <div className="w-full max-w-[1440px] px-6 sm:px-10">
                 <div className="flex flex-col md:flex-row justify-between items-center mb-16 gap-8">
                     <div className="md:w-1/2">

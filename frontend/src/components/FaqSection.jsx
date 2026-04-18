@@ -27,6 +27,7 @@ export function FaqSection() {
 
     return (
         <section className="py-24 bg-white overflow-hidden" id="faq">
+            {/* <div className="container mx-auto px-4"> */}
             <div className="w-full max-w-[1440px] mx-auto px-6 sm:px-10">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
                     {/* Left side: Illustration */}
