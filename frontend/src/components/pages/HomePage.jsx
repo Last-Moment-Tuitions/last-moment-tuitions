@@ -74,30 +74,33 @@ export default function HomePage() {
     const bestSellingCourses = [
         {
             image: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-            category: "DESIGN",
-            title: "The Complete 2024 Web Development Boot Camp",
+            category: "DEVELOPMENT",
+            title: "The Complete 2026 Web Development Boot Camp Course",
             rating: "4.9",
             students: "5.3k",
             price: "57.00",
-            instructor: "Kevin Gilbert"
+            instructor: "Kevin Gilbert",
+            href: "/course-checkout/web-development-bootcamp-2026"
         },
         {
             image: "https://images.unsplash.com/photo-1552664730-d307ca884978?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-            category: "DEVELOPMENT",
+            category: "FINANCE",
             title: "Python for Finance: Investment Fundamentals & Data Analytics",
             rating: "4.7",
             students: "8.2k",
             price: "45.00",
-            instructor: "Sarah Johnson"
+            instructor: "Sarah Johnson",
+            href: "/course-checkout/python-finance-data-analytics"
         },
         {
             image: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-            category: "BUSINESS",
+            category: "DATA SCIENCE",
             title: "Machine Learning A-Z™: Hands-On Python & R In Data Science",
             rating: "4.8",
             students: "12k",
             price: "62.00",
-            instructor: "David Brown"
+            instructor: "David Brown",
+            href: "/course-checkout/machine-learning-python-r"
         },
         {
             image: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
@@ -106,7 +109,8 @@ export default function HomePage() {
             rating: "4.6",
             students: "9.1k",
             price: "39.00",
-            instructor: "Emily Davis"
+            instructor: "Emily Davis",
+            href: "/course-checkout/digital-marketing-complete"
         }
     ];
 
@@ -158,7 +162,8 @@ export default function HomePage() {
             students: "1.2k",
             price: "35.00",
             oldPrice: "70.00",
-            instructor: "John Doe"
+            instructor: "John Doe",
+            href: "/course-checkout/ux-design-essentials"
         },
         {
             image: "https://images.unsplash.com/photo-1551434678-e076c223a692?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
@@ -168,17 +173,19 @@ export default function HomePage() {
             students: "8.5k",
             price: "49.00",
             oldPrice: "99.00",
-            instructor: "Jane Smith"
+            instructor: "Jane Smith",
+            href: "/course-checkout/react-complete-guide"
         },
         {
             image: "https://images.unsplash.com/photo-1515378791036-0648a3ef77b2?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
             category: "BUSINESS",
-            title: "The Complete Financial Analyst Course 2024",
+            title: "The Complete Financial Analyst Course 2026",
             rating: "4.7",
             students: "3.3k",
             price: "42.00",
             oldPrice: "84.00",
-            instructor: "Mike Wilson"
+            instructor: "Mike Wilson",
+            href: "/course-checkout/financial-analyst-2026"
         },
         {
             image: "https://images.unsplash.com/photo-1542744173-8e7e53415bb0?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
@@ -188,7 +195,8 @@ export default function HomePage() {
             students: "6.7k",
             price: "38.00",
             oldPrice: "76.00",
-            instructor: "Sarah Lee"
+            instructor: "Sarah Lee",
+            href: "/course-checkout/social-media-marketing"
         }
     ];
 
@@ -306,7 +314,7 @@ export default function HomePage() {
             </section>
 
             {/* Feature Courses */}
-            <section className="py-12">
+            {/* <section className="py-12">
                 <div className="container mx-auto px-4">
                     <div className="text-center mb-10">
                         <FadeIn>
@@ -323,7 +331,7 @@ export default function HomePage() {
                         ))}
                     </StaggerContainer>
                 </div>
-            </section>
+            </section> */}
 
             {/* Recently Added Courses */}
             <section className="py-12 bg-gray-50">
