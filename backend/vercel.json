@@ -25,6 +25,10 @@
                     "value": "https://prepfocus.lastmomenttuitions.com"
                 },
                 {
+                    "key": "Access-Control-Allow-Origin",
+                    "value": "https://last-moment-tuitions-7485.vercel.app"
+                },
+                {
                     "key": "Access-Control-Allow-Methods",
                     "value": "GET,OPTIONS,PATCH,DELETE,POST,PUT"
                 },
