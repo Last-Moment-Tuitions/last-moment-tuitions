@@ -21,7 +21,7 @@ export class Course {
   @Prop({ default: '', trim: true })
   topic: string;
 
-  @Prop({ default: '', trim: true })
+  @Prop({ default: 'english', trim: true })
   language: string;
 
   @Prop({ default: '', trim: true })
