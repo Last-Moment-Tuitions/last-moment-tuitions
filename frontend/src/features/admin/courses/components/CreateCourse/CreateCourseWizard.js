@@ -26,9 +26,10 @@ export default function CreateCourseWizard({ initialData }) {
 
     const handleNext = async () => {
         // Auto-save before moving to next step
-        await handleSave(false);
+        const savedCourse = await handleSave(false);
 
-        if (currentStep < steps.length - 1) {
+        // Only proceed if save was successful
+        if (savedCourse && currentStep < steps.length - 1) {
             setCurrentStep(prev => prev + 1);
         }
     };

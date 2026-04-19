@@ -299,28 +299,28 @@ export function useCourseForm(initialData = null) {
         return findNode(course.content, activeItemId);
     };
 
-    // Transform camelCase form state → snake_case for backend API
+    // Transform form state → camelCase for backend API (matches DTOs)
     const toApiFormat = () => ({
         title: course.title || 'Untitled Course',
         subtitle: course.subtitle || '',
         category: course.category || 'Uncategorized',
-        sub_category: course.subCategory || null,
+        subCategory: course.subCategory || null,
         topic: course.topic || '',
         level: course.level || 'beginner',
         language: course.language || '',
-        subtitle_language: course.subtitleLanguage || '',
+        subtitleLanguage: course.subtitleLanguage || '',
         duration: course.duration || '',
         thumbnail: course.thumbnail || '',
         trailer: course.trailer || '',
         descriptions: course.descriptions || course.description || '',
-        what_to_learn: course.whatToLearn || [],
-        target_audience: course.targetAudience || [],
+        whatToLearn: course.whatToLearn || [],
+        targetAudience: course.targetAudience || [],
         requirements: course.requirements || [],
         tags: course.tags || [],
-        welcome_message: course.welcomeMessage || '',
-        congratulations_message: course.congratulationsMessage || '',
+        welcomeMessage: course.welcomeMessage || '',
+        congratulationsMessage: course.congratulationsMessage || '',
         price: course.price || 0,
-        original_price: course.originalPrice || 0,
+        originalPrice: course.originalPrice || 0,
         status: course.status || 'draft',
         instructor: course.instructor || null,
     });
