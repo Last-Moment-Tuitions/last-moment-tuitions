@@ -99,7 +99,7 @@ npm run build
 
 ---
 
-## 📂 Directory Structure
+## 📂 Directory Structure    
 ```
 root/
 ├── frontend/             # Next.js App
