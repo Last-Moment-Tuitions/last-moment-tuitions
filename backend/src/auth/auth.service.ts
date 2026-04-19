@@ -333,6 +333,20 @@ export class AuthService {
             throw new BadRequestException('User not found');
         }
 
+        // 1. Strong Password Validation (Regex)
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*])(?=.{8,})/;
+        if (!passwordRegex.test(newPassword)) {
+            throw new BadRequestException('Password must be 8+ characters with uppercase, lowercase, number, and special character (!@#$%^&*)');
+        }
+
+        // 2. Check if same as previous password
+        if (user.passwordHash) {
+            const isSameAsOld = await argon2.verify(user.passwordHash, newPassword);
+            if (isSameAsOld) {
+                throw new BadRequestException('New password cannot be the same as your old password');
+            }
+        }
+
         const hashedPassword = await argon2.hash(newPassword);
         await this.usersService.updateById(user._id.toString(), {
             passwordHash: hashedPassword
