@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, OnModuleInit, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { CreateCourseDto } from './dto/create-course.dto';
@@ -14,13 +14,29 @@ import { PDFDocument, rgb, degrees } from 'pdf-lib';
 import * as crypto from 'crypto';
 
 @Injectable()
-export class CoursesService {
+export class CoursesService implements OnModuleInit {
+  private readonly logger = new Logger(CoursesService.name);
+
   constructor(
     @InjectModel(Course.name) private courseModel: Model<CourseDocument>,
     @InjectModel(CourseContent.name) private courseContentModel: Model<CourseContentDocument>,
     @InjectModel(Enrollment.name) private enrollmentModel: Model<EnrollmentDocument>,
     private readonly uploadsService: UploadsService,
   ) {}
+
+  async onModuleInit() {
+    // Drop the stale text index that was created without language_override: 'none'.
+    // MongoDB uses the `language` field by default to determine text-search language.
+    // Our Course schema has a `language` field (e.g. "English") which defaults to ''
+    // causing MongoServerError 17262 on insert. syncIndexes() drops the old index
+    // and recreates it with language_override: 'none' as defined in course.entity.ts.
+    try {
+      await this.courseModel.syncIndexes();
+      this.logger.log('Course indexes synced successfully');
+    } catch (err) {
+      this.logger.warn(`Course index sync failed: ${err.message}`);
+    }
+  }
 
   async create(createCourseDto: CreateCourseDto, userId: string) {
     const createdCourse = new this.courseModel({
