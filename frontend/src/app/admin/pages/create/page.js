@@ -39,7 +39,7 @@ function CreatePageContent() {
                     const templates = res?.data || res || [];
                     setAvailableTemplates(templates);
                 })
-                .catch(err =>);
+                .catch(err => { });
         }
     }, [searchParams]);
 
