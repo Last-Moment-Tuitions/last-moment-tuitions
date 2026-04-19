@@ -25,10 +25,8 @@ export function AuthProvider({ children, initialUser = null }) {
         try {
             // First, try to load user from localStorage for instant UI update
             const storedUser = localStorage.getItem('user');
-            console.log('[AuthContext] localStorage user:', storedUser);
             if (storedUser) {
                 const parsedUser = JSON.parse(storedUser);
-                console.log('[AuthContext] Parsed user:', parsedUser);
                 setUser(parsedUser);
             }
 
@@ -57,7 +55,6 @@ export function AuthProvider({ children, initialUser = null }) {
                 localStorage.removeItem('user');
             }
         } catch (error) {
-            console.error('Session check failed', error);
             setUser(null);
             localStorage.removeItem('user');
         } finally {
@@ -85,7 +82,6 @@ export function AuthProvider({ children, initialUser = null }) {
                 headers
             });
         } catch (error) {
-            console.error('Logout failed', error);
         }
         setUser(null);
         localStorage.removeItem('user');

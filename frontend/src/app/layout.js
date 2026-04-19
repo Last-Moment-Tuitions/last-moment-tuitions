@@ -13,6 +13,7 @@ export const metadata = {
 };
 
 import SessionMonitor from '@/components/SessionMonitor';
+import NavigationProgress from '@/components/NavigationProgress';
 
 import { cookies } from 'next/headers';
 import API_BASE_URL from '@/lib/config';
@@ -38,7 +39,6 @@ async function getUserOnServer() {
       return responseData.details || responseData;
     }
   } catch (error) {
-    console.error('SSR Auth Check Failed', error);
   }
   return null;
 }
@@ -51,6 +51,7 @@ export default async function RootLayout({ children }) {
       <body suppressHydrationWarning>
         <AuthProvider initialUser={initialUser}>
           <ToastProvider>
+            <NavigationProgress />
             <SessionMonitor />
             {children}
           </ToastProvider>

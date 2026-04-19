@@ -59,7 +59,6 @@ export default function CoursesPage() {
             setCourses(transformedCourses);
             setError(null);
         } catch (err) {
-            console.error('Failed to fetch courses:', err);
             setError('Failed to load courses. Please try again later.');
             setCourses([]);
         } finally {

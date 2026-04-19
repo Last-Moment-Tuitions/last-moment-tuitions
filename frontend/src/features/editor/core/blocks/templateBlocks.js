@@ -43,7 +43,6 @@ export const loadTemplateBlocks = async (editor) => {
         const templates = Array.isArray(json) ? json : (json.data || []);
 
         if (templates.length === 0) {
-            console.warn('[templateBlocks] No templates found.');
             return;
         }
 
@@ -90,9 +89,7 @@ export const loadTemplateBlocks = async (editor) => {
             });
         });
 
-        console.log(`[templateBlocks] ✅ Registered ${sections.length} section block(s).`);
 
     } catch (err) {
-        console.error('[templateBlocks] Error loading template blocks:', err);
     }
 };

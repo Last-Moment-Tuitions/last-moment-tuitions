@@ -34,6 +34,7 @@ export class CoursesService {
       courseId: savedCourse._id,
       version: 1,
       content: [],
+      isActive: true,
     });
     await courseContent.save();
 
@@ -233,15 +234,27 @@ export class CoursesService {
     // Attempt to extract the S3 key from the contentUrl assuming it's an S3 public URL or just the key
     // Example: https://bucket.s3.region.amazonaws.com/documents/xxx.pdf => documents/xxx.pdf
     let key = contentUrl;
-    if (contentUrl.includes('amazonaws.com/')) {
-        key = contentUrl.split('amazonaws.com/')[1];
-    } else if (contentUrl.includes('?')) {
-        // If it's a signed url
-        const u = new URL(contentUrl);
-        key = u.pathname.substring(1); 
+    try {
+        if (contentUrl.includes('amazonaws.com/')) {
+            key = contentUrl.split('amazonaws.com/')[1];
+        } 
+        
+        if (key.includes('?')) {
+            // Remove query parameters if it's a signed url or has other params
+            key = key.split('?')[0];
+        }
+
+        // If it's a full URL and we still have the protocol, try to extract just the path
+        if (key.startsWith('http')) {
+            const u = new URL(key);
+            key = u.pathname.substring(1); 
+        }
+    } catch (e) {
+        // Fallback to original contentUrl if URL parsing fails
+        key = contentUrl;
     }
 
-    // Decode URL-encoded keys
+    // Decode URL-encoded keys (important for filenames with spaces/special characters)
     key = decodeURIComponent(key);
 
     const pdfBuffer = await this.uploadsService.getFileBuffer(key);

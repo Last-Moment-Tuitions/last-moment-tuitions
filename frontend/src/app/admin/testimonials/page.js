@@ -36,7 +36,6 @@ export default function TestimonialAdmin() {
 
             setTestimonials(actualData);
         } catch (error) {
-            console.error("Load Error:", error);
             setError(error.message || "Failed to load testimonials");
             toast.error(error.message || "Failed to load testimonials");
             setTestimonials([]);

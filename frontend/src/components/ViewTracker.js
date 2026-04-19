@@ -18,7 +18,6 @@ export default function ViewTracker({ pageId }) {
                 // We'll add a simple check to avoid counting the same session repeatedly if needed later.
                 await axios.patch(`${API_BASE_URL}/pages/${pageId}/view`);
             } catch (error) {
-                console.error('Failed to track view:', error);
             }
         };
 

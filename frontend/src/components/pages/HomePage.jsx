@@ -47,7 +47,6 @@ export default function HomePage() {
                 const data = await testimonialService.getByPage('Homepage');
                 setTestimonials(data);
             } catch (error) {
-                console.error("Failed to fetch testimonials:", error);
             } finally {
                 setLoading(false);
             }

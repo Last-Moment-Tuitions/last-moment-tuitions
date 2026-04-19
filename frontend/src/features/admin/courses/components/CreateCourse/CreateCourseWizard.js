@@ -26,9 +26,10 @@ export default function CreateCourseWizard({ initialData }) {
 
     const handleNext = async () => {
         // Auto-save before moving to next step
-        await handleSave(false);
+        const savedCourse = await handleSave(false);
 
-        if (currentStep < steps.length - 1) {
+        // Only proceed if save was successful
+        if (savedCourse && currentStep < steps.length - 1) {
             setCurrentStep(prev => prev + 1);
         }
     };
@@ -75,7 +76,6 @@ export default function CreateCourseWizard({ initialData }) {
 
             return savedCourse;
         } catch (error) {
-            console.error('Failed to save course:', error);
             alert('Failed to save course. Please try again.');
             return null;
         } finally {
@@ -99,7 +99,6 @@ export default function CreateCourseWizard({ initialData }) {
             alert('Course published successfully!');
             router.push('/admin/courses');
         } catch (error) {
-            console.error('Failed to publish course:', error);
             alert('Failed to publish course. Please try again.');
         } finally {
             setSaving(false);

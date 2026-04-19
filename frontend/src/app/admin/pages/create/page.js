@@ -39,7 +39,7 @@ function CreatePageContent() {
                     const templates = res?.data || res || [];
                     setAvailableTemplates(templates);
                 })
-                .catch(err => console.error("Failed to fetch templates", err));
+                .catch(err =>);
         }
     }, [searchParams]);
 
@@ -84,7 +84,6 @@ function CreatePageContent() {
                 }, 300);
             }
         } catch (error) {
-            console.error(error);
             toast.error(error.message || 'Failed to create page');
             setLoading(false);
         }

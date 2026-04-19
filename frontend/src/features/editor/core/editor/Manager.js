@@ -78,7 +78,6 @@ export const initEditor = (pageId) => {
                     // If we pass an unsupported element, CKEditor throws an error and breaks the editor.
                     const unsupported = ['span', 'a', 'b', 'i', 'strong', 'em', 'small', 'code'];
                     if (el.tagName && unsupported.includes(el.tagName.toLowerCase())) {
-                        console.warn(`CKEditor blocked on <${el.tagName.toLowerCase()}> to prevent crash. Falling back to native contentEditable.`);
                         el.contentEditable = true;
                         if (rte && rte.focus) rte.focus();
                         return { 
@@ -148,7 +147,6 @@ export const initEditor = (pageId) => {
                     input.value = trait.getTarget().get(trait.getName()) || '';
                 } catch (err) {
                     input.innerHTML = '<option value="">Error loading</option>';
-                    console.error('Failed to load trait options', err);
                 }
             };
 
@@ -656,7 +654,6 @@ export const initEditor = (pageId) => {
                                 }
                             }
                         } catch (e) {
-                            console.error("Error clearing old CSS", e);
                         }
                     }
 
@@ -667,7 +664,6 @@ export const initEditor = (pageId) => {
                             const parsedCss = editor.Parser.parseCss(newCss);
                             editor.CssComposer.getAll().add(parsedCss);
                         } catch (e) {
-                            console.error("GrapesJS CSS parsing error", e);
                         }
                     }
 
@@ -675,7 +671,6 @@ export const initEditor = (pageId) => {
                         try {
                             newComp.set('script', newJs);
                         } catch (e) {
-                            console.error("Error setting script", e);
                             newComp.set('script', newJs);
                         }
                     } else {

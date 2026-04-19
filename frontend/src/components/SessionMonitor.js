@@ -64,10 +64,6 @@ export default function SessionMonitor() {
             const timeSinceLastActivity = now - lastActivity.current;
 
             // Debugging (Remove in Prod)
-            console.log(`[SessionMonitor] Checking... 
-                Last Server: ${Math.round(timeSinceLastServer / 1000)}s ago
-                Last Activity: ${Math.round(timeSinceLastActivity / 1000)}s ago
-            `);
 
             // Only care if we are in the "Danger Zone" (last 15 minutes of session)
             if (timeSinceLastServer >= REFRESH_THRESHOLD) {
@@ -78,15 +74,12 @@ export default function SessionMonitor() {
                         await checkUser(); // This calls /auth/me which refreshes the Redis TTL
                         lastServerInteraction.current = Date.now(); // Reset server timer
                     } catch (err) {
-                        console.error('Failed to extend session', err);
                     }
                 } else {
                     // Check if actually expired
                     if (timeSinceLastServer >= SESSION_TIMEOUT) {
-                        console.log('[SessionMonitor] User idle for > 15m. Logging out...');
                         await logout();
                     } else {
-                        console.warn(`[SessionMonitor] User idle. Will logout in ${Math.round((SESSION_TIMEOUT - timeSinceLastServer) / 60000)} minutes.`);
                     }
                 }
             }
