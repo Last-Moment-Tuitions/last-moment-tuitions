@@ -4,16 +4,23 @@ import Link from 'next/link';
 import { useState, useEffect, useRef } from 'react';
 import { Plus, BookOpen, MoreVertical, Globe, Lock, Trash2, Edit3 } from 'lucide-react';
 import { Button } from '@/components/ui';
-import { coursesApi } from '@/services/courses.api';
+import { 
+    useCourses, 
+    usePublishCourse, 
+    useDeleteCourse, 
+    useUpdateCourse 
+} from '@/hooks/api/useCourses';
 
 export default function CoursesPage() {
-    const [courses, setCourses] = useState([]);
-    const [loading, setLoading] = useState(true);
     const [openMenu, setOpenMenu] = useState(null); // course._id or null
 
-    useEffect(() => {
-        fetchCourses();
-    }, []);
+    // TanStack Query
+    const { data: response, isLoading: loading } = useCourses();
+    const courses = response?.data || [];
+
+    const publishMutation = usePublishCourse();
+    const updateMutation = useUpdateCourse();
+    const deleteMutation = useDeleteCourse();
 
     // Close menu on outside click
     useEffect(() => {
@@ -24,29 +31,13 @@ export default function CoursesPage() {
         }
     }, [openMenu]);
 
-    const fetchCourses = async () => {
-        try {
-            setLoading(true);
-            const response = await coursesApi.getAllCourses();
-            setCourses(response?.data || []);
-        } catch (error) {
-        } finally {
-            setLoading(false);
-        }
-    };
-
     const handleStatusChange = async (courseId, newStatus) => {
         try {
             if (newStatus === 'published') {
-                await coursesApi.publishCourse(courseId);
+                await publishMutation.mutateAsync(courseId);
             } else {
-                // Set back to draft via update
-                await coursesApi.updateCourse(courseId, { status: 'draft' });
+                await updateMutation.mutateAsync({ id: courseId, data: { status: 'draft' } });
             }
-            // Update local state immediately
-            setCourses(prev =>
-                prev.map(c => c._id === courseId ? { ...c, status: newStatus } : c)
-            );
         } catch (error) {
             alert('Failed to update course status. Please try again.');
         }
@@ -56,8 +47,7 @@ export default function CoursesPage() {
     const handleDelete = async (courseId) => {
         if (!confirm('Are you sure you want to delete this course? This action cannot be undone.')) return;
         try {
-            await coursesApi.deleteCourse(courseId);
-            setCourses(prev => prev.filter(c => c._id !== courseId));
+            await deleteMutation.mutateAsync(courseId);
         } catch (error) {
             alert('Failed to delete course. Please try again.');
         }

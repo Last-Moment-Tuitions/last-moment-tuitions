@@ -1,23 +1,48 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Button, Card, Input, Label, Badge } from '@/components/ui';
-import menuService from '@/services/menuService';
-import adminService from '@/services/adminService';
+import { 
+    useMenus, 
+    useCreateMenu, 
+    useUpdateMenu, 
+    useDeleteMenu, 
+    useActivateMenu 
+} from '@/hooks/api/useMenus';
+import { usePages } from '@/hooks/api/useAdmin';
 import { useToast } from '@/context/ToastContext';
 import { Plus, Trash2, Edit2, Save, MoveUp, MoveDown, ChevronRight, ChevronDown, CheckCircle, Circle } from 'lucide-react';
 
 export default function MenusAdminPage() {
     const { toast } = useToast();
-    const [menus, setMenus] = useState([]);
-    const [selectedMenu, setSelectedMenu] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [saving, setSaving] = useState(false);
-    const [pages, setPages] = useState([]); // Available pages for selector
+    const [selectedMenuId, setSelectedMenuId] = useState(null);
+
+    // TanStack Query
+    const { data: menus = [], isLoading: menusLoading } = useMenus();
+    const { data: pagesRaw } = usePages({ limit: 100, status: 'all' });
+    const pages = useMemo(() => pagesRaw?.data || pagesRaw || [], [pagesRaw]);
+
+    const createMutation = useCreateMenu();
+    const updateMutation = useUpdateMenu();
+    const deleteMutation = useDeleteMenu();
+    const activateMutation = useActivateMenu();
+
+    const selectedMenu = useMemo(() => {
+        if (!menus.length) return null;
+        if (selectedMenuId) return menus.find(m => m._id === selectedMenuId) || menus[0];
+        return menus.find(m => m.isActive) || menus[0];
+    }, [menus, selectedMenuId]);
+
+    const setSelectedMenu = (menu) => {
+        setSelectedMenuId(menu?._id);
+    };
+
+    const loading = menusLoading;
+    const saving = updateMutation.isPending;
 
     // Edit State
+    const [localItems, setLocalItems] = useState([]);
     const [editingPath, setEditingPath] = useState(null);
     const [editForm, setEditForm] = useState({ label: '', href: '', type: 'link' });
-    const [activating, setActivating] = useState(false);
     const [renaming, setRenaming] = useState(false);
     const [renameValue, setRenameValue] = useState('');
 
@@ -25,51 +50,20 @@ export default function MenusAdminPage() {
     const [newItem, setNewItem] = useState({ label: '', href: '', type: 'link', items: [] });
     const [activeParentPath, setActiveParentPath] = useState(null);
 
+    // Sync local items when selected menu changes
     useEffect(() => {
-        fetchMenus();
-        fetchPages();
-    }, []);
-
-    const fetchPages = async () => {
-        try {
-            const res = await adminService.getPages({ limit: 100, status: 'all' });
-            // Robustly handle both { data: [...] } and [...] response formats
-            const pagesData = res?.data || res;
-            setPages(Array.isArray(pagesData) ? pagesData : []);
-        } catch (error) {
+        if (selectedMenu) {
+            setLocalItems(JSON.parse(JSON.stringify(selectedMenu.items || [])));
+        } else {
+            setLocalItems([]);
         }
-    }
-
-    const fetchMenus = async () => {
-        try {
-            setLoading(true);
-            const data = await menuService.getAll();
-            setMenus(data);
-
-            // Refresh selected menu logic
-            if (selectedMenu) {
-                const refreshed = data.find(m => m._id === selectedMenu._id);
-                if (refreshed) setSelectedMenu(refreshed);
-                else setSelectedMenu(null); // Menu might have been deleted
-            } else if (data.length > 0) {
-                const active = data.find(m => m.isActive);
-                setSelectedMenu(active || data[0]);
-            } else {
-                setSelectedMenu(null);
-            }
-        } catch (error) {
-        } finally {
-            setLoading(false);
-        }
-    };
+    }, [selectedMenu?._id]);
 
     const handleCreateMenu = async () => {
         const name = prompt("Enter menu name (e.g., 'primary'):", "primary");
         if (!name) return;
         try {
-            const newMenu = await menuService.create({ name, items: [] });
-            setMenus([...menus, newMenu]);
-            setSelectedMenu(newMenu);
+            await createMutation.mutateAsync({ name, items: [] });
         } catch (error) {
             toast.error(error.message || 'Failed to create menu');
         }
@@ -80,10 +74,9 @@ export default function MenusAdminPage() {
         if (!toast.confirm(`Are you sure you want to delete menu "${selectedMenu.name}"? This cannot be undone.`)) return;
 
         try {
-            await menuService.delete(selectedMenu._id);
+            await deleteMutation.mutateAsync(selectedMenu._id);
             toast.success('Menu deleted successfully');
-            setSelectedMenu(null); // Clear selection first
-            await fetchMenus(); // Then refresh
+            setSelectedMenuId(null);
         } catch (error) {
             toast.error(error.message || 'Failed to delete menu');
         }
@@ -92,9 +85,8 @@ export default function MenusAdminPage() {
     const handleRenameMenu = async () => {
         if (!renameValue) return;
         try {
-            await menuService.update(selectedMenu._id, { name: renameValue });
+            await updateMutation.mutateAsync({ id: selectedMenu._id, data: { name: renameValue } });
             setRenaming(false);
-            await fetchMenus();
         } catch (error) {
             toast.error(error.message || 'Failed to rename menu');
         }
@@ -103,36 +95,27 @@ export default function MenusAdminPage() {
     const handleSaveMenu = async () => {
         if (!selectedMenu) return;
         try {
-            setSaving(true);
-            await menuService.update(selectedMenu._id, { items: selectedMenu.items });
+            await updateMutation.mutateAsync({ id: selectedMenu._id, data: { items: localItems } });
             toast.success('Menu saved successfully!');
-            await fetchMenus();
         } catch (error) {
             toast.error(error.message || 'Failed to save menu');
-        } finally {
-            setSaving(false);
         }
     };
 
     const handleActivateMenu = async (menu) => {
         if (!toast.confirm(`Are you sure you want to set "${menu.name}" as the ACTIVE public menu?`)) return;
         try {
-            setActivating(true);
-            await menuService.activate(menu._id);
-            await fetchMenus();
+            await activateMutation.mutateAsync(menu._id);
             toast.success(`Menu "${menu.name}" is now active`);
         } catch (error) {
             toast.error(error.message || 'Failed to activate menu');
-        } finally {
-            setActivating(false);
         }
     };
 
     const handleDeactivateMenu = async (menu) => {
         if (!toast.confirm(`Are you sure you want to DEACTIVATE "${menu.name}"? The site will revert to default navigation.`)) return;
         try {
-            await menuService.update(menu._id, { isActive: false });
-            await fetchMenus();
+            await updateMutation.mutateAsync({ id: menu._id, data: { isActive: false } });
             toast.success(`Menu "${menu.name}" deactivated`);
         } catch (error) {
             toast.error(error.message || 'Failed to deactivate menu');
@@ -173,9 +156,9 @@ export default function MenusAdminPage() {
     };
 
     const saveEdit = (path) => {
-        const updatedMenu = { ...selectedMenu };
-        updateItemInPath(updatedMenu.items, path, editForm);
-        setSelectedMenu(updatedMenu);
+        const updatedItems = [...localItems];
+        updateItemInPath(updatedItems, path, editForm);
+        setLocalItems(updatedItems);
         cancelEdit();
     };
 
@@ -194,13 +177,13 @@ export default function MenusAdminPage() {
             return;
         }
         const itemToAdd = { ...newItem, type: newItem.type };
-        const updatedMenu = { ...selectedMenu };
+        const updatedItems = [...localItems];
         if (!activeParentPath) {
-            updatedMenu.items.push(itemToAdd);
+            updatedItems.push(itemToAdd);
         } else {
-            addItemToPath(updatedMenu.items, activeParentPath, itemToAdd);
+            addItemToPath(updatedItems, activeParentPath, itemToAdd);
         }
-        setSelectedMenu(updatedMenu);
+        setLocalItems(updatedItems);
         setNewItem({ label: '', href: '', type: 'link', items: [] });
         setActiveParentPath(null);
     };
@@ -219,9 +202,9 @@ export default function MenusAdminPage() {
     };
 
     const deleteItem = (path) => {
-        const updatedMenu = { ...selectedMenu };
-        deleteItemFromPath(updatedMenu.items, path);
-        setSelectedMenu(updatedMenu);
+        const updatedItems = [...localItems];
+        deleteItemFromPath(updatedItems, path);
+        setLocalItems(updatedItems);
     };
 
     const deleteItemFromPath = (items, path) => {
@@ -234,9 +217,9 @@ export default function MenusAdminPage() {
     };
 
     const moveItem = (path, direction) => {
-        const updatedMenu = { ...selectedMenu };
-        moveItemInPath(updatedMenu.items, path, direction);
-        setSelectedMenu(updatedMenu);
+        const updatedItems = [...localItems];
+        moveItemInPath(updatedItems, path, direction);
+        setLocalItems(updatedItems);
     };
 
     const moveItemInPath = (items, path, direction) => {
@@ -567,10 +550,10 @@ export default function MenusAdminPage() {
 
                             {/* Tree View */}
                             <div className="space-y-4">
-                                {selectedMenu.items && selectedMenu.items.length === 0 && (
+                                {localItems.length === 0 && (
                                     <div className="text-center py-10 text-gray-400 italic">No items yet. Add one above.</div>
                                 )}
-                                {renderItems(selectedMenu.items || [])}
+                                {renderItems(localItems)}
                             </div>
                         </Card>
                     ) : (

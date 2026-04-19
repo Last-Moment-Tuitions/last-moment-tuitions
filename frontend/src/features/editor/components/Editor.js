@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useRef, useState, useCallback } from 'react';
-import { adminService } from '@/services/adminService';
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
+import { usePage, useUpdatePage } from '@/hooks/api/useAdmin';
 import { initEditor } from '@/features/editor/core/editor/Manager';
 import { loadBlocks } from '@/features/editor/core/blocks/basic';
 import { loadAdvancedBlocks } from '@/features/editor/core/blocks/advanced';
@@ -14,14 +14,18 @@ import Link from 'next/link';
 
 export function Editor({ pageId }) {
     const editorRef = useRef(null);
-    const [loading, setLoading] = useState(true);
-    const [saving, setSaving] = useState(false);
-    const [pageDetails, setPageDetails] = useState(null);
     const [toast, setToast] = useState(null); // { message, type }
     const [isPreview, setIsPreview] = useState(false);
     const [bordersActive, setBordersActive] = useState(false);
     const [rightSidebarOpen, setRightSidebarOpen] = useState(true); // Default open on desktop
     const [sidebarWidth, setSidebarWidth] = useState(320); // Default 320px width
+
+    // TanStack Query
+    const { data: page, isLoading: loading } = usePage(pageId);
+    const updateMutation = useUpdatePage();
+    const saving = updateMutation.isPending;
+
+    const pageDetails = page;
 
     // Resizing logic for right sidebar
     const isResizing = useRef(false);
@@ -116,51 +120,12 @@ export function Editor({ pageId }) {
         // Load Section/Template Blocks from API (async, non-blocking)
         loadTemplateBlocks(editor);
 
-        let isMounted = true;
-
-        // Fetch Page Data
-        const fetchPage = async () => {
-            try {
-                const page = await adminService.getPage(pageId);
-
-                if (!isMounted) return;
-
-                setPageDetails(page);
-
-                if (page.gjsComponents && (!Array.isArray(page.gjsComponents) || page.gjsComponents.length > 0)) {
-                    const safeComponents = sanitizeComponentsForCanvas(page.gjsComponents);
-                    editor.setComponents(safeComponents);
-                } else if (page.gjsHtml) {
-                    // Fallback: Parse raw HTML back into editor blocks (handles seeded data)
-                    const tempDiv = document.createElement('div');
-                    tempDiv.innerHTML = stripScriptTags(page.gjsHtml);
-                    if (page.gjsCss) { tempDiv.innerHTML += `<style>${page.gjsCss}</style>`; }
-                    editor.setComponents(tempDiv.innerHTML);
-                }
-                if (page.gjsStyles && (!Array.isArray(page.gjsStyles) || page.gjsStyles.length > 0)) {
-                    editor.setStyle(page.gjsStyles);
-                }
-                if (page.gjsAssets) {
-                    editor.Assets.add(page.gjsAssets);
-                }
-            } catch (err) {
-                if (!isMounted) return;
-                showToast(err.message || 'Failed to load page', 'error');
-            } finally {
-                if (isMounted) setLoading(false);
-            }
-        };
-
-        fetchPage();
-        
-        // ── Selection Logic ───────────────────────────────────────────────
+        // ── Selection Logic ──
         editor.on('component:selected', (model) => {
             if (model && model.get('type') === 'template-ref') {
-                // Ensure the "Settings" section is visible in our custom sidebar
                 const traitsContainer = document.getElementById('traits-container');
                 if (traitsContainer) {
                     traitsContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                    // Visual feedback: highlight the Settings header briefly
                     const settingsHeader = traitsContainer.previousElementSibling;
                     if (settingsHeader) {
                         settingsHeader.style.backgroundColor = '#1e40af';
@@ -171,8 +136,10 @@ export function Editor({ pageId }) {
         });
 
         return () => {
-            isMounted = false;
-            if (editor) editor.destroy();
+            if (editor) {
+                editor.destroy();
+                editorRef.current = null;
+            }
         };
     }, [pageId]);
 
@@ -204,7 +171,7 @@ export function Editor({ pageId }) {
                 gjsAssets: rawAssets,
             });
 
-            await adminService.updatePage(pageId, data);
+            await updateMutation.mutateAsync({ id: pageId, data });
             showToast('Page saved successfully!', 'success');
             // Bust the module-level template cache for this template ID so any page
             // that imports it will re-fetch the latest content from the database.

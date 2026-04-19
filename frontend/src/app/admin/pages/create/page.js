@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
-import { adminService } from '@/services/adminService';
+import { useState, useEffect, Suspense, useMemo } from 'react';
+import { usePages, useCreatePage } from '@/hooks/api/useAdmin';
 import { useToast } from '@/context/ToastContext';
 import { Button } from '@/components/ui';
 import { Save, ArrowRight } from 'lucide-react';
@@ -20,7 +20,21 @@ function CreatePageContent() {
         folder: null, // Default
         sourceTemplateId: '', // Added for selecting a template
     });
-    const [availableTemplates, setAvailableTemplates] = useState([]);
+
+    // TanStack Query
+    const { data: templatesRaw } = usePages({ 
+        type: 'template', 
+        status: 'published',
+        limit: 100 
+    }, { 
+        enabled: formData.type !== 'template' 
+    });
+
+    const availableTemplates = useMemo(() => {
+        return templatesRaw?.data || templatesRaw || [];
+    }, [templatesRaw]);
+
+    const createMutation = useCreatePage();
 
     useEffect(() => {
         const typeParam = searchParams.get('type');
@@ -31,16 +45,6 @@ function CreatePageContent() {
             type: typeParam === 'template' ? 'template' : 'page',
             folder: (folderParam && folderParam !== 'null') ? folderParam : null
         }));
-
-        // Fetch templates for the dropdown if creating a page
-        if (typeParam !== 'template') {
-            adminService.getPages({ type: 'template', status: 'published' })
-                .then(res => {
-                    const templates = res?.data || res || [];
-                    setAvailableTemplates(templates);
-                })
-                .catch(err =>);
-        }
     }, [searchParams]);
 
     const generateSlug = (title) => {
@@ -66,7 +70,6 @@ function CreatePageContent() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setLoading(true);
         try {
             const payload = { ...formData };
             if (!payload.folder) {
@@ -75,7 +78,9 @@ function CreatePageContent() {
             if (!payload.sourceTemplateId) {
                 delete payload.sourceTemplateId;
             }
-            const data = await adminService.createPage(payload);
+            
+            const data = await createMutation.mutateAsync(payload);
+            
             if (data && data._id) {
                 const newPageId = data._id;
                 toast.success('Page created successfully!');
@@ -85,10 +90,10 @@ function CreatePageContent() {
             }
         } catch (error) {
             toast.error(error.message || 'Failed to create page');
-            setLoading(false);
         }
-        // Don't set loading to false here - keep it active until redirect
     };
+
+    const loading = createMutation.isPending;
 
     const isTemplate = formData.type === 'template';
 

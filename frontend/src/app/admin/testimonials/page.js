@@ -1,15 +1,18 @@
 "use client";
-import { useState, useEffect } from 'react';
-import { testimonialService } from '@/services/testimonialService';
+import { useState, useEffect, useMemo } from 'react';
 import { Plus, Edit, Trash2, Star, Save, X, Loader2 } from 'lucide-react';
 import { useToast } from '@/context/ToastContext';
+import { 
+    useInfiniteTestimonials,
+    useCreateTestimonial, 
+    useUpdateTestimonial, 
+    useDeleteTestimonial 
+} from '@/hooks/api/useTestimonials';
 
 export default function TestimonialAdmin() {
     const { toast } = useToast();
-    const [testimonials, setTestimonials] = useState([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingId, setEditingId] = useState(null);
-    const [isLoading, setIsLoading] = useState(true);
     const [formData, setFormData] = useState({
         name: '',
         image: '',
@@ -18,43 +21,53 @@ export default function TestimonialAdmin() {
         target_pages: []
     });
 
-    const [error, setError] = useState(null);
+    // TanStack Query
+    const { 
+        data: infiniteData, 
+        isLoading, 
+        isFetchingNextPage,
+        hasNextPage,
+        fetchNextPage,
+        error, 
+        refetch: loadData 
+    } = useInfiniteTestimonials({ pageTag: 'all' }, 20);
 
+    const testimonials = useMemo(() => {
+        return infiniteData?.pages.flatMap(page => page.details || page.data || page) || [];
+    }, [infiniteData]);
+
+    const createMutation = useCreateTestimonial();
+    const updateMutation = useUpdateTestimonial();
+    const deleteMutation = useDeleteTestimonial();
+
+    // Infinite Scroll Observer
     useEffect(() => {
-        loadData();
-    }, []);
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
+                    fetchNextPage();
+                }
+            },
+            { threshold: 0.1 }
+        );
 
-    const loadData = async () => {
-        setIsLoading(true);
-        setError(null);
-        try {
-            const response = await testimonialService.getByPage('all');
+        const sentinel = document.getElementById('testimonial-sentinel');
+        if (sentinel) observer.observe(sentinel);
 
-            const actualData = Array.isArray(response)
-                ? response
-                : (response?.details || [{}]);
-
-            setTestimonials(actualData);
-        } catch (error) {
-            setError(error.message || "Failed to load testimonials");
-            toast.error(error.message || "Failed to load testimonials");
-            setTestimonials([]);
-        } finally {
-            setIsLoading(false);
-        }
-    };
+        return () => {
+            if (sentinel) observer.unobserve(sentinel);
+        };
+    }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
 
         try {
             if (editingId) {
-                const updatedData = await testimonialService.update(editingId, formData);
-                setTestimonials(prev => prev.map(t => t._id === editingId ? { ...t, ...updatedData } : t));
+                await updateMutation.mutateAsync({ id: editingId, data: formData });
                 toast.success("Updated successfully!");
             } else {
-                const newTestimonial = await testimonialService.create(formData);
-                setTestimonials(prev => [newTestimonial, ...prev]);
+                await createMutation.mutateAsync(formData);
                 toast.success("Added successfully!");
             }
             closeModal();
@@ -63,13 +76,11 @@ export default function TestimonialAdmin() {
         }
     };
 
-    // --- Delete Functionality ---
     const handleDelete = async (id) => {
         if (!(await toast.confirm("Are you sure you want to delete this testimonial?"))) return;
 
         try {
-            await testimonialService.delete(id);
-            setTestimonials(prev => prev.filter(t => t._id !== id));
+            await deleteMutation.mutateAsync(id);
             toast.success("Deleted");
         } catch (error) {
             toast.error(error.message);
@@ -137,8 +148,8 @@ export default function TestimonialAdmin() {
                             <tr>
                                 <td colSpan="5" className="py-12 text-center text-red-500 font-medium bg-red-50">
                                     <div className="flex flex-col items-center gap-2">
-                                        <span>Error: {error}</span>
-                                        <button onClick={loadData} className="text-sm underline text-red-700">Retry</button>
+                                        <span>Error: {error?.message || 'Failed to load data'}</span>
+                                        <button onClick={() => loadData()} className="text-sm underline text-red-700">Retry</button>
                                     </div>
                                 </td>
                             </tr>
@@ -191,6 +202,12 @@ export default function TestimonialAdmin() {
                                 </tr>
                             ))
                         )}
+                        {/* sentinel for infinite scroll */}
+                        <tr id="testimonial-sentinel" className="h-4">
+                            <td colSpan="5" className="text-center py-4">
+                                {isFetchingNextPage && <Loader2 className="animate-spin text-slate-400 mx-auto" />}
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>

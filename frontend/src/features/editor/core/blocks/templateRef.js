@@ -16,18 +16,11 @@
  *   ✅ Human-readable trait labels
  */
 
-// Module-level template cache (survives re-renders, cleared on page reload)
-export const _templateCache = new Map();
-
-if (typeof window !== 'undefined') {
-    window.addEventListener('clear-template-cache', (e) => {
-        if (e.detail && e.detail.id) {
-            _templateCache.delete(e.detail.id);
-        } else {
-            _templateCache.clear();
-        }
-    });
-}
+import { queryClient } from '@/providers/QueryProvider';
+import { adminKeys, usePage } from '@/hooks/api/useAdmin';
+import { adminService } from '@/services/adminService';
+import { testimonialKeys } from '@/hooks/api/useTestimonials';
+import { testimonialService } from '@/services/testimonialService';
 
 /**
  * Convert a variable name to a human-readable trait label.
@@ -448,8 +441,11 @@ export const loadTemplateRefBlock = (editor) => {
 
             async syncTestimonialData(id, slotIdx) {
                 try {
-                    const { adminService } = await import('@/services/adminService');
-                    const data = await adminService.getTestimonial(id);
+                    const data = await queryClient.fetchQuery({
+                        queryKey: testimonialKeys.detail(id),
+                        queryFn: () => testimonialService.getOne(id)
+                    });
+
                     if (data) {
                         const prefix = `prop_test_t${slotIdx}_`;
                         this.set({
@@ -721,29 +717,28 @@ export const loadTemplateRefBlock = (editor) => {
                 }
 
                 try {
-                    // ── Fetch with cache / timestamp ───────────────────────────
+                    // ── Fetch with TanStack Query ───────────────────────────
                     let templateData;
-                    if (_templateCache.has(cacheKey)) {
-                        templateData = _templateCache.get(cacheKey);
-                    } else {
-                        const { adminService } = await import('@/services/adminService');
-                        
-                        if (templateId) {
-                            templateData = await adminService.getPage(templateId);
-                        } else if (templateSlug) {
-                            templateData = await adminService.getPageBySlug(templateSlug);
-                        }
+                    const queryKey = templateId ? adminKeys.page(templateId) : adminKeys.pageBySlug(templateSlug);
+                    
+                    templateData = queryClient.getQueryData(queryKey);
 
-                        if (!templateData) {
-                            throw new Error(`No data for ${templateId ? 'ID ' + templateId : 'Slug ' + templateSlug}`);
-                        }
+                    if (!templateData) {
+                        templateData = await queryClient.fetchQuery({
+                            queryKey,
+                            queryFn: () => templateId 
+                                ? adminService.getPage(templateId) 
+                                : adminService.getPageBySlug(templateSlug)
+                        });
+                    }
 
-                        // Handle the case where the backend wraps it in 'data'
-                        if (templateData.data) {
-                            templateData = templateData.data;
-                        }
+                    if (!templateData) {
+                        throw new Error(`No data for ${templateId ? 'ID ' + templateId : 'Slug ' + templateSlug}`);
+                    }
 
-                        _templateCache.set(cacheKey, templateData);
+                    // Handle the case where the backend wraps it in 'data'
+                    if (templateData.data) {
+                        templateData = templateData.data;
                     }
 
                     let html = templateData.gjsHtml || '';
@@ -791,9 +786,13 @@ export const loadTemplateRefBlock = (editor) => {
                         if (track) {
                             if (selectedIds.length > 0) {
                                 try {
-                                    const { adminService } = await import('@/services/adminService');
-                                    // Fetch all selected students in parallel
-                                    const studentData = await Promise.all(selectedIds.map(id => adminService.getTestimonial(id)));
+                                    // Fetch all selected students in parallel using TanStack Query
+                                    const studentData = await Promise.all(
+                                        selectedIds.map(id => queryClient.fetchQuery({
+                                            queryKey: testimonialKeys.detail(id),
+                                            queryFn: () => testimonialService.getOne(id)
+                                        }))
+                                    );
                                     
                                     let cardsHtml = '';
                                     studentData.forEach((student, i) => {

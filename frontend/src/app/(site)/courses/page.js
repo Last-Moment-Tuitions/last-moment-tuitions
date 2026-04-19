@@ -11,7 +11,7 @@ import {
     Accordion, AccordionItem, AccordionTrigger, AccordionContent,
     Badge
 } from '@/components/ui';
-import { coursesApi } from '@/services/courses.api';
+import { useCourses } from '@/hooks/api/useCourses';
 
 const CATEGORIES = [
     { id: 'gov', label: 'Government', count: 42, icon: <Building2 size={18} /> },
@@ -22,49 +22,32 @@ const CATEGORIES = [
 
 export default function CoursesPage() {
     const [viewMode, setViewMode] = useState('grid');
-    const [courses, setCourses] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-
+    
     // Filters state
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedCategories, setSelectedCategories] = useState([]);
     const [selectedRatings, setSelectedRatings] = useState([]);
     const [sortBy, setSortBy] = useState('Most Popular');
 
-    useEffect(() => {
-        fetchCourses();
-    }, []);
+    // Fetch courses using TanStack Query
+    const { data: response, isLoading: loading, error, refetch: fetchCourses } = useCourses({ status: 'published' });
 
-    const fetchCourses = async () => {
-        try {
-            setLoading(true);
-            const response = await coursesApi.getAllCourses({ status: 'published' });
-
-            // Transform backend data to match CourseCard props
-            const transformedCourses = (response?.data || []).map(course => ({
-                id: course._id,
-                title: course.title,
-                category: course.category,
-                price: course.price,
-                originalPrice: course.original_price,
-                rating: course.average_rating,
-                students: course.enrollment_count.toLocaleString(),
-                enrollmentCount: course.enrollment_count,
-                createdAt: course.createdAt || course.updatedAt || new Date().toISOString(),
-                image: course.thumbnail || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=1000&auto=format&fit=crop',
-                instructor: course.instructor?.name || 'Unknown Instructor'
-            }));
-
-            setCourses(transformedCourses);
-            setError(null);
-        } catch (err) {
-            setError('Failed to load courses. Please try again later.');
-            setCourses([]);
-        } finally {
-            setLoading(false);
-        }
-    };
+    // Transform backend data to match CourseCard props (memoized for performance)
+    const courses = React.useMemo(() => {
+        return (response?.data || []).map(course => ({
+            id: course._id,
+            title: course.title,
+            category: course.category,
+            price: course.price,
+            originalPrice: course.original_price,
+            rating: course.average_rating,
+            students: (course.enrollment_count || 0).toLocaleString(),
+            enrollmentCount: course.enrollment_count || 0,
+            createdAt: course.createdAt || course.updatedAt || new Date().toISOString(),
+            image: course.thumbnail || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=1000&auto=format&fit=crop',
+            instructor: course.instructor?.name || 'Unknown Instructor'
+        }));
+    }, [response]);
 
     const filteredCourses = React.useMemo(() => {
         return courses.filter(course => {
@@ -130,16 +113,16 @@ export default function CoursesPage() {
     if (error) {
         return (
             <div className="bg-gray-50 min-h-screen py-8 font-sans">
-                <div className="container mx-auto px-4">
-                    <div className="flex items-center justify-center min-h-[400px]">
-                        <div className="text-center">
-                            <p className="text-red-600 mb-4">{error}</p>
-                            <Button onClick={fetchCourses} variant="primary">
-                                Try Again
-                            </Button>
-                        </div>
+            <div className="container mx-auto px-4">
+                <div className="flex items-center justify-center min-h-[400px]">
+                    <div className="text-center">
+                        <p className="text-red-600 mb-4">{error?.message || 'Failed to load courses. Please try again later.'}</p>
+                        <Button onClick={() => fetchCourses()} variant="primary">
+                            Try Again
+                        </Button>
                     </div>
                 </div>
+            </div>
             </div>
         );
     }

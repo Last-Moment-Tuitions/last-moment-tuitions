@@ -29,30 +29,15 @@ import { HeroBackground } from '@/components/HeroAnimation';
 import { HeroMerged } from '@/components/HeroMerged';
 import { FaqSection } from '@/components/FaqSection';
 // import TestimonialSection from '@/components/TestimonialSection';
-import { testimonialService } from '@/services/testimonialService';
+import { useTestimonials } from '@/hooks/api/useTestimonials';
 import AnimatedTestimonials from '@/components/AnimatedTestimonials';
 import { StickyScroll } from '@/components/StickyScrollLayout';
 
 
 export default function HomePage() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
-    const [testimonials, setTestimonials] = useState([]);
-
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        const fetchTestimonials = async () => {
-            try {
-                // This call hits NestJS -> Redis (Fast) -> MongoDB (Fallback)
-                const data = await testimonialService.getByPage('Homepage');
-                setTestimonials(data);
-            } catch (error) {
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchTestimonials();
-    }, []);
+    // Fetch testimonials using TanStack Query
+    const { data: testimonials = [], isLoading: loading } = useTestimonials('Homepage');
 
     // Mock Data
     const categories = [
