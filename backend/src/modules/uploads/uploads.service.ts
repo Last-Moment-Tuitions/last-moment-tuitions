@@ -76,4 +76,11 @@ export class UploadsService {
         const folder = type ? this.folderMap[type] : undefined;
         return this.storage.list(folder);
     }
+
+    async getFileBuffer(key: string): Promise<Buffer> {
+        if (!this.storage.getBuffer) {
+            throw new Error('Storage provider does not support getBuffer');
+        }
+        return this.storage.getBuffer(key);
+    }
 }

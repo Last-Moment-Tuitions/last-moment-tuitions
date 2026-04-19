@@ -10,7 +10,9 @@ import {
   NotFoundException,
   Req,
   UseGuards,
+  Res,
 } from '@nestjs/common';
+import { Response } from 'express';
 import { CoursesService } from './courses.service';
 import { CreateCourseDto } from './dto/create-course.dto';
 import { UpdateCourseDto } from './dto/update-course.dto';
@@ -48,6 +50,39 @@ export class CoursesController {
     const course = await this.coursesService.findCourseWithContent(id);
     if (!course) throw new NotFoundException('Course not found');
     return { success: true, data: course };
+  }
+
+  @Post(':id/lecture/:lectureId/secure-ticket')
+  @UseGuards(AuthGuard)
+  async getSecureTicket(
+    @Param('id') id: string,
+    @Param('lectureId') lectureId: string,
+    @Req() req: any,
+  ) {
+    const data = await this.coursesService.generateSecureTicket(id, lectureId, req.user);
+    return { success: true, data };
+  }
+
+  @Get(':id/lecture/:lectureId/secure-document')
+  @UseGuards(AuthGuard)
+  async getSecureDocument(
+    @Param('id') id: string,
+    @Param('lectureId') lectureId: string,
+    @Query('ticket') ticket: string,
+    @Query('t') t: string,
+    @Req() req: any,
+    @Res() res: Response,
+  ) {
+    if (!ticket || !t) {
+      throw new NotFoundException('Security parameters missing');
+    }
+    const buffer = await this.coursesService.getSecureDocument(id, lectureId, req.user, ticket, t);
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': 'inline; filename="secure-document.pdf"',
+      'Content-Length': buffer.length,
+    });
+    res.send(buffer);
   }
 
   @Patch(':id')

@@ -52,6 +52,19 @@ export const coursesApi = {
         return api.get(`/courses/${id}/full`);
     },
 
+    // Generate secure hand-shake ticket
+    getSecureDocumentTicket: (courseId, lectureId) => {
+        return api.post(`/courses/${courseId}/lecture/${lectureId}/secure-ticket`);
+    },
+
+    // Fetch secure document stream for Canvas
+    getSecureDocumentStream: (courseId, lectureId, ticket, timestamp) => {
+        return api.get(`/courses/${courseId}/lecture/${lectureId}/secure-document`, {
+            params: { ticket, t: timestamp },
+            responseType: 'blob'
+        });
+    },
+
     // Create new course
     createCourse: (data) => {
         return api.post('/courses', data);

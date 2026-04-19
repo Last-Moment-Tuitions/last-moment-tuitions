@@ -9,6 +9,12 @@ import Link from 'next/link';
 import { Button, Badge } from '@/components/ui';
 import CurriculumSidebar from '@/components/CurriculumSidebar';
 import { coursesApi } from '@/services/courses.api';
+import { useAuth } from '@/context/AuthContext';
+import { Document, Page, pdfjs } from 'react-pdf';
+import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
+import 'react-pdf/dist/esm/Page/TextLayer.css';
+
+pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
 // Helper: find a lesson node by ID in the recursive curriculum tree
 function findLessonInTree(nodes, lessonId) {
@@ -101,10 +107,78 @@ function VideoContent({ url, title }) {
 
 export default function LessonPage({ params }) {
     const { id: courseId, lectureId } = React.use(params);
+    const { user } = useAuth();
+    const userIdentifier = user?.email || user?.name || 'Student';
+
     const [courseData, setCourseData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [activeTab, setActiveTab] = useState('overview');
+
+    // PDF specific states
+    const [numPages, setNumPages] = useState(null);
+    const [pdfBlobUrl, setPdfBlobUrl] = useState(null);
+
+    // Refs for security & fullscreen
+    const containerRef = useRef(null);
+    const overlayRef = useRef(null);
+    const iframeRef = useRef(null);
+    const [isMaximized, setIsMaximized] = useState(false);
+
+    // Fullscreen Toggle
+    const toggleFullScreen = () => {
+        if (!document.fullscreenElement) {
+            containerRef.current?.requestFullscreen().catch(err => {
+                console.error(`Error attempting to enable full-screen mode: ${err.message}`);
+            });
+        } else {
+            document.exitFullscreen();
+        }
+    };
+
+    // Fullscreen listener
+    useEffect(() => {
+        const handleFullscreenChange = () => {
+            setIsMaximized(!!document.fullscreenElement);
+        };
+        document.addEventListener('fullscreenchange', handleFullscreenChange);
+        return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    }, []);
+
+    // Security listener (DOM Blackout & No Right Click)
+    useEffect(() => {
+        let hideTimeout;
+        const handleKeyDown = (e) => {
+            // Trigger on PrintScreen or Cmd+Shift+S / Cmd+Shift+4 etc.
+            if (e.key === 'PrintScreen' || (e.metaKey && e.shiftKey)) {
+                clearTimeout(hideTimeout);
+                if (overlayRef.current) overlayRef.current.style.display = 'flex';
+                if (iframeRef.current) iframeRef.current.style.opacity = '0';
+            }
+        };
+
+        const handleKeyUp = (e) => {
+            if (!e.metaKey && !e.shiftKey && e.key !== 'PrintScreen') {
+                hideTimeout = setTimeout(() => {
+                    if (overlayRef.current) overlayRef.current.style.display = 'none';
+                    if (iframeRef.current) iframeRef.current.style.opacity = '1';
+                }, 1000); // 1s cooldown
+            }
+        };
+
+        const handleContextMenu = (e) => e.preventDefault();
+
+        window.addEventListener('keydown', handleKeyDown);
+        window.addEventListener('keyup', handleKeyUp);
+        window.addEventListener('contextmenu', handleContextMenu);
+
+        return () => {
+            clearTimeout(hideTimeout);
+            window.removeEventListener('keydown', handleKeyDown);
+            window.removeEventListener('keyup', handleKeyUp);
+            window.removeEventListener('contextmenu', handleContextMenu);
+        };
+    }, []);
 
     useEffect(() => {
         const fetchCourse = async () => {
@@ -123,6 +197,28 @@ export default function LessonPage({ params }) {
         };
         if (courseId) fetchCourse();
     }, [courseId]);
+
+    // Fetch the raw encoded PDF blob when courseData and lecture is identified
+    useEffect(() => {
+        if (!courseData) return;
+        const tempLoc = findLessonInTree(courseData.curriculum || [], lectureId) || getFirstLesson(courseData.curriculum || []);
+        if (tempLoc?.data?.type === 'document') {
+                    const fetchDocument = async () => {
+                        try {
+                            const ticketResponse = await coursesApi.getSecureDocumentTicket(courseId, tempLoc.id);
+                            const { ticket, timestamp } = ticketResponse.data;
+                            
+                            const blob = await coursesApi.getSecureDocumentStream(courseId, tempLoc.id, ticket, timestamp);
+                            const url = URL.createObjectURL(blob);
+                            setPdfBlobUrl(url);
+                        } catch (err) {
+                            console.error("Failed to fetch secure document", err);
+                            // We could set an error state here specifically for 'Not Enrolled' etc.
+                        }
+                    };
+                    fetchDocument();
+        }
+    }, [courseData, lectureId, courseId]);
 
     // Loading state
     if (loading) {
@@ -176,7 +272,12 @@ export default function LessonPage({ params }) {
     const instructor = courseData.instructor || {};
 
     return (
-        <div className="bg-white min-h-screen font-sans text-gray-900">
+        <div className="bg-white min-h-screen font-sans text-gray-900 select-none print:hidden">
+            <style jsx global>{`
+                @media print {
+                    body { display: none !important; }
+                }
+            `}</style>
 
             {/* Main Grid Layout */}
             <div className="flex flex-col lg:flex-row h-[calc(100vh-56px)] overflow-hidden">
@@ -209,16 +310,73 @@ export default function LessonPage({ params }) {
                                 <VideoContent url={contentUrl} title={currentLesson.title} />
                             </div>
                         ) : contentType === 'document' && contentUrl ? (
-                            <div className="bg-white w-full min-h-[500px] p-8">
-                                {contentUrl.endsWith('.pdf') ? (
-                                    <iframe src={contentUrl} className="w-full h-[600px] border-none" title="Document" />
+                            <div ref={containerRef} className="bg-white w-full h-full relative overflow-hidden flex flex-col min-h-[500px]">
+                                {/* Floating Maximize Button */}
+                                <button
+                                    onClick={toggleFullScreen}
+                                    className="absolute top-4 right-4 z-50 bg-gray-900/10 hover:bg-gray-900/80 text-gray-600 hover:text-white p-2 rounded-full backdrop-blur-sm transition-all"
+                                    title={isMaximized ? "Exit Full Screen" : "Full Screen"}
+                                >
+                                    {isMaximized ? (
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 3v3a2 2 0 0 1-2 2H3" /><path d="M21 8h-3a2 2 0 0 1-2-2V3" /><path d="M3 16h3a2 2 0 0 1 2 2v3" /><path d="M16 21v-3a2 2 0 0 1 2-2h3" /></svg>
+                                    ) : (
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 3 21 3 21 9" /><polyline points="9 21 3 21 3 15" /><line x1="21" y1="3" x2="14" y2="10" /><line x1="3" y1="21" x2="10" y2="14" /></svg>
+                                    )}
+                                </button>
+
+                                {/* 1. Tiled Watermark Overlay */}
+                                <div className="absolute inset-0 z-30 pointer-events-none opacity-[0.05] overflow-hidden flex flex-wrap content-start select-none">
+                                    {[...Array(20)].map((_, i) => (
+                                        <div key={i} className="w-[300px] h-[300px] flex items-center justify-center -rotate-45 transform">
+                                            <span className="text-3xl font-bold text-black">{userIdentifier}</span>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                {/* 2. Security Overlay (Ref-controlled) */}
+                                <div
+                                    ref={overlayRef}
+                                    style={{ display: 'none' }} // Hidden by default, toggled via Ref
+                                    className="absolute inset-0 z-50 bg-white/95 backdrop-blur-md items-center justify-center select-none flex flex-col"
+                                >
+                                    <div className="text-4xl mb-2">🔒</div>
+                                    <h3 className="text-xl font-bold text-gray-800">Security Mode Active</h3>
+                                    <p className="text-gray-500 mt-1">Taking screenshots is explicitly prohibited</p>
+                                </div>
+
+                                {/* 3. Actual Content using React-PDF Canvas */}
+                                {contentUrl.endsWith('.pdf') || contentUrl.includes('response-content-disposition') || contentUrl.includes('documents%2F') ? (
+                                    pdfBlobUrl ? (
+                                        <div className="flex-1 w-full h-full overflow-y-auto bg-gray-100 flex flex-col items-center py-4">
+                                            <Document
+                                                file={pdfBlobUrl}
+                                                onLoadSuccess={({ numPages }) => setNumPages(numPages)}
+                                                className="flex flex-col items-center gap-4"
+                                                loading={<div className="animate-pulse text-gray-500">Decrypting & Loading Document...</div>}
+                                            >
+                                                {Array.from(new Array(numPages || 0), (el, index) => (
+                                                    <Page 
+                                                        key={`page_${index + 1}`} 
+                                                        pageNumber={index + 1} 
+                                                        width={Math.min(window.innerWidth * 0.8, 800)}
+                                                        className="shadow-xl"
+                                                    />
+                                                ))}
+                                            </Document>
+                                        </div>
+                                    ) : (
+                                        <div className="flex-1 w-full h-full flex items-center justify-center bg-gray-50 text-gray-500">
+                                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mr-3"></div>
+                                            Loading Secure Document...
+                                        </div>
+                                    )
                                 ) : (
-                                    <div className="text-center py-10">
-                                        <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                                    <div className="text-center py-10 my-auto flex-1 flex flex-col justify-center items-center">
+                                        <FileText className="w-16 h-16 text-gray-300 mb-4" />
                                         <p className="text-gray-600 mb-4">Document available</p>
                                         <a href={contentUrl} target="_blank" rel="noopener noreferrer">
                                             <Button>
-                                                <Download size={16} className="mr-2" /> Open Document
+                                                <Download size={16} className="mr-2" /> Download Document
                                             </Button>
                                         </a>
                                     </div>
