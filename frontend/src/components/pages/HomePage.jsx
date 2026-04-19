@@ -423,7 +423,7 @@ export default function HomePage() {
 
 
             {/* Browse Top Category */}
-            <section className="py-12">
+            {/* <section className="py-12">
                 <div className="w-full max-w-[1440px] mx-auto px-6 sm:px-10">
                     <div className="text-center mb-10">
                         <FadeIn>
@@ -451,7 +451,7 @@ export default function HomePage() {
                         </p>
                     </div>
                 </div>
-            </section>
+            </section> */}
 
 
             {/* Best Selling Courses */}

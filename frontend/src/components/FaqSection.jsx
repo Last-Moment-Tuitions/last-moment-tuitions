@@ -27,7 +27,7 @@ export function FaqSection() {
 
     return (
         <section className="py-20 bg-white">
-                <div className="w-full max-w-[1440px] mx-auto px-6 sm:px-10">
+            <div className="container mx-auto px-4">
                 <div className="text-center mb-12">
                     <h2 className="text-3xl md:text-5xl font-bold text-gray-900 mb-6">Frequently asked Questions</h2>
                 </div>
