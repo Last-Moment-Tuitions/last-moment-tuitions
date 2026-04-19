@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { CoursesService } from './courses.service';
 import { CoursesController } from './courses.controller';
@@ -16,7 +16,7 @@ import { UploadsModule } from '../uploads/uploads.module';
       { name: Enrollment.name, schema: EnrollmentSchema },
     ]),
     AuthModule,
-    UploadsModule,
+    forwardRef(() => UploadsModule),
   ],
   controllers: [CoursesController],
   providers: [CoursesService],

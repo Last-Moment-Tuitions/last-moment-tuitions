@@ -1,6 +1,6 @@
 import { Injectable, BadRequestException, Logger, Inject } from '@nestjs/common';
 import { StorageProvider } from './storage/storage.interface';
-import { STORAGE_PROVIDER } from './uploads.module';
+import { STORAGE_PROVIDER } from './constants';
 
 @Injectable()
 export class UploadsService {
