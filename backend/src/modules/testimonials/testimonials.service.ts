@@ -45,7 +45,6 @@ export class TestimonialsService {
             throw new NotFoundException(`Testimonial with ID ${id} not found`);
         }
 
-        await this.clearCache();
         return updated;
     }
 
@@ -54,13 +53,6 @@ export class TestimonialsService {
         if (!deleted) {
             throw new NotFoundException(`Testimonial with ID ${id} not found`);
         }
-        await this.clearCache();
         return { deleted: true };
     }
-
-    // Helper method to clear Redis/Internal cache
-    private async clearCache() {
-        console.log('Cache cleared after data change');
-    }
-
 }

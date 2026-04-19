@@ -1,9 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { CreateCourseDto } from './dto/create-course.dto';
 import { UpdateCourseDto } from './dto/update-course.dto';
 import { UpdateCourseContentDto } from './dto/update-course-content.dto';
+import { FindCoursesQueryDto } from './dto/find-courses-query.dto';
 import { Course, CourseDocument } from './entities/course.entity';
 import { CourseContent, CourseContentDocument } from './entities/course-content.entity';
 
@@ -15,17 +16,15 @@ export class CoursesService {
   ) {}
 
   async create(createCourseDto: CreateCourseDto, userId: string) {
-    // Create course
-    const courseData = {
+    const createdCourse = new this.courseModel({
       ...createCourseDto,
-      created_by: userId,
-    };
-    const createdCourse = new this.courseModel(courseData);
+      createdBy: userId,
+    });
     const savedCourse = await createdCourse.save();
 
-    // Create empty course content document
+    // Create empty course content document linked to the new course
     const courseContent = new this.courseContentModel({
-      course_id: savedCourse._id,
+      courseId: savedCourse._id,
       version: 1,
       content: [],
     });
@@ -34,21 +33,19 @@ export class CoursesService {
     return savedCourse;
   }
 
-  async findAll(query: any) {
-    const { category, status, created_by, search } = query;
-    const filter: any = {};
+  async findAll(query: FindCoursesQueryDto) {
+    const { category, status, createdBy, search } = query;
+    const filter: Record<string, any> = {};
 
     if (category) filter.category = category;
     if (status) filter.status = status;
-    if (created_by) filter.created_by = created_by;
-    if (search) {
-      filter.$text = { $search: search };
-    }
+    if (createdBy) filter.createdBy = createdBy;
+    if (search) filter.$text = { $search: search };
 
     return this.courseModel
       .find(filter)
       .select('-__v')
-      .sort({ updated_at: -1 })
+      .sort({ updatedAt: -1 })
       .exec();
   }
 
@@ -58,8 +55,12 @@ export class CoursesService {
 
   async findCourseWithContent(id: string) {
     const course = await this.courseModel.findById(id).exec();
+    if (!course) {
+      throw new NotFoundException('Course not found');
+    }
+
     const content = await this.courseContentModel
-      .findOne({ course_id: id, is_active: true })
+      .findOne({ courseId: id, isActive: true })
       .sort({ version: -1 })
       .exec();
 
@@ -76,25 +77,23 @@ export class CoursesService {
   }
 
   async updateContent(id: string, updateContentDto: UpdateCourseContentDto) {
-    // Find current content
     const currentContent = await this.courseContentModel
-      .findOne({ course_id: id, is_active: true })
+      .findOne({ courseId: id, isActive: true })
       .exec();
 
     if (currentContent) {
-      // Update existing content
       currentContent.content = updateContentDto.content;
       currentContent.version = (currentContent.version || 1) + 1;
       return currentContent.save();
-    } else {
-      // Create new content
-      const newContent = new this.courseContentModel({
-        course_id: id,
-        content: updateContentDto.content,
-        version: 1,
-      });
-      return newContent.save();
     }
+
+    // No existing content — create the first version
+    const newContent = new this.courseContentModel({
+      courseId: id,
+      content: updateContentDto.content,
+      version: 1,
+    });
+    return newContent.save();
   }
 
   async publish(id: string) {
@@ -103,7 +102,7 @@ export class CoursesService {
         id,
         {
           status: 'published',
-          published_at: new Date(),
+          publishedAt: new Date(),
         },
         { new: true },
       )
@@ -111,18 +110,14 @@ export class CoursesService {
   }
 
   async remove(id: string): Promise<any> {
-    // Remove course
     const result = await this.courseModel.deleteOne({ _id: id }).exec();
-    
-    // Remove associated content
-    await this.courseContentModel.deleteMany({ course_id: id }).exec();
-    
+    await this.courseContentModel.deleteMany({ courseId: id }).exec();
     return result;
   }
 
   async incrementViews(id: string) {
     return this.courseModel
-      .findByIdAndUpdate(id, { $inc: { view_count: 1 } }, { new: true })
+      .findByIdAndUpdate(id, { $inc: { viewCount: 1 } }, { new: true })
       .exec();
   }
 }

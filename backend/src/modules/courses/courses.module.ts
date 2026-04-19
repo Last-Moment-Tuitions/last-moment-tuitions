@@ -5,6 +5,7 @@ import { CoursesController } from './courses.controller';
 import { Course, CourseSchema } from './entities/course.entity';
 import { CourseContent, CourseContentSchema } from './entities/course-content.entity';
 import { Enrollment, EnrollmentSchema } from './entities/enrollment.entity';
+import { AuthModule } from '../../auth/auth.module';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { Enrollment, EnrollmentSchema } from './entities/enrollment.entity';
       { name: CourseContent.name, schema: CourseContentSchema },
       { name: Enrollment.name, schema: EnrollmentSchema },
     ]),
+    AuthModule,
   ],
   controllers: [CoursesController],
   providers: [CoursesService],

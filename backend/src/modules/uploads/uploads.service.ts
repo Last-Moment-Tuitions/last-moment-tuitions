@@ -1,6 +1,6 @@
-import { Injectable, BadRequestException, Logger } from '@nestjs/common';
+import { Injectable, BadRequestException, Logger, Inject } from '@nestjs/common';
 import { StorageProvider } from './storage/storage.interface';
-import { S3StorageProvider } from './storage/s3.storage';
+import { STORAGE_PROVIDER } from './uploads.module';
 
 @Injectable()
 export class UploadsService {
@@ -23,14 +23,20 @@ export class UploadsService {
 
     // Max sizes per category (in bytes)
     private readonly maxSizes = {
-        image: 10 * 1024 * 1024, // 10 MB
-        video: 500 * 1024 * 1024, // 500 MB
+        image: 10 * 1024 * 1024,   // 10 MB
+        video: 500 * 1024 * 1024,  // 500 MB
         document: 50 * 1024 * 1024, // 50 MB
     };
 
-    constructor() {
-        this.logger.log(`Using S3 storage provider exclusively`);
-        this.storage = new S3StorageProvider();
+    // Maps category name to S3 folder prefix — single source of truth
+    private readonly folderMap: Record<string, string> = {
+        image: 'images',
+        video: 'videos',
+        document: 'documents',
+    };
+
+    constructor(@Inject(STORAGE_PROVIDER) storage: StorageProvider) {
+        this.storage = storage;
     }
 
     async requestPresignedUrl(
@@ -57,12 +63,7 @@ export class UploadsService {
         }
 
         // Map category to storage folder
-        const folderMap = {
-            image: 'images',
-            video: 'videos',
-            document: 'documents',
-        };
-        const folder = folderMap[category] || 'misc';
+        const folder = this.folderMap[category] || 'misc';
 
         return this.storage.getPresignedUrl(folder, filename, contentType);
     }
@@ -72,12 +73,7 @@ export class UploadsService {
     }
 
     async listMedia(type?: string): Promise<any[]> {
-        const folderMap: Record<string, string> = {
-            image: 'images',
-            video: 'videos',
-            document: 'documents',
-        };
-        const folder = type ? folderMap[type] : undefined;
+        const folder = type ? this.folderMap[type] : undefined;
         return this.storage.list(folder);
     }
 }

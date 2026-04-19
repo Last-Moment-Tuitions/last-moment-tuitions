@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { CreatePageDto } from './dto/create-page.dto';
 import { UpdatePageDto } from './dto/update-page.dto';
+import { FindPagesQueryDto } from './dto/find-pages-query.dto';
 import { Page, PageDocument } from './entities/page.entity';
 import { Folder, FolderDocument } from '../folders/entities/folder.entity';
 import { PageStatus } from './enums/page-status.enum';
@@ -60,7 +61,7 @@ export class PagesService {
     return createdPage.save();
   }
 
-  async findAll(query: any) {
+  async findAll(query: FindPagesQueryDto) {
     const { folder, type, status, category } = query;
     const filter: any = {};
     if (folder !== undefined) {

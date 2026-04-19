@@ -19,7 +19,7 @@ export class CreateCourseDto {
 
   @IsString()
   @IsOptional()
-  sub_category?: string;
+  subCategory?: string;
 
   @IsString()
   @IsOptional()
@@ -31,7 +31,7 @@ export class CreateCourseDto {
 
   @IsString()
   @IsOptional()
-  subtitle_language?: string;
+  subtitleLanguage?: string;
 
   @IsEnum(['beginner', 'intermediate', 'advanced'])
   @IsOptional()
@@ -56,11 +56,11 @@ export class CreateCourseDto {
 
   @IsArray()
   @IsOptional()
-  what_to_learn?: string[];
+  whatToLearn?: string[];
 
   @IsArray()
   @IsOptional()
-  target_audience?: string[];
+  targetAudience?: string[];
 
   @IsArray()
   @IsOptional()
@@ -73,15 +73,15 @@ export class CreateCourseDto {
   // PUBLISH COURSE
   @IsString()
   @IsOptional()
-  welcome_message?: string;
+  welcomeMessage?: string;
 
   @IsString()
   @IsOptional()
-  congratulations_message?: string;
+  congratulationsMessage?: string;
 
   @IsArray()
   @IsOptional()
-  instructor_ids?: string[];
+  instructorIds?: string[];
 
   @IsObject()
   @IsOptional()
@@ -99,7 +99,7 @@ export class CreateCourseDto {
 
   @IsNumber()
   @IsOptional()
-  original_price?: number;
+  originalPrice?: number;
 
   @IsString()
   @IsOptional()
@@ -111,5 +111,5 @@ export class CreateCourseDto {
 
   @IsString()
   @IsOptional()
-  last_updated?: string;
+  lastUpdated?: string;
 }

@@ -2,6 +2,7 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, Query, NotFoundExcep
 import { PagesService } from './pages.service';
 import { CreatePageDto } from './dto/create-page.dto';
 import { UpdatePageDto } from './dto/update-page.dto';
+import { FindPagesQueryDto } from './dto/find-pages-query.dto';
 
 @Controller('pages')
 export class PagesController {
@@ -20,7 +21,7 @@ export class PagesController {
   }
 
   @Get()
-  async findAll(@Query() query: any) {
+  async findAll(@Query() query: FindPagesQueryDto) {
     const pages = await this.pagesService.findAll(query);
     return { success: true, data: pages };
   }
