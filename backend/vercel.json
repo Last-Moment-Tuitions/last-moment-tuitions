@@ -22,10 +22,6 @@
                 },
                 {
                     "key": "Access-Control-Allow-Origin",
-                    "value": "https://prepfocus.lastmomenttuitions.com"
-                },
-                {
-                    "key": "Access-Control-Allow-Origin",
                     "value": "https://last-moment-tuitions-7485.vercel.app"
                 },
                 {
