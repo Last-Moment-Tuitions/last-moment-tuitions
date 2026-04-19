@@ -1,26 +1,24 @@
 import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
-import { ExpressAdapter } from '@nestjs/platform-express';
 import { ValidationPipe } from '@nestjs/common';
 import { HttpAdapterHost } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
 import { json, urlencoded } from 'express';
-import * as express from 'express';
 import helmet from 'helmet';
 
 import { AppModule } from '../src/app.module';
 import { AllExceptionsFilter } from '../src/common/filters/http-exception.filter';
 import { TransformInterceptor } from '../src/common/interceptors/transform.interceptor';
 
-const expressApp = express();
-let isBootstrapped = false;
+// Cached after first cold start — reused across Vercel invocations
+let cachedHandler: ((req: any, res: any) => void) | null = null;
 
-async function bootstrap() {
-    if (isBootstrapped) return;
+async function bootstrap(): Promise<(req: any, res: any) => void> {
+    if (cachedHandler) return cachedHandler;
 
-    const adapter = new ExpressAdapter(expressApp);
-    const app = await NestFactory.create<NestExpressApplication>(AppModule, adapter, {
+    // NestJS creates its own Express instance internally — no direct express import needed
+    const app = await NestFactory.create<NestExpressApplication>(AppModule, {
         logger: ['error', 'warn'],
     });
 
@@ -46,7 +44,7 @@ async function bootstrap() {
             const frontendUrls = configService.get<string>('FRONTEND_URL') || '';
             const allowedOrigins = frontendUrls
                 .split(',')
-                .map((url) => url.trim().replace(/\/$/, ''))
+                .map((url: string) => url.trim().replace(/\/$/, ''))
                 .filter(Boolean);
             const normalizedOrigin = origin.replace(/\/$/, '');
 
@@ -91,10 +89,13 @@ async function bootstrap() {
     app.useGlobalFilters(new AllExceptionsFilter(httpAdapter));
 
     await app.init();
-    isBootstrapped = true;
+
+    // Pull the underlying Express instance NestJS created — this IS callable as a handler
+    cachedHandler = app.getHttpAdapter().getInstance();
+    return cachedHandler;
 }
 
 export default async function handler(req: any, res: any) {
-    await bootstrap();
-    expressApp(req, res);
+    const app = await bootstrap();
+    app(req, res);
 }
