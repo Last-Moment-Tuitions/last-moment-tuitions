@@ -51,7 +51,10 @@ async function bootstrap() {
             const normalizedOrigin = origin.replace(/\/$/, '');
 
             // Native allowance for their main domain subdomains
-            if (allowedOrigins.includes(normalizedOrigin) || normalizedOrigin.endsWith('.lastmomenttuitions.com')) {
+            const isDomainMatch = normalizedOrigin === 'https://lastmomenttuitions.com' || 
+                                normalizedOrigin.endsWith('.lastmomenttuitions.com');
+
+            if (allowedOrigins.includes(normalizedOrigin) || isDomainMatch) {
                 return callback(null, true);
             }
 
@@ -62,8 +65,15 @@ async function bootstrap() {
             'Content-Type',
             'Authorization',
             'X-Session-Id',
+            'X-SESSION-ID',
+            'X-CSRF-Token',
             'X-Requested-With',
             'Accept',
+            'Accept-Version',
+            'Content-Length',
+            'Content-MD5',
+            'Date',
+            'X-Api-Version',
         ],
         credentials: true,
     });

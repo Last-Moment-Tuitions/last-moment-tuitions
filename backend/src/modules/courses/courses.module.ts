@@ -6,6 +6,7 @@ import { Course, CourseSchema } from './entities/course.entity';
 import { CourseContent, CourseContentSchema } from './entities/course-content.entity';
 import { Enrollment, EnrollmentSchema } from './entities/enrollment.entity';
 import { AuthModule } from '../../auth/auth.module';
+import { UsersModule } from '../../users/users.module';
 import { UploadsModule } from '../uploads/uploads.module';
 
 @Module({
@@ -16,6 +17,7 @@ import { UploadsModule } from '../uploads/uploads.module';
       { name: Enrollment.name, schema: EnrollmentSchema },
     ]),
     AuthModule,
+    UsersModule,
     forwardRef(() => UploadsModule),
   ],
   controllers: [CoursesController],
