@@ -11,7 +11,6 @@ function CreatePageContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const { toast } = useToast();
-    const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState({
         title: '',
         slug: '',
