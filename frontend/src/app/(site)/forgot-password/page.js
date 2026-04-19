@@ -19,6 +19,7 @@ export default function ForgotPasswordPage() {
     const [loading, setLoading] = useState(false);
     const [mount, setMounted] = useState(false);
     const [resendTimer, setResendTimer] = useState(0);
+    const [errors, setErrors] = useState({});
 
     const router = useRouter();
     const { toast } = useToast();
@@ -85,7 +86,8 @@ export default function ForgotPasswordPage() {
             const data = await res.json();
 
             if (res.ok) {
-                setResetToken(data.resetToken);
+                const token = data.details?.resetToken || data.resetToken;
+                setResetToken(token);
                 setStep(3);
                 toast.success('OTP Verified successfully!');
             } else {
@@ -105,10 +107,15 @@ export default function ForgotPasswordPage() {
             toast.error('Passwords do not match');
             return;
         }
-        if (newPassword.length < 8) {
-            toast.error('Password must be at least 8 characters long');
+
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*])(?=.{8,})/;
+        if (!passwordRegex.test(newPassword)) {
+            const errorMsg = "Password must be 8+ characters with uppercase, lowercase, number, and special character (!@#$%^&*)";
+            setErrors({ newPassword: errorMsg });
+            toast.error(errorMsg);
             return;
         }
+        setErrors({});
 
         setLoading(true);
         try {
@@ -270,6 +277,7 @@ export default function ForgotPasswordPage() {
                                             {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                                         </button>
                                     </div>
+                                    {errors.newPassword && <p className="text-xs text-red-500 font-medium ml-1 mt-1">{errors.newPassword}</p>}
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="confirmPassword" className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Confirm Password</Label>

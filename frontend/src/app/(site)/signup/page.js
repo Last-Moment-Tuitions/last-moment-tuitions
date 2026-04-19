@@ -48,8 +48,9 @@ export default function SignUpPage() {
             newErrors.phone = "Invalid 10-digit mobile number";
         }
 
-        if (formData.password.length < 8) {
-            newErrors.password = "Password must be at least 8 characters long";
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*])(?=.{8,})/;
+        if (!passwordRegex.test(formData.password)) {
+            newErrors.password = "Password must be 8+ characters with uppercase, lowercase, number, and special character (!@#$%^&*)";
         }
 
         if (formData.password !== formData.confirmPassword) {
@@ -240,7 +241,7 @@ export default function SignUpPage() {
                                             onChange={handleChange}
                                             className="rounded-md border-gray-200 bg-white h-11 text-sm placeholder:text-gray-400 focus-visible:ring-primary-500 pr-10"
                                         />
-                                        <button
+                                    <button
                                             type="button"
                                             onClick={() => setShowPassword(!showPassword)}
                                             className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
@@ -248,6 +249,7 @@ export default function SignUpPage() {
                                             {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                                         </button>
                                     </div>
+                                    {errors.password && <p className="text-xs text-red-500 font-medium ml-1 mt-1">{errors.password}</p>}
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="confirmPassword" className="text-sm font-medium text-gray-700">Confirm Password *</Label>
