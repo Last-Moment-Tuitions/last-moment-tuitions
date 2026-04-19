@@ -75,7 +75,6 @@ export default function CourseDetailPage({ params }) {
                 setData(course);
                 setError(null);
             } catch (err) {
-                console.error('Failed to fetch course:', err);
                 setError('Failed to load course. Please try again.');
             } finally {
                 setLoading(false);

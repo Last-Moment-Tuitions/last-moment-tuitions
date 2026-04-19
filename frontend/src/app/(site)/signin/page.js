@@ -70,7 +70,6 @@ export default function SignInPage() {
             login(user);
             router.push('/');
         } catch (error) {
-            console.error('Google Sign In Error:', error);
             toast.error('Failed to authenticate with Google');
         }
     };
@@ -103,7 +102,6 @@ export default function SignInPage() {
                 toast.error(errorData.message || 'Invalid email or password');
             }
         } catch (error) {
-            console.error('Login error:', error);
             toast.error('Connection error. Please try again.');
         } finally {
             setLoading(false);

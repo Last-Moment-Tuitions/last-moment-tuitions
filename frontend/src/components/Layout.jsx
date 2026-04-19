@@ -30,7 +30,6 @@ export function Header() {
                     setNavItems([]);
                 }
             } catch (error) {
-                console.error('Failed to fetch nav', error);
             }
         };
         fetchNav();

@@ -28,7 +28,6 @@ export default function EditCoursePage() {
 
                 setCourseData(transformedData);
             } catch (err) {
-                console.error('Failed to fetch course:', err);
                 setError(err.message || 'Failed to load course');
             } finally {
                 setLoading(false);

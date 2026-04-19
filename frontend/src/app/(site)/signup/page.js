@@ -103,7 +103,6 @@ export default function SignUpPage() {
             login(user);
             router.push('/');
         } catch (error) {
-            console.error('Google Sign Up Error:', error);
             toast.error('Failed to authenticate with Google');
         }
     };
@@ -141,7 +140,6 @@ export default function SignUpPage() {
                 toast.error(errorData.message || 'Signup failed');
             }
         } catch (error) {
-            console.error('Signup error:', error);
             toast.error('Connection error. Please try again.');
         } finally {
             setLoading(false);

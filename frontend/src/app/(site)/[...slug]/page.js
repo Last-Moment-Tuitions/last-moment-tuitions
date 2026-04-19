@@ -1,3 +1,4 @@
+import { cache } from 'react';
 import { notFound } from 'next/navigation';
 import { Button } from '@/components/ui';
 import ViewTracker from '@/components/ViewTracker';
@@ -5,26 +6,20 @@ import GenericSectionInteractivity from '@/components/GenericSectionInteractivit
 
 import API_BASE_URL from '@/lib/config';
 
-// This function fetches data from the backend
-async function getPageData(slugArray) {
-    const slug = slugArray.join('/'); // e.g. "summer-bootcamp"
-
+// cache() deduplicates identical calls within the same request (e.g. render + generateMetadata)
+const getPageData = cache(async (slugArray) => {
+    const slug = slugArray.join('/');
     try {
-        // Use the new slug-specific endpoint
-        // Revalidate every 0 seconds for testing - force fresh data
         const res = await fetch(`${API_BASE_URL}/pages/slug/${slug}`, {
-            next: { revalidate: 0 }
+            next: { revalidate: 120 } // cache for 2 minutes instead of never
         });
-
         if (!res.ok) return null;
-
         const json = await res.json();
         return json.success ? json.data : null;
     } catch (error) {
-        console.error('Failed to fetch page:', error);
         return null;
     }
-}
+});
 
 // Block Renderers
 const HeroBlock = ({ data }) => (
@@ -60,12 +55,11 @@ const BlockRenderer = ({ block }) => {
 // Helper to fetch template content by ID
 async function getTemplateContent(id) {
     try {
-        const res = await fetch(`${API_BASE_URL}/pages/id/${id}`, { next: { revalidate: 0 } });
+        const res = await fetch(`${API_BASE_URL}/pages/id/${id}`, { next: { revalidate: 120 } });
         if (!res.ok) return null;
         const json = await res.json();
         return json.success ? json.data : null;
     } catch (e) {
-        console.error(`Failed to fetch template ${id}`, e);
         return null;
     }
 }
@@ -73,7 +67,7 @@ async function getTemplateContent(id) {
 // Helper to fetch testimonial data by ID
 async function getTestimonialContent(id) {
     try {
-        const res = await fetch(`${API_BASE_URL}/testimonials/${id}`, { next: { revalidate: 0 } });
+        const res = await fetch(`${API_BASE_URL}/testimonials/${id}`, { next: { revalidate: 120 } });
         if (!res.ok) return null;
         const json = await res.json();
         
@@ -86,7 +80,6 @@ async function getTestimonialContent(id) {
         }
         return null;
     } catch (e) {
-        console.error(`[Hydration] Failed to fetch testimonial ${id}:`, e.message);
         return null;
     }
 }
@@ -193,29 +186,38 @@ async function resolveTemplateRefs(html, templateCache = new Map(), seenIds = ne
     const refs = [...html.matchAll(tagRegex)];
     if (refs.length === 0) return html;
 
-    let resolvedHtml = html;
-
-    for (const refMatch of refs) {
+    // Parse all refs upfront
+    const parsedRefs = refs.map(refMatch => {
         const fullTag = refMatch[0];
         const attrs = parseAttributesFromTag(fullTag);
         const templateId = attrs['data-template-id'] || attrs.id;
+        return { fullTag, attrs, templateId };
+    });
+
+    // Fetch all unique templates IN PARALLEL instead of sequentially
+    const uniqueIds = [...new Set(
+        parsedRefs.map(r => r.templateId).filter(id => id && !seenIds.has(id) && !templateCache.has(id))
+    )];
+    await Promise.all(uniqueIds.map(async (id) => {
+        const data = await getTemplateContent(id);
+        templateCache.set(id, data || null);
+    }));
+
+    let resolvedHtml = html;
+
+    for (const { fullTag, attrs, templateId } of parsedRefs) {
         if (!templateId) {
             resolvedHtml = resolvedHtml.replace(fullTag, '');
             continue;
         }
 
         if (seenIds.has(templateId)) {
-            console.warn('[template-resolver] Circular template reference detected:', templateId);
             resolvedHtml = resolvedHtml.replace(fullTag, '');
             continue;
         }
 
         try {
-            let templateData = templateCache.get(templateId);
-            if (!templateData) {
-                templateData = await getTemplateContent(templateId);
-                templateCache.set(templateId, templateData || null);
-            }
+            const templateData = templateCache.get(templateId);
 
             if (!templateData) {
                 resolvedHtml = resolvedHtml.replace(fullTag, '');
@@ -236,18 +238,15 @@ async function resolveTemplateRefs(html, templateCache = new Map(), seenIds = ne
                                  templateId === '69bedd85babf20277b80c00639a60a20';
 
             if (isTestimonials) {
-                console.log(`[Hydration] Detected Testimonial Template: slug="${templateData.slug}", id=${templateId}`);
                 const selectedIdsStr = mergedProps.prop_selected_ids || mergedProps.selected_ids || '';
                 const selectedIds = selectedIdsStr.split(',').filter(Boolean);
                 
-                console.log(`[Hydration] Selected IDs: [${selectedIds.join(', ')}]`);
 
                 if (selectedIds.length > 0) {
                     try {
                         const studentData = await Promise.all(selectedIds.map(id => getTestimonialContent(id)));
                         const validStudents = studentData.filter(Boolean);
                         
-                        console.log(`[Hydration] Successfully fetched ${validStudents.length}/${selectedIds.length} students`);
                         
                         let cardsHtml = '';
                         validStudents.forEach((student, i) => {
@@ -272,7 +271,6 @@ async function resolveTemplateRefs(html, templateCache = new Map(), seenIds = ne
 
                         // Inject the generated cards into the track
                         if (templateHtml.includes('test-track')) {
-                            console.log(`[Hydration] Injecting cards into test-track...`);
                             
                             const trackMarkers = ['class="test-track"', 'class=\'test-track\'', 'test-track'];
                             let startIndex = -1;
@@ -302,16 +300,12 @@ async function resolveTemplateRefs(html, templateCache = new Map(), seenIds = ne
                                 }
                                 const closingTagStart = currentIndex - 6;
                                 templateHtml = templateHtml.substring(0, openingTagEnd) + cardsHtml + templateHtml.substring(closingTagStart);
-                                console.log(`[Hydration] HTML replacement complete. New length: ${templateHtml.length}`);
                             }
                         } else {
-                            console.warn('[Hydration] .test-track container NOT FOUND in template HTML!');
                         }
                     } catch (err) {
-                        console.error('[Hydration] FATAL ERROR during card generation:', err);
                     }
                 } else {
-                    console.log('[Hydration] NO SELECTED IDs FOUND in mergedProps');
                 }
             } else {
                 // Not a testimonials template, skip hydration
@@ -329,7 +323,6 @@ async function resolveTemplateRefs(html, templateCache = new Map(), seenIds = ne
             const css = templateData.gjsCss ? `<style>${templateData.gjsCss}</style>` : '';
             resolvedHtml = resolvedHtml.replace(fullTag, `${css}${resolvedNestedHtml || ''}`);
         } catch (e) {
-            console.error(`Failed to resolve template ${templateId}`, e);
             resolvedHtml = resolvedHtml.replace(fullTag, '');
         }
     }

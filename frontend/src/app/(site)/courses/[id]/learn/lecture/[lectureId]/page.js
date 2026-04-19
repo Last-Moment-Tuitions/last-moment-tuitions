@@ -189,7 +189,6 @@ export default function LessonPage({ params }) {
                 setCourseData(data);
                 setError(null);
             } catch (err) {
-                console.error('Failed to fetch course:', err);
                 setError('Failed to load lesson. Please try again.');
             } finally {
                 setLoading(false);

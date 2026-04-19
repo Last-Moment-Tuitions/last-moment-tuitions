@@ -145,7 +145,6 @@ export function Editor({ pageId }) {
                 }
             } catch (err) {
                 if (!isMounted) return;
-                console.error("Failed to load page", err);
                 showToast(err.message || 'Failed to load page', 'error');
             } finally {
                 if (isMounted) setLoading(false);
@@ -213,7 +212,6 @@ export function Editor({ pageId }) {
                 window.dispatchEvent(new CustomEvent('clear-template-cache', { detail: { id: pageId } }));
             }
         } catch (error) {
-            console.error(error);
             showToast(error.message || 'Failed to save page', 'error');
         } finally {
             setSaving(false);

@@ -37,7 +37,6 @@ export default function MenusAdminPage() {
             const pagesData = res?.data || res;
             setPages(Array.isArray(pagesData) ? pagesData : []);
         } catch (error) {
-            console.error("Failed to fetch pages", error);
         }
     }
 
@@ -59,7 +58,6 @@ export default function MenusAdminPage() {
                 setSelectedMenu(null);
             }
         } catch (error) {
-            console.error('Failed to fetch menus', error);
         } finally {
             setLoading(false);
         }

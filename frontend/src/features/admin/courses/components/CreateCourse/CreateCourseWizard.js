@@ -76,7 +76,6 @@ export default function CreateCourseWizard({ initialData }) {
 
             return savedCourse;
         } catch (error) {
-            console.error('Failed to save course:', error);
             alert('Failed to save course. Please try again.');
             return null;
         } finally {
@@ -100,7 +99,6 @@ export default function CreateCourseWizard({ initialData }) {
             alert('Course published successfully!');
             router.push('/admin/courses');
         } catch (error) {
-            console.error('Failed to publish course:', error);
             alert('Failed to publish course. Please try again.');
         } finally {
             setSaving(false);

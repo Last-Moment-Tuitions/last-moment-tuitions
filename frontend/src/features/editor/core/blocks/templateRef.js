@@ -462,7 +462,6 @@ export const loadTemplateRefBlock = (editor) => {
                         this.trigger('change:templateContent');
                     }
                 } catch (err) {
-                    console.error('Failed to sync testimonial data', err);
                 }
             },
 
@@ -818,7 +817,6 @@ export const loadTemplateRefBlock = (editor) => {
                                     });
                                     track.innerHTML = cardsHtml;
                                 } catch (err) {
-                                    console.error('Failed to populate testimonials', err);
                                     track.innerHTML = '<div style="padding:20px; color:#94a3b8;">Error loading selected testimonials</div>';
                                 }
                             } else {
@@ -1595,7 +1593,6 @@ export const loadTemplateRefBlock = (editor) => {
                                     ref.replaceWith(wrapper);
                                 }
                             } catch (e) {
-                                console.error('[templateRef] Failed to resolve nested template', e);
                             }
                         }
                         return tempDoc.body.innerHTML;
@@ -1646,7 +1643,6 @@ export const loadTemplateRefBlock = (editor) => {
                     // to ensure both empty and loaded templates are properly isolated.
 
                 } catch (err) {
-                    console.error('[templateRef] Render error:', err);
                     this.el.innerHTML = `
                     <div style="padding:20px; border:2px dashed #f87171; background:#fef2f2; text-align:center; color:#991b1b; font-family:sans-serif; border-radius:8px;">
                         <strong>Failed to load section</strong>

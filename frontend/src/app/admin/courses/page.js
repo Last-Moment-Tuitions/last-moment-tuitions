@@ -30,7 +30,6 @@ export default function CoursesPage() {
             const response = await coursesApi.getAllCourses();
             setCourses(response?.data || []);
         } catch (error) {
-            console.error('Failed to fetch courses:', error);
         } finally {
             setLoading(false);
         }
@@ -49,7 +48,6 @@ export default function CoursesPage() {
                 prev.map(c => c._id === courseId ? { ...c, status: newStatus } : c)
             );
         } catch (error) {
-            console.error('Failed to update status:', error);
             alert('Failed to update course status. Please try again.');
         }
         setOpenMenu(null);
@@ -61,7 +59,6 @@ export default function CoursesPage() {
             await coursesApi.deleteCourse(courseId);
             setCourses(prev => prev.filter(c => c._id !== courseId));
         } catch (error) {
-            console.error('Failed to delete course:', error);
             alert('Failed to delete course. Please try again.');
         }
         setOpenMenu(null);

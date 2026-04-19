@@ -94,7 +94,6 @@ export default function ContentManager({ view = 'page' }) {
             setPages(Array.isArray(pagesData) ? pagesData : []);
 
         } catch (error) {
-            console.error('Failed to fetch content', error);
             toast.error(error.message || 'Failed to fetch content');
         } finally {
             setLoading(false);
@@ -184,7 +183,6 @@ export default function ContentManager({ view = 'page' }) {
             // Optimistic update
             setPages(pages.map(p => p._id === page._id ? { ...p, status: newStatus } : p));
         } catch (error) {
-            console.error('Failed to update status', error);
             toast.error(error.message || 'Failed to update status');
         } finally {
             setTogglingId(null);
