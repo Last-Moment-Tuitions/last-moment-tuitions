@@ -11,12 +11,14 @@ export default function ViewTracker({ pageId }) {
         if (!pageId || hasTracked.current) return;
 
         // Simple fire-and-forget view count increment
+        const sessionKey = `viewed-page-${pageId}`;
+        if (sessionStorage.getItem(sessionKey)) return;
+
         const trackView = async () => {
             try {
-                // Use a session storage flag to prevent double-counting on strict-mode/dev re-renders if desired,
-                // but for simple MVP, just calling it is fine.
-                // We'll add a simple check to avoid counting the same session repeatedly if needed later.
                 await axios.patch(`${API_BASE_URL}/pages/${pageId}/view`);
+                sessionStorage.setItem(sessionKey, 'true');
+                hasTracked.current = true;
             } catch (error) {
             }
         };

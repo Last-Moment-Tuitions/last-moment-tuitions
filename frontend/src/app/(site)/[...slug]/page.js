@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { Button } from '@/components/ui';
 import ViewTracker from '@/components/ViewTracker';
 import GenericSectionInteractivity from '@/components/GenericSectionInteractivity';
+import PageIdBroadcaster from '@/components/PageIdBroadcaster';
 
 import API_BASE_URL from '@/lib/config';
 
@@ -347,11 +348,12 @@ export default async function DynamicPage({ params }) {
 
     return (
         <main>
+            <PageIdBroadcaster pageId={String(page._id)} />
             <ViewTracker pageId={page._id} />
             {finalHtml ? (
                 <>
-                    {page.gjsCss && <style dangerouslySetInnerHTML={{ __html: page.gjsCss }} />}
-                    <div dangerouslySetInnerHTML={{ __html: finalHtml }} />
+                    {page.gjsCss && <style dangerouslySetInnerHTML={{ __html: page.gjsCss }} suppressHydrationWarning />}
+                    <div dangerouslySetInnerHTML={{ __html: finalHtml }} suppressHydrationWarning />
                     <GenericSectionInteractivity />
                 </>
             ) : (

@@ -6,22 +6,68 @@ import { Home, BookOpen, Stethoscope, Cog, BriefcaseBusiness, GraduationCap, Loa
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { useActiveMenu } from '@/hooks/api/useMenus';
+import { usePage } from '@/context/PageContext';
 
-import { ChevronDown, Search, Menu, X } from 'lucide-react';
+import { ChevronDown, Search, Menu, X, LayoutDashboard, FileEdit, Shield } from 'lucide-react';
 
-export function Header() {
+export function Header({ initialMenu }) {
     const pathname = usePathname();
     const { user, logout } = useAuth();
     const { toast } = useToast();
-    const { data: activeMenu } = useActiveMenu();
+    const { data: activeMenu } = useActiveMenu(initialMenu);
+    const { pageId } = usePage();
     const navItems = activeMenu?.items || [];
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [loggingOut, setLoggingOut] = useState(false);
 
     const isActive = (path) => pathname === path;
     const isGroupActive = (items) => items.some(item => pathname === item.href);
+    const isAdmin = user?.roles?.includes('admin');
+
+    // If we're on a CMS dynamic page and have its ID, link directly to the editor.
+    // Otherwise fall back to the pages listing.
+    const isDynamicPage = pathname !== '/' && !pathname.startsWith('/admin') && !pathname.startsWith('/editor') && !pathname.startsWith('/courses') && !pathname.startsWith('/signin') && !pathname.startsWith('/signup');
+    const editPageHref = isDynamicPage && pageId
+        ? `/admin/editor/${pageId}`
+        : `/admin/pages`;
 
     return (
+        <>
+        {/* Admin Quick-Access Bar */}
+        {isAdmin && (
+            <div className="sticky top-0 z-[60] bg-gray-900 text-white text-xs font-medium flex items-center justify-between px-4 py-1.5 border-b border-gray-700">
+                <div className="flex items-center gap-1 text-gray-400">
+                    <Shield className="w-3 h-3 text-primary-400" />
+                    <span className="text-primary-400 font-semibold">Admin</span>
+                    <span className="text-gray-600 mx-1">|</span>
+                    <span className="text-gray-400">You are viewing the live site</span>
+                </div>
+                <div className="flex items-center gap-3">
+                    <Link
+                        href="/admin"
+                        className="flex items-center gap-1.5 text-gray-300 hover:text-white transition-colors px-2 py-0.5 rounded hover:bg-gray-700"
+                    >
+                        <LayoutDashboard className="w-3 h-3" />
+                        Dashboard
+                    </Link>
+                    <span className="text-gray-700">|</span>
+                    <Link
+                        href={editPageHref}
+                        className="flex items-center gap-1.5 text-gray-300 hover:text-white transition-colors px-2 py-0.5 rounded hover:bg-gray-700"
+                    >
+                        <FileEdit className="w-3 h-3" />
+                        {isDynamicPage ? 'Edit this Page' : 'Edit Pages'}
+                    </Link>
+                    <span className="text-gray-700">|</span>
+                    <Link
+                        href="/admin/menus"
+                        className="flex items-center gap-1.5 text-gray-300 hover:text-white transition-colors px-2 py-0.5 rounded hover:bg-gray-700"
+                    >
+                        Menus
+                    </Link>
+                </div>
+            </div>
+        )}
         <header className="sticky top-0 z-50 bg-white border-b border-gray-100 shadow-sm font-sans">
             <div className="container mx-auto px-4 h-20 flex items-center justify-between gap-4">
 
@@ -82,6 +128,15 @@ export function Header() {
                 <div className="hidden md:flex items-center gap-3 xl:gap-4">
                     {user ? (
                         <div className="flex items-center gap-4">
+                            {isAdmin && (
+                                <Link
+                                    href="/admin"
+                                    className="flex items-center gap-1.5 text-xs font-semibold text-primary-600 bg-primary-50 hover:bg-primary-100 border border-primary-200 px-3 py-1.5 rounded-full transition-all"
+                                >
+                                    <Shield className="w-3.5 h-3.5" />
+                                    Admin Panel
+                                </Link>
+                            )}
                             <span className="text-sm font-semibold text-gray-700">
                                 Hello, {user.firstName || 'User'}
                             </span>
@@ -189,6 +244,27 @@ export function Header() {
                                 <div className="px-4 py-2 text-sm text-gray-600">
                                     Signed in as <span className="font-semibold text-gray-900">{user.firstName}</span>
                                 </div>
+                                {isAdmin && (
+                                    <div className="px-4 flex flex-col gap-2">
+                                        <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Admin</p>
+                                        <Link
+                                            href="/admin"
+                                            onClick={() => setIsMobileMenuOpen(false)}
+                                            className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-primary-600 bg-primary-50 rounded-lg hover:bg-primary-100 transition-colors"
+                                        >
+                                            <LayoutDashboard className="w-4 h-4" />
+                                            Admin Dashboard
+                                        </Link>
+                                        <Link
+                                            href={editPageHref}
+                                            onClick={() => setIsMobileMenuOpen(false)}
+                                            className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                                        >
+                                            <FileEdit className="w-4 h-4" />
+                                            {isDynamicPage && pageId ? 'Edit this Page' : 'Edit Pages'}
+                                        </Link>
+                                    </div>
+                                )}
                                 <Button onClick={() => { logout(); setIsMobileMenuOpen(false); }} variant="outline" className="w-full justify-center">
                                     Logout
                                 </Button>
@@ -207,6 +283,7 @@ export function Header() {
                 </div>
             )}
         </header>
+        </>
     );
 }
 

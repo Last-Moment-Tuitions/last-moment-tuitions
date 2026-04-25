@@ -67,7 +67,7 @@ api.interceptors.response.use(
 export const adminService = {
     // Pages
     getPages: async (params = {}) => {
-        const response = await api.get('/pages', { params });
+        const response = await api.get('/admin/pages', { params });
         return response.data;
     },
 

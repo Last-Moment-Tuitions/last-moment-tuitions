@@ -21,10 +21,11 @@ export function useMenus() {
     });
 }
 
-export function useActiveMenu() {
+export function useActiveMenu(initialData) {
     return useQuery({
         queryKey: menuKeys.active(),
         queryFn: () => menuService.getActive(),
+        initialData,
     });
 }
 

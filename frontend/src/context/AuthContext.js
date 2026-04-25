@@ -7,7 +7,7 @@ import { useQueryClient } from '@tanstack/react-query';
 
 const AuthContext = createContext();
 
-export function AuthProvider({ children }) {
+export function AuthProvider({ children, initialUser }) {
     const router = useRouter();
     const queryClient = useQueryClient();
     
@@ -16,7 +16,9 @@ export function AuthProvider({ children }) {
         data: user, 
         isLoading: loading, 
         refetch: checkUser 
-    } = useUser();
+    } = useUser({
+        initialData: initialUser
+    });
 
     // Sync user state with localStorage (v5 handles onSuccess via useEffect)
     useEffect(() => {

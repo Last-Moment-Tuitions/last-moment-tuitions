@@ -15,6 +15,13 @@ export class PagesService {
         if (filter.folder === 'null') {
             filter.folder = null;
         }
+        // 'all' is a UI sentinel meaning "no status filter" — remove it so all statuses are returned
+        if (filter.status === 'all') {
+            delete filter.status;
+        }
+        // Remove pagination params not applicable to Mongoose find
+        delete filter.page;
+        delete filter.limit;
         return this.pageModel
             .find(filter)
             .select('title slug updatedAt folder type status viewCount')

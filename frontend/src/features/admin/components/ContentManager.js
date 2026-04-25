@@ -52,7 +52,7 @@ export default function ContentManager({ view = 'page' }) {
     
     // Flatten the infinite pages data
     const pages = useMemo(() => {
-        return pagesInfiniteData?.pages.flatMap(page => page.data || page) || [];
+        return pagesInfiniteData?.pages.flatMap(page => Array.isArray(page) ? page : (page.data || [])) || [];
     }, [pagesInfiniteData]);
 
     const loading = foldersLoading || pagesLoading;

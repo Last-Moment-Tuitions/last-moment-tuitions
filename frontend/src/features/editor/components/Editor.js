@@ -143,6 +143,38 @@ export function Editor({ pageId }) {
         };
     }, [pageId]);
 
+    // ── Load page data into the canvas once it arrives from the API ──
+    useEffect(() => {
+        const editor = editorRef.current;
+        if (!editor || !page) return;
+
+        try {
+            const hasComponents = page.gjsComponents && page.gjsComponents.length > 0;
+            const hasHtml = page.gjsHtml && page.gjsHtml.trim() !== '';
+
+            if (hasComponents) {
+                // Preferred: restore from saved GrapesJS component JSON
+                editor.setComponents(sanitizeComponentsForCanvas(page.gjsComponents));
+            } else if (hasHtml) {
+                // Fallback: restore from raw HTML
+                editor.setComponents(page.gjsHtml);
+            }
+
+            if (page.gjsStyles && page.gjsStyles.length > 0) {
+                editor.setStyle(page.gjsStyles);
+            } else if (page.gjsCss && page.gjsCss.trim() !== '') {
+                // CSS string fallback — parse it in
+                editor.setStyle(page.gjsCss);
+            }
+
+            // Trigger the load event so the canvas highlights & layers refresh
+            editor.trigger('load');
+        } catch (err) {
+            console.error('[Editor] Failed to load page content into canvas:', err);
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [page]);
+
     const showToast = (message, type = 'success') => {
         setToast({ message, type });
         setTimeout(() => setToast(null), 3000);
@@ -152,7 +184,6 @@ export function Editor({ pageId }) {
         const editor = editorRef.current;
         if (!editor || !pageId) return;
 
-        setSaving(true);
         try {
             // Correctly serialize GrapesJS data to avoid circular references and massive objects
             const rawComponents = editor.getComponents().toJSON();
@@ -180,8 +211,6 @@ export function Editor({ pageId }) {
             }
         } catch (error) {
             showToast(error.message || 'Failed to save page', 'error');
-        } finally {
-            setSaving(false);
         }
     };
 

@@ -30,9 +30,8 @@ export function useInfinitePages(params = {}, limit = 20) {
         queryKey: adminKeys.pagesInfinite(params),
         queryFn: ({ pageParam = 1 }) => adminService.getPages({ ...params, page: pageParam, limit }),
         getNextPageParam: (lastPage, allPages) => {
-            // Check if backend returned more data or use the simple length-based check
-            // Standardizing: if the last page had 'limit' items, there might be more
-            const lastPageItems = lastPage.data || lastPage || [];
+            // Admin endpoint returns a raw array; public endpoint wraps in { data: [] }
+            const lastPageItems = Array.isArray(lastPage) ? lastPage : (lastPage.data || []);
             if (lastPageItems.length < limit) return undefined;
             return allPages.length + 1;
         },

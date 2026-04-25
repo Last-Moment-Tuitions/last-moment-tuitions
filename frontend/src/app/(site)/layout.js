@@ -1,25 +1,33 @@
-"use client";
 import React from 'react';
-import { Header, Footer } from '@/components/Layout';
-import { StickyBanner } from '@/components/StickyBanner';
+import SiteLayoutClient from './SiteLayoutClient';
+import API_BASE_URL from '@/lib/config';
+import { cookies } from 'next/headers';
 
-export default function SiteLayout({ children }) {
-    const [mounted, setMounted] = React.useState(false);
+async function getActiveMenu() {
+    try {
+        const url = `${API_BASE_URL}/menus/status/active`;
+        console.log('[Server Layout] Fetching menu from:', url);
+        const res = await fetch(url, {
+            cache: 'no-store'
+        });
+        if (res.ok) {
+            const responseData = await res.json();
+            console.log('[Server Layout] Fetched menu successfully:', responseData.data?.name);
+            return responseData.data;
+        } else {
+            console.error('[Server Layout] Menu fetch failed. Status:', res.status);
+        }
+    } catch (error) {
+        console.error('[Server Layout] Failed to fetch active menu:', error);
+    }
+    return null;
+}
 
-    React.useEffect(() => {
-        setMounted(true);
-    }, []);
-
+export default async function SiteLayout({ children }) {
+    const initialMenu = await getActiveMenu();
     return (
-        <div className="flex flex-col min-h-screen">
-            <StickyBanner sticky={false} className="relative">
-                🎉 <span className="font-bold">New Year Sale!</span> Get 50% off on all courses. Use code: <span className="font-bold">NEWYear2025</span>
-            </StickyBanner>
-            <Header />
-            <main className="flex-1">
-                {mounted ? children : <div className="min-h-screen bg-white" />}
-            </main>
-            <Footer />
-        </div>
+        <SiteLayoutClient initialMenu={initialMenu}>
+            {children}
+        </SiteLayoutClient>
     );
 }
