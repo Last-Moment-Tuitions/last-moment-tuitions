@@ -4,7 +4,6 @@ import { useState, useEffect, Suspense, useMemo } from 'react';
 import { usePages, useCreatePage } from '@/hooks/api/useAdmin';
 import { useToast } from '@/context/ToastContext';
 import { Button } from '@/components/ui';
-import { Save, ArrowRight } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 function CreatePageContent() {
