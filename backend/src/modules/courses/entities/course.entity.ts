@@ -21,7 +21,7 @@ export class Course {
   @Prop({ default: '', trim: true })
   topic: string;
 
-  @Prop({ default: '', trim: true })
+  @Prop({ default: 'english', trim: true })
   language: string;
 
   @Prop({ default: '', trim: true })
@@ -116,7 +116,7 @@ export class Course {
 export const CourseSchema = SchemaFactory.createForClass(Course);
 
 // Indexes
-CourseSchema.index({ title: 'text', descriptions: 'text' });
+CourseSchema.index({ title: 'text', descriptions: 'text' }, { language_override: 'none' });
 CourseSchema.index({ category: 1, status: 1 });
 CourseSchema.index({ createdBy: 1, status: 1 });
 CourseSchema.index({ status: 1, publishedAt: -1 });

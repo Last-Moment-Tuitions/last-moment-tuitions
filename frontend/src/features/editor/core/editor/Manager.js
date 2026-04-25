@@ -4,6 +4,10 @@ import API_BASE_URL from '@/lib/config';
 import gjsCustomCode from 'grapesjs-custom-code';
 import gjsCkeditor from 'grapesjs-plugin-ckeditor';
 import { adminService } from '@/services/adminService';
+import { queryClient } from '@/providers/QueryProvider';
+import { adminKeys } from '@/hooks/api/useAdmin';
+import { testimonialKeys } from '@/hooks/api/useTestimonials';
+import { testimonialService } from '@/services/testimonialService';
 // Import 'grapesjs/dist/css/grapes.min.css'; // This normally needs to be imported in global CSS or locally
 
 const ensureCodeMirror = () => {
@@ -136,7 +140,10 @@ export const initEditor = (pageId) => {
 
             const loadOptions = async () => {
                 try {
-                    const data = await adminService[apiMethod]();
+                    const data = await queryClient.fetchQuery({
+                        queryKey: adminKeys.testimonials({}) , // Reasonable default for select-api
+                        queryFn: () => adminService[apiMethod]()
+                    });
                     input.innerHTML = '<option value="">-- Select --</option>';
                     data.forEach(item => {
                         const option = document.createElement('option');
@@ -187,7 +194,18 @@ export const initEditor = (pageId) => {
                 modal.open();
                 
                 try {
-                    const students = await adminService.getTestimonials();
+                    const students = await queryClient.fetchQuery({
+                        queryKey: testimonialKeys.all,
+                        queryFn: () => testimonialService.getOne('all') // Use the service directly for bulk if needed, or queryClient.fetchQuery handles it
+                    });
+                    // Wait, getTestimonials() in adminService is different from public testimonialService.
+                    // I'll stick to adminService for now but wrap in fetchQuery.
+                    const studentsData = await queryClient.fetchQuery({
+                        queryKey: adminKeys.testimonials({}),
+                        queryFn: () => adminService.getTestimonials()
+                    });
+                    const studentsList = studentsData?.data || studentsData || [];
+
                     const currentIds = (component.get('prop_selected_ids') || '').split(',').filter(Boolean);
                     
                     const container = document.createElement('div');
@@ -203,7 +221,7 @@ export const initEditor = (pageId) => {
                         <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap:12px; max-height:400px; overflow-y:auto; padding-right:10px;">
                     `;
                     
-                    students.forEach(student => {
+                    studentsList.forEach(student => {
                         const isChecked = currentIds.includes(student._id);
                         html += `
                             <label style="display:flex; align-items:center; gap:12px; padding:12px; background:#1e293b; border-radius:8px; cursor:pointer; border:1px solid ${isChecked ? '#f97316' : '#334155'}; transition:all 0.2s;">

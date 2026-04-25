@@ -5,8 +5,7 @@ import { usePathname } from 'next/navigation';
 import { Home, BookOpen, Stethoscope, Cog, BriefcaseBusiness, GraduationCap, Loader2 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
-import contentService from '@/services/contentService';
-import menuService from '@/services/menuService';
+import { useActiveMenu } from '@/hooks/api/useMenus';
 
 import { ChevronDown, Search, Menu, X } from 'lucide-react';
 
@@ -14,26 +13,10 @@ export function Header() {
     const pathname = usePathname();
     const { user, logout } = useAuth();
     const { toast } = useToast();
-    const [navItems, setNavItems] = useState([]);
+    const { data: activeMenu } = useActiveMenu();
+    const navItems = activeMenu?.items || [];
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [loggingOut, setLoggingOut] = useState(false);
-
-    useEffect(() => {
-        const fetchNav = async () => {
-            try {
-                // Try fetching dynamic menu first
-                const dynamicMenu = await menuService.getActive().catch(() => null);
-
-                if (dynamicMenu && dynamicMenu.items && dynamicMenu.items.length > 0) {
-                    setNavItems(dynamicMenu.items);
-                } else {
-                    setNavItems([]);
-                }
-            } catch (error) {
-            }
-        };
-        fetchNav();
-    }, []);
 
     const isActive = (path) => pathname === path;
     const isGroupActive = (items) => items.some(item => pathname === item.href);

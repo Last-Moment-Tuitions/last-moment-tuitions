@@ -6,7 +6,7 @@ import { Button, Input, Label, GoogleButton } from '@/components/ui';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import API_BASE_URL from '@/lib/config';
+import { authService } from '@/services/authService';
 import { auth, googleProvider } from '@/lib/firebase';
 import { signInWithPopup } from 'firebase/auth';
 import { useToast } from '@/context/ToastContext';
@@ -44,21 +44,10 @@ export default function SignInPage() {
                 throw new Error('No OAuth Token returned from Firebase');
             }
 
-            // Send to backend to create session
-            const res = await fetch(`${API_BASE_URL}/auth/google`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ token }),
-            });
-
-            if (!res.ok) {
-                const errorData = await res.json();
-                throw new Error(errorData.message || 'Backend verification failed');
-            }
-
-            const data = await res.json();
+            // Send to backend to create session via standardized fetch (authService.me or custom axios)
+            // For OAuth session creation, I'll add a method to authService or use axios directly here
+            const res = await authService.login({ provider: 'google', token }); 
+            const data = res;
             const { accessToken, expiresIn, user } = data.details || {};
 
             if (!accessToken || !user) {
@@ -78,31 +67,21 @@ export default function SignInPage() {
         e.preventDefault();
         setLoading(true);
         try {
-            const res = await fetch(`${API_BASE_URL}/auth/login`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formData),
-            });
+            const data = await authService.login(formData);
+            
+            // API returns nested structure: { success, message, details: { accessToken, expiresIn, user } }
+            const { accessToken, expiresIn, user } = data.details || {};
 
-            if (res.ok) {
-                const data = await res.json();
-
-                // API returns nested structure: { success, message, details: { accessToken, expiresIn, user } }
-                const { accessToken, expiresIn, user } = data.details || {};
-
-                if (!accessToken || !user) {
-                    throw new Error('Invalid response from server');
-                }
-
-                document.cookie = `sessionId=${accessToken}; path=/; max-age=${expiresIn}; SameSite=Lax; Secure`;
-                toast.success('Login successful! Welcome back.');
-                login(user);
-            } else {
-                const errorData = await res.json();
-                toast.error(errorData.message || 'Invalid email or password');
+            if (!accessToken || !user) {
+                throw new Error('Invalid response from server');
             }
+
+            document.cookie = `sessionId=${accessToken}; path=/; max-age=${expiresIn}; SameSite=Lax; Secure`;
+            toast.success('Login successful! Welcome back.');
+            login(user);
         } catch (error) {
-            toast.error('Connection error. Please try again.');
+            console.error('Login error:', error);
+            toast.error(error.response?.data?.message || error.message || 'Invalid email or password');
         } finally {
             setLoading(false);
         }

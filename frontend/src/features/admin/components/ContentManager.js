@@ -1,7 +1,14 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { adminService } from '@/services/adminService';
+import { useEffect, useState, useMemo } from 'react';
+import { 
+    useInfinitePages,
+    useFolders, 
+    useCreateFolder, 
+    useDeleteFolder, 
+    useDeletePage, 
+    useUpdatePage 
+} from '@/hooks/api/useAdmin';
 import { useToast } from '@/context/ToastContext';
 import Link from 'next/link';
 import { Button } from '@/components/ui';
@@ -20,85 +27,45 @@ export default function ContentManager({ view = 'page' }) {
     const [currentFolder, setCurrentFolder] = useState(null); // null = root
     const [breadcrumbs, setBreadcrumbs] = useState([{ id: null, name: 'Home' }]);
 
-    // Data State
-    const [folders, setFolders] = useState([]);
-    const [pages, setPages] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [creatingFolder, setCreatingFolder] = useState(false);
-    const [deletingId, setDeletingId] = useState(null);
-    const [togglingId, setTogglingId] = useState(null);
+    // Filter/UI State
     const [search, setSearch] = useState('');
     const [copiedId, setCopiedId] = useState(null);
+    const [isCreateFolderOpen, setIsCreateFolderOpen] = useState(false);
+    const [newFolderName, setNewFolderName] = useState('');
 
-    // Initial Load & Folder Change
-    useEffect(() => {
-        fetchContent();
-    }, [currentFolder, view]);
+    // TanStack Query
+    const folderParams = { parent: currentFolder || 'null', type: view };
+    const pageParams = { folder: currentFolder || 'null', type: view, status: 'all' };
 
-    const fetchContent = async () => {
-        setLoading(true);
-        try {
-            // Fetch Folders (only for current parent)
-            const parentParam = currentFolder ? currentFolder : 'null';
-            // Note: Update backend to handle 'null' string if sending as query param, 
-            // or better, handle undefined/null in service. 
-            // Existing code sent 'null' string to express? 
-            // In NestJS controller I implemented standard finding. 
-            // Let's pass params cleanly. 
+    const { data: foldersRaw, isLoading: foldersLoading } = useFolders(folderParams);
+    
+    // Use Infinite Query for pages
+    const { 
+        data: pagesInfiniteData, 
+        isLoading: pagesLoading,
+        fetchNextPage,
+        hasNextPage,
+        isFetchingNextPage
+    } = useInfinitePages(pageParams, 20);
 
-            // Backend expectation: 
-            // If I look at my PagesService: async findAll(filter: any = {})
-            // It passes the query directly to mongoose find.
-            // So if I pass { folder: 'null' } it will look for folder: 'null' string.
-            // But ObjectId is needed.
+    const folders = useMemo(() => foldersRaw?.details || foldersRaw || [], [foldersRaw]);
+    
+    // Flatten the infinite pages data
+    const pages = useMemo(() => {
+        return pagesInfiniteData?.pages.flatMap(page => page.data || page) || [];
+    }, [pagesInfiniteData]);
 
-            // The previous code sent `?parent=null`. 
-            // I should check how I implemented the backend Service/Controller.
-            // PagesController: findAll(@Query() query) -> pagesService.findAll(query)
-            // PagesService: find(filter)
+    const loading = foldersLoading || pagesLoading;
 
-            // If query is { folder: 'null' }, mongoose might error on casting to ObjectId if 'null' string is passed
-            // OR if I used `type: Types.ObjectId` and default null, searching for { folder: null } (literal null) is correct.
-            // Searching for { folder: 'null' } (string) is wrong.
+    // Mutations
+    const createFolderMutation = useCreateFolder();
+    const deleteFolderMutation = useDeleteFolder();
+    const deletePageMutation = useDeletePage();
+    const updatePageMutation = useUpdatePage();
 
-            // In express, query params are strings. 
+    const [deletingId, setDeletingId] = useState(null);
+    const [togglingId, setTogglingId] = useState(null);
 
-            // I'll stick to reproducing what the frontend WAS sending for now, 
-            // but I might need to fix the backend to handle 'null' string vs null value
-            // if the previous backend handled it manually.
-
-            const folderParams = { parent: currentFolder, type: view };
-            const pageParams = { folder: currentFolder, type: view };
-
-            // However, ContentManager passes 'null' string explicitly if currentFolder is null.
-            // "const parentParam = currentFolder ? currentFolder : 'null';"
-
-            // I will update this to pass null or undefined if currentFolder is null, 
-            // letting the service/axios handle it (usually axios drops undefined params).
-            // But wait, if I want root folders (parent: null), I need to query for parent: null.
-            // Mongoose find({ parent: null }) works. 
-            // But over HTTP, query param ?parent=null is a string "null" or literal null depending on parser.
-            // NestJS/Express usually sees it as string "null" unless transformed.
-
-            // For now, I will trust the previous frontend logic assumption, 
-            // but use the service.
-
-            const folders = await adminService.getFolders({ parent: parentParam, type: view });
-            const pages = await adminService.getPages({ folder: parentParam, type: view, status: 'all' });
-
-            // Robustly handle both { data: [...] } and [...] response formats
-            const foldersData = folders?.details || folders;
-            const pagesData = pages?.data || pages;
-
-            setFolders(Array.isArray(foldersData) ? foldersData : []);
-            setPages(Array.isArray(pagesData) ? pagesData : []);
-
-        } catch (error) {
-            toast.error(error.message || 'Failed to fetch content');
-        } finally {
-            setLoading(false);
-        }
-    };
 
     // --- Navigation Actions ---
     const enterFolder = (folder) => {
@@ -113,9 +80,8 @@ export default function ContentManager({ view = 'page' }) {
         setBreadcrumbs(newBreadcrumbs);
     };
 
-    // --- Modal State ---
-    const [isCreateFolderOpen, setIsCreateFolderOpen] = useState(false);
-    const [newFolderName, setNewFolderName] = useState('');
+    // --- Modal Logic ---
+    // (State moved to Filter/UI State section)
 
     // --- CRUD Actions ---
     const handleCreateFolderClick = () => {
@@ -127,19 +93,15 @@ export default function ContentManager({ view = 'page' }) {
         e.preventDefault();
         if (!newFolderName.trim()) return;
 
-        setCreatingFolder(true);
         try {
-            await adminService.createFolder({
+            await createFolderMutation.mutateAsync({
                 name: newFolderName,
                 parent: currentFolder,
                 type: view
             });
-            fetchContent();
             setIsCreateFolderOpen(false);
         } catch (error) {
             toast.error(error.message || 'Failed to create folder');
-        } finally {
-            setCreatingFolder(false);
         }
     };
 
@@ -149,8 +111,7 @@ export default function ContentManager({ view = 'page' }) {
 
         setDeletingId(id);
         try {
-            await adminService.deleteFolder(id);
-            fetchContent();
+            await deleteFolderMutation.mutateAsync(id);
         } catch (error) {
             toast.error(error.message || 'Failed to delete folder');
         } finally {
@@ -164,8 +125,7 @@ export default function ContentManager({ view = 'page' }) {
 
         setDeletingId(id);
         try {
-            await adminService.deletePage(id);
-            fetchContent();
+            await deletePageMutation.mutateAsync(id);
         } catch (error) {
             toast.error(error.message || 'Failed to delete page');
         } finally {
@@ -178,10 +138,7 @@ export default function ContentManager({ view = 'page' }) {
         setTogglingId(page._id);
         try {
             const newStatus = page.status === 'published' ? 'draft' : 'published';
-            await adminService.updatePage(page._id, { status: newStatus });
-
-            // Optimistic update
-            setPages(pages.map(p => p._id === page._id ? { ...p, status: newStatus } : p));
+            await updatePageMutation.mutateAsync({ id: page._id, data: { status: newStatus } });
         } catch (error) {
             toast.error(error.message || 'Failed to update status');
         } finally {
@@ -194,6 +151,25 @@ export default function ContentManager({ view = 'page' }) {
         setCopiedId(id);
         setTimeout(() => setCopiedId(null), 2000);
     };
+
+    // --- Infinite Scroll Logic ---
+    useEffect(() => {
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
+                    fetchNextPage();
+                }
+            },
+            { threshold: 0.5 }
+        );
+
+        const sentinel = document.getElementById('infinite-scroll-sentinel');
+        if (sentinel) observer.observe(sentinel);
+
+        return () => {
+            if (sentinel) observer.unobserve(sentinel);
+        };
+    }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
     // --- Filter Logic ---
     // Search creates a "Flat View" of the current folder's content (client-side only for now)
@@ -398,6 +374,13 @@ export default function ContentManager({ view = 'page' }) {
                     </div>
                 ))}
 
+                {/* Infinite Scroll Sentinel */}
+                {pages.length > 0 && (
+                    <div id="infinite-scroll-sentinel" className="col-span-full h-10 flex items-center justify-center">
+                        {isFetchingNextPage && <Loader2 className="w-6 h-6 animate-spin text-primary-600" />}
+                    </div>
+                )}
+
                 {/* Empty State */}
                 {filteredFolders.length === 0 && filteredPages.length === 0 && (
                     <div className="col-span-full py-20 text-center">
@@ -446,10 +429,10 @@ export default function ContentManager({ view = 'page' }) {
                                     </button>
                                     <button
                                         type="submit"
-                                        disabled={!newFolderName.trim() || creatingFolder}
+                                        disabled={!newFolderName.trim() || createFolderMutation.isPending}
                                         className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
-                                        {creatingFolder ? 'Creating...' : 'Create Folder'}
+                                        {createFolderMutation.isPending ? 'Creating...' : 'Create Folder'}
                                     </button>
                                 </div>
                             </form>

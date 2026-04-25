@@ -1,101 +1,71 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import API_BASE_URL from '@/lib/config';
+import { useUser, useLogout } from '@/hooks/api/useAuth';
+import { useQueryClient } from '@tanstack/react-query';
 
 const AuthContext = createContext();
 
-export function AuthProvider({ children, initialUser = null }) {
-    const [user, setUser] = useState(initialUser);
-    const [loading, setLoading] = useState(!initialUser);
+export function AuthProvider({ children }) {
     const router = useRouter();
+    const queryClient = useQueryClient();
+    
+    // Use TanStack Query for session management
+    const { 
+        data: user, 
+        isLoading: loading, 
+        refetch: checkUser 
+    } = useUser();
 
+    // Sync user state with localStorage (v5 handles onSuccess via useEffect)
     useEffect(() => {
-        // Always check user on mount for client-side verification
-        checkUser();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
-
-    const getSessionId = () => {
-        return document.cookie.split('; ').find(row => row.startsWith('sessionId='))?.split('=')[1];
-    };
-
-    const checkUser = async () => {
-        try {
-            // First, try to load user from localStorage for instant UI update
-            const storedUser = localStorage.getItem('user');
-            if (storedUser) {
-                const parsedUser = JSON.parse(storedUser);
-                setUser(parsedUser);
-            }
-
-            // Then verify session with API call
-            const sessionId = getSessionId();
-            const headers = sessionId ? { 'x-session-id': sessionId } : {};
-
-            const res = await fetch(`${API_BASE_URL}/auth/me`, { headers });
-
-            if (res.ok) {
-                const responseData = await res.json();
-
-                // Check if response has nested details structure like login endpoint
-                const userData = responseData.details || responseData;
-
-                // Validate user data has required fields
-                if (userData && userData._id) {
-                    setUser(userData);
-                    localStorage.setItem('user', JSON.stringify(userData));
-                } else {
-                    setUser(null);
-                    localStorage.removeItem('user');
-                }
-            } else {
-                setUser(null);
-                localStorage.removeItem('user');
-            }
-        } catch (error) {
-            setUser(null);
+        if (user) {
+            localStorage.setItem('user', JSON.stringify(user));
+        } else if (user === null) {
             localStorage.removeItem('user');
-        } finally {
-            setLoading(false);
         }
-    };
+    }, [user]);
+
+    const logoutMutation = useLogout();
 
     const login = (userData) => {
-        setUser(userData);
+        // Manually update the query cache with the new user data
+        queryClient.setQueryData(['auth', 'me'], userData);
         localStorage.setItem('user', JSON.stringify(userData));
         router.push('/');
     };
 
     const logout = async (onLogout) => {
-        // Call the optional callback before logout (for toast notifications)
         if (onLogout && typeof onLogout === 'function') {
             onLogout();
         }
 
         try {
-            const sessionId = getSessionId();
-            const headers = sessionId ? { 'x-session-id': sessionId } : {};
-            await fetch(`${API_BASE_URL}/auth/logout`, {
-                method: 'POST',
-                headers
-            });
+            await logoutMutation.mutateAsync();
         } catch (error) {
+            console.error('Logout failed', error);
         }
-        setUser(null);
+        
         localStorage.removeItem('user');
-        // Clear cookie if not HttpOnly (backend clears it usually, but we can try)
+        // Clear session cookie client-side as fallback
         document.cookie = 'sessionId=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
 
-        // Small delay to allow toast to be visible before redirect
         setTimeout(() => {
             router.push('/signin');
         }, 500);
     };
 
+    const value = useMemo(() => ({
+        user,
+        loading,
+        checkUser,
+        login,
+        logout
+    }), [user, loading, checkUser]);
+
     return (
-        <AuthContext.Provider value={{ user, loading, checkUser, login, logout }}>
+        <AuthContext.Provider value={value}>
             {children}
         </AuthContext.Provider>
     );
