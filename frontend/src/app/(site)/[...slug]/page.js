@@ -1,29 +1,25 @@
+import { cache } from 'react';
 import { notFound } from 'next/navigation';
 import { Button } from '@/components/ui';
 import ViewTracker from '@/components/ViewTracker';
+import GenericSectionInteractivity from '@/components/GenericSectionInteractivity';
 
 import API_BASE_URL from '@/lib/config';
 
-// This function fetches data from the backend
-async function getPageData(slugArray) {
-    const slug = slugArray.join('/'); // e.g. "summer-bootcamp"
-
+// cache() deduplicates identical calls within the same request (e.g. render + generateMetadata)
+const getPageData = cache(async (slugArray) => {
+    const slug = slugArray.join('/');
     try {
-        // Use the new slug-specific endpoint
         const res = await fetch(`${API_BASE_URL}/pages/slug/${slug}`, {
-            // Revalidate every 60 seconds (ISR)
-            next: { revalidate: 60 }
+            next: { revalidate: 120 } // cache for 2 minutes instead of never
         });
-
         if (!res.ok) return null;
-
         const json = await res.json();
         return json.success ? json.data : null;
     } catch (error) {
-        console.error('Failed to fetch page:', error);
         return null;
     }
-}
+});
 
 // Block Renderers
 const HeroBlock = ({ data }) => (
@@ -59,57 +55,274 @@ const BlockRenderer = ({ block }) => {
 // Helper to fetch template content by ID
 async function getTemplateContent(id) {
     try {
-        const res = await fetch(`${API_BASE_URL}/pages/id/${id}`, { next: { revalidate: 60 } });
+        const res = await fetch(`${API_BASE_URL}/pages/id/${id}`, { next: { revalidate: 120 } });
         if (!res.ok) return null;
         const json = await res.json();
         return json.success ? json.data : null;
     } catch (e) {
-        console.error(`Failed to fetch template ${id}`, e);
         return null;
     }
 }
 
-// Recursive function to resolve <template-ref> tags
-async function resolveTemplateRefs(html) {
-    if (!html) return html;
+// Helper to fetch testimonial data by ID
+async function getTestimonialContent(id) {
+    try {
+        const res = await fetch(`${API_BASE_URL}/testimonials/${id}`, { next: { revalidate: 120 } });
+        if (!res.ok) return null;
+        const json = await res.json();
+        
+        // FLEXIBLE UNWRAP: Handle both { success, details/data } wrappers and raw objects
+        if (json && typeof json === 'object') {
+            if (json.success === true) {
+                return json.details || json.data || json;
+            }
+            return json; // Backend returns the raw student object directly
+        }
+        return null;
+    } catch (e) {
+        return null;
+    }
+}
 
-    // Find all <template-ref> tags
-    const regex = /<template-ref\s+id="([^"]+)"[^>]*><\/template-ref>/g; // Updated regex
-    let match;
-    let resolvedHtml = html;
+function parseDataProps(raw) {
+    if (!raw) return {};
+    try {
+        const decoded = raw
+            .replace(/&quot;/g, '"')
+            .replace(/&#34;/g, '"')
+            .replace(/&apos;/g, "'")
+            .replace(/&#39;/g, "'");
+        const parsed = JSON.parse(decoded);
+        return parsed && typeof parsed === 'object' ? parsed : {};
+    } catch {
+        return {};
+    }
+}
 
-    // We need to process matches sequentially to avoid issues with string replacement
-    // However, string replacement on a mutating string is tricky with regex exec
-    // Better approach: collect all replacements first
-    const replacements = [];
+function applyTemplateProps(templateHtml, propsObj) {
+    if (!templateHtml) return '';
+    if (!propsObj || Object.keys(propsObj).length === 0) return templateHtml;
 
-    while ((match = regex.exec(html)) !== null) {
-        const [fullTag, templateId] = match;
-        replacements.push({ fullTag, templateId });
+    let hydratedHtml = templateHtml;
+
+    // First pass: {{ Mustache }} style replacement
+    for (const [key, rawValue] of Object.entries(propsObj)) {
+        if (rawValue === undefined || rawValue === null) continue;
+        const value = String(rawValue);
+        
+        // Try both key and key without prop_ prefix
+        const varName = key.replace(/^prop_/, '');
+        [key, varName].forEach(k => {
+            const safeK = k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const propRegex = new RegExp(`{{\\s*${safeK}\\s*}}`, 'g');
+            hydratedHtml = hydratedHtml.replace(propRegex, value);
+        });
     }
 
-    // Fetch and replace
-    for (const { fullTag, templateId } of replacements) {
-        try {
-            // Fetch the template content
-            const res = await fetch(`${API_BASE_URL}/pages/id/${templateId}`, {
-                cache: 'no-store' // Updated cache strategy
+    // Second pass: data-var/data-var-src etc. attributes
+    for (const [key, rawValue] of Object.entries(propsObj)) {
+        if (rawValue === undefined || rawValue === null) continue;
+        const value = String(rawValue);
+        const varName = key.replace(/^prop_/, '');
+
+        // Support both names in regex
+        const searchNames = key === varName ? [key] : [key, varName];
+        searchNames.forEach(k => {
+            const safeK = k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+            // Text content
+            const textRegex = new RegExp(`(<[^>]+data-var=["']${safeK}["'][^>]*>)([\\s\\S]*?)(<\\/[a-z0-9-]+>)`, 'gi');
+            hydratedHtml = hydratedHtml.replace(textRegex, (_m, openTag, _inner, closeTag) => `${openTag}${value}${closeTag}`);
+
+            // Image Src
+            const srcRegex = new RegExp(`(<[^>]+data-var-src=["']${safeK}["'][^>]*>)`, 'gi');
+            hydratedHtml = hydratedHtml.replace(srcRegex, (tag) => {
+                if (/(src=["'][^"']*["'])/i.test(tag)) {
+                    return tag.replace(/src=["'][^"']*["']/i, `src="${value}"`);
+                }
+                return tag.replace(/>$/, ` src="${value}">`);
             });
 
-            if (res.ok) {
-                const data = await res.json();
-                if (data.success && data.data) {
-                    // Recursively resolve references in the template itself
-                    const innerContent = await resolveTemplateRefs(data.data.gjsHtml);
-                    resolvedHtml = resolvedHtml.replace(fullTag, innerContent || '');
+            // Video Src
+            const videoRegex = new RegExp(`(<[^>]+data-var-video=["']${safeK}["'][^>]*>)`, 'gi');
+            hydratedHtml = hydratedHtml.replace(videoRegex, (tag) => {
+                if (/(src=["'][^"']*["'])/i.test(tag)) {
+                    return tag.replace(/src=["'][^"']*["']/i, `src="${value}"`);
+                }
+                return tag.replace(/>$/, ` src="${value}">`);
+            });
+
+            // Link Href
+            const linkRegex = new RegExp(`(<[^>]+data-var-link=["']${safeK}["'][^>]*>)`, 'gi');
+            hydratedHtml = hydratedHtml.replace(linkRegex, (tag) => {
+                if (/(href=["'][^"']*["'])/i.test(tag)) {
+                    return tag.replace(/href=["'][^"']*["']/i, `href="${value}"`);
+                }
+                return tag.replace(/>$/, ` href="${value}">`);
+            });
+        });
+    }
+
+    return hydratedHtml;
+}
+
+function parseAttributesFromTag(tag) {
+    const attrs = {};
+    const attrRegex = /([a-zA-Z_:][-a-zA-Z0-9_:.]*)\s*=\s*("([^"]*)"|'([^']*)')/g;
+    let match;
+    while ((match = attrRegex.exec(tag)) !== null) {
+        const key = match[1];
+        const value = match[3] ?? match[4] ?? '';
+        attrs[key] = value;
+    }
+    return attrs;
+}
+
+// Recursive function to resolve <template-ref> tags
+async function resolveTemplateRefs(html, templateCache = new Map(), seenIds = new Set()) {
+    if (!html) return html;
+
+    const tagRegex = /<template-ref\b[^>]*?(?:\/>|>[\s\S]*?<\/template-ref>)/gi;
+    const refs = [...html.matchAll(tagRegex)];
+    if (refs.length === 0) return html;
+
+    // Parse all refs upfront
+    const parsedRefs = refs.map(refMatch => {
+        const fullTag = refMatch[0];
+        const attrs = parseAttributesFromTag(fullTag);
+        const templateId = attrs['data-template-id'] || attrs.id;
+        return { fullTag, attrs, templateId };
+    });
+
+    // Fetch all unique templates IN PARALLEL instead of sequentially
+    const uniqueIds = [...new Set(
+        parsedRefs.map(r => r.templateId).filter(id => id && !seenIds.has(id) && !templateCache.has(id))
+    )];
+    await Promise.all(uniqueIds.map(async (id) => {
+        const data = await getTemplateContent(id);
+        templateCache.set(id, data || null);
+    }));
+
+    let resolvedHtml = html;
+
+    for (const { fullTag, attrs, templateId } of parsedRefs) {
+        if (!templateId) {
+            resolvedHtml = resolvedHtml.replace(fullTag, '');
+            continue;
+        }
+
+        if (seenIds.has(templateId)) {
+            resolvedHtml = resolvedHtml.replace(fullTag, '');
+            continue;
+        }
+
+        try {
+            const templateData = templateCache.get(templateId);
+
+            if (!templateData) {
+                resolvedHtml = resolvedHtml.replace(fullTag, '');
+                continue;
+            }
+
+            const overrideProps = parseDataProps(attrs['data-props'] || '');
+            const mergedProps = {
+                ...(templateData.defaultProps || {}),
+                ...overrideProps,
+            };
+
+            let templateHtml = templateData.gjsHtml || '';
+
+            // ─── START: Dynamic Testimonial Hydration ───
+            const isTestimonials = templateData.slug === 'lmt-testimonials' || 
+                                 templateData.title?.toLowerCase().includes('testimonials') ||
+                                 templateId === '69bedd85babf20277b80c00639a60a20';
+
+            if (isTestimonials) {
+                const selectedIdsStr = mergedProps.prop_selected_ids || mergedProps.selected_ids || '';
+                const selectedIds = selectedIdsStr.split(',').filter(Boolean);
+                
+
+                if (selectedIds.length > 0) {
+                    try {
+                        const studentData = await Promise.all(selectedIds.map(id => getTestimonialContent(id)));
+                        const validStudents = studentData.filter(Boolean);
+                        
+                        
+                        let cardsHtml = '';
+                        validStudents.forEach((student, i) => {
+                            // Mirroring exact HTML structure from templateRef.js
+                            cardsHtml += `
+                                <div data-testimonial style="flex:0 0 320px; background:#fff; border-radius:16px; padding:32px; box-shadow:0 10px 25px rgba(0,0,0,0.05); border:1px solid #f1f5f9; display:flex; flex-direction:column; min-height:280px; scroll-snap-align:start;">
+                                    <div style="display:flex; align-items:center; gap:12px; margin-bottom:24px;">
+                                        <img src="https://placehold.co/40" style="width:32px; height:32px; object-fit:contain; border-radius:50%;" />
+                                        <span style="font-weight:700; font-size:18px; color:#334155; text-transform:uppercase;" data-var="test_card${i + 1}_badge">{{test_card${i + 1}_badge}}</span>
+                                    </div>
+                                    <p style="font-size:15px; color:#475569; line-height:1.6; flex:1; margin:0 0 32px 0;">${student.message || ''}</p>
+                                    <div style="display:flex; align-items:center; gap:16px;">
+                                        <img src="${student.image || `https://i.pravatar.cc/60?img=${i + 10}`}" style="width:48px; height:48px; border-radius:50%; object-fit:cover;" />
+                                        <div>
+                                            <div style="font-weight:700; font-size:15px; color:#1e293b;">${student.name || ''}</div>
+                                            <div style="font-size:13px; color:#64748b;">${(student.target_pages || []).join(', ') || 'Learner'}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        });
+
+                        // Inject the generated cards into the track
+                        if (templateHtml.includes('test-track')) {
+                            
+                            const trackMarkers = ['class="test-track"', 'class=\'test-track\'', 'test-track'];
+                            let startIndex = -1;
+                            for (const m of trackMarkers) {
+                                startIndex = templateHtml.indexOf(m);
+                                if (startIndex !== -1) break;
+                            }
+
+                            if (startIndex !== -1) {
+                                const tagStart = templateHtml.lastIndexOf('<', startIndex);
+                                const openingTagEnd = templateHtml.indexOf('>', startIndex) + 1;
+                                
+                                // Find matching </div>
+                                let depth = 1;
+                                let currentIndex = openingTagEnd;
+                                while (depth > 0 && currentIndex < templateHtml.length) {
+                                    const nextOpen = templateHtml.indexOf('<div', currentIndex);
+                                    const nextClose = templateHtml.indexOf('</div>', currentIndex);
+                                    if (nextClose === -1) break;
+                                    if (nextOpen !== -1 && nextOpen < nextClose) {
+                                        depth++;
+                                        currentIndex = nextOpen + 4;
+                                    } else {
+                                        depth--;
+                                        currentIndex = nextClose + 6;
+                                    }
+                                }
+                                const closingTagStart = currentIndex - 6;
+                                templateHtml = templateHtml.substring(0, openingTagEnd) + cardsHtml + templateHtml.substring(closingTagStart);
+                            }
+                        } else {
+                        }
+                    } catch (err) {
+                    }
                 } else {
-                    resolvedHtml = resolvedHtml.replace(fullTag, '');
                 }
             } else {
-                resolvedHtml = resolvedHtml.replace(fullTag, '');
+                // Not a testimonials template, skip hydration
             }
+            // ─── END: Dynamic Testimonial Hydration ───
+            // ─── END: Dynamic Testimonial Hydration ───
+
+            const hydratedHtml = applyTemplateProps(templateHtml, mergedProps);
+            const resolvedNestedHtml = await resolveTemplateRefs(
+                hydratedHtml,
+                templateCache,
+                new Set([...seenIds, templateId])
+            );
+
+            const css = templateData.gjsCss ? `<style>${templateData.gjsCss}</style>` : '';
+            resolvedHtml = resolvedHtml.replace(fullTag, `${css}${resolvedNestedHtml || ''}`);
         } catch (e) {
-            console.error(`Failed to resolve template ${templateId}`, e);
             resolvedHtml = resolvedHtml.replace(fullTag, '');
         }
     }
@@ -139,6 +352,7 @@ export default async function DynamicPage({ params }) {
                 <>
                     {page.gjsCss && <style dangerouslySetInnerHTML={{ __html: page.gjsCss }} />}
                     <div dangerouslySetInnerHTML={{ __html: finalHtml }} />
+                    <GenericSectionInteractivity />
                 </>
             ) : (
                 <div className="py-20 text-center">

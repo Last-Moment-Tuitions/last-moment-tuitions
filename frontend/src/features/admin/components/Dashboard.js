@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { adminService } from '@/services/adminService';
 import React from 'react';
 import {
     Search, Bell, ChevronDown,

@@ -7,6 +7,7 @@ import { GoogleLoginDto } from './dto/google-login.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { VerifyOtpDto } from './dto/verify-otp.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { AuthGuard } from './guards/auth.guard';
 import { Throttle } from '@nestjs/throttler';
 
@@ -21,9 +22,9 @@ export class AuthController {
 
     @Post('login')
     @HttpCode(HttpStatus.OK)
-    @Throttle({ default: { limit: 5, ttl: 60000 } }) // Rate limit login attempts
+    @Throttle({ default: { limit: 5, ttl: 60000 } })
     async login(@Body() loginDto: LoginDto, @Req() req) {
-        const ip = req.ip || req.connection.remoteAddress;
+        const ip = req.ip;
         const userAgent = req.headers['user-agent'] || 'unknown';
         return this.authService.login(loginDto, ip, userAgent);
     }
@@ -31,7 +32,7 @@ export class AuthController {
     @Post('google')
     @HttpCode(HttpStatus.OK)
     async googleLogin(@Body() googleLoginDto: GoogleLoginDto, @Req() req) {
-        const ip = req.ip || req.connection.remoteAddress;
+        const ip = req.ip;
         const userAgent = req.headers['user-agent'] || 'unknown';
         return this.authService.googleLogin(googleLoginDto, ip, userAgent);
     }
@@ -63,16 +64,16 @@ export class AuthController {
         @Body() changePasswordDto: ChangePasswordDto
     ) {
         return this.authService.changePassword(
-            req.user.userId, 
-            changePasswordDto.currentPassword, 
+            req.user.userId,
+            changePasswordDto.currentPassword,
             changePasswordDto.newPassword
         );
     }
 
     @Post('forgot-password')
     @HttpCode(HttpStatus.OK)
-    async forgotPassword(@Body('email') email: string) {
-        return this.authService.forgotPassword(email);
+    async forgotPassword(@Body() dto: ForgotPasswordDto) {
+        return this.authService.forgotPassword(dto.email);
     }
 
     @Post('verify-otp')
@@ -100,7 +101,7 @@ export class AuthController {
         @Body() resetPasswordDto: ResetPasswordDto
     ) {
         return this.authService.resetPassword(
-            resetPasswordDto.resetToken, 
+            resetPasswordDto.resetToken,
             resetPasswordDto.newPassword
         );
     }

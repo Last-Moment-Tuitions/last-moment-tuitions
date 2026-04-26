@@ -28,6 +28,14 @@ export class TestimonialsService {
             .exec();
     }
 
+    async findOne(id: string): Promise<Testimonial> {
+        const testimonial = await this.testimonialModel.findById(id).exec();
+        if (!testimonial) {
+            throw new NotFoundException(`Testimonial with ID ${id} not found`);
+        }
+        return testimonial;
+    }
+
     async update(id: string, data: Partial<CreateTestimonialDto>): Promise<Testimonial> {
         const updated = await this.testimonialModel
             .findByIdAndUpdate(id, data, { new: true })
@@ -37,7 +45,6 @@ export class TestimonialsService {
             throw new NotFoundException(`Testimonial with ID ${id} not found`);
         }
 
-        await this.clearCache();
         return updated;
     }
 
@@ -46,13 +53,6 @@ export class TestimonialsService {
         if (!deleted) {
             throw new NotFoundException(`Testimonial with ID ${id} not found`);
         }
-        await this.clearCache();
         return { deleted: true };
     }
-
-    // Helper method to clear Redis/Internal cache
-    private async clearCache() {
-        console.log('Cache cleared after data change');
-    }
-
 }

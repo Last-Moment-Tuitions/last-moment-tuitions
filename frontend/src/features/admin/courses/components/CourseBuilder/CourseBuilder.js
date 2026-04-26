@@ -49,7 +49,6 @@ export default function CourseBuilder({ initialData }) {
 
             alert('Course saved successfully!');
         } catch (error) {
-            console.error('Failed to save course:', error);
             alert('Failed to save course. Please try again.');
         } finally {
             setSaving(false);

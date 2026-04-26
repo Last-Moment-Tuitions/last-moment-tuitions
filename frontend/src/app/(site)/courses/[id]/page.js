@@ -83,25 +83,29 @@ export default function CourseDetailPage({ params }) {
                 }
 
                 const [courseRes, enrollmentData] = await Promise.all([coursePromise, enrollmentPromise]);
-                
+
                 const course = courseRes?.data || courseRes;
                 setData(course);
 
                 if (enrollmentData) {
                     const orders = enrollmentData.details || enrollmentData;
                     if (Array.isArray(orders)) {
-                        const hasActiveOrder = orders.some(order => 
-                            order.course_id === id && 
+                        const hasActiveOrder = orders.some(order =>
+                            order.course_id === id &&
                             (order.status === 'completed' || order.status === 'paid' || order.status === 'pending_payment')
                         );
                         setIsEnrolled(hasActiveOrder);
                     }
                 }
-                
+
                 setError(null);
             } catch (err) {
-                console.error('Failed to fetch course data:', err);
-                setError('Failed to load course details.');
+                if (err.response?.status === 404) {
+                    setError('Course not found.');
+                } else {
+                    console.error('Failed to fetch course data:', err);
+                    setError('Failed to load course details.');
+                }
             } finally {
                 setLoading(false);
             }

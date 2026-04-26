@@ -46,22 +46,34 @@ async function bootstrap() {
 
             const frontendUrls = configService.get<string>('FRONTEND_URL') || '';
 
-            // Production: use env variable
-            const allowedOrigins = frontendUrls.split(',').map(url => url.trim()).filter(Boolean);
-            console.log(allowedOrigins, 'origins');
-            if (allowedOrigins.includes(origin)) {
+            // Normalize urls to avoid trailing slash issues
+            const allowedOrigins = frontendUrls.split(',').map(url => url.trim().replace(/\/$/, '')).filter(Boolean);
+            const normalizedOrigin = origin.replace(/\/$/, '');
+
+            // Native allowance for their main domain subdomains
+            const isDomainMatch = normalizedOrigin === 'https://lastmomenttuitions.com' || 
+                                normalizedOrigin.endsWith('.lastmomenttuitions.com');
+
+            if (allowedOrigins.includes(normalizedOrigin) || isDomainMatch) {
                 return callback(null, true);
             }
 
-            callback(new Error('Not allowed by CORS'));
+            callback(new Error(`Not allowed by CORS: ${normalizedOrigin}`));
         },
         methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
         allowedHeaders: [
             'Content-Type',
             'Authorization',
             'X-Session-Id',
+            'X-SESSION-ID',
+            'X-CSRF-Token',
             'X-Requested-With',
             'Accept',
+            'Accept-Version',
+            'Content-Length',
+            'Content-MD5',
+            'Date',
+            'X-Api-Version',
         ],
         credentials: true,
     });

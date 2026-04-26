@@ -8,14 +8,26 @@ import AdvanceInformation from './steps/AdvanceInformation';
 import CourseCurriculum from './steps/CourseCurriculum';
 import PublishCourse from './steps/PublishCourse';
 import { Layers, FileText, Video, CheckCircle } from 'lucide-react';
-import { coursesApi } from '@/services/courses.api';
+import { 
+    useCreateCourse, 
+    useUpdateCourse, 
+    useUpdateCourseContent, 
+    usePublishCourse 
+} from '@/hooks/api/useCourses';
 
 export default function CreateCourseWizard({ initialData }) {
     const router = useRouter();
     const { course, updateCourseInfo, addNode, updateNode, deleteNode, moveNode, activeItemId, selectItem, toApiFormat } = useCourseForm(initialData);
     const [currentStep, setCurrentStep] = useState(0);
-    const [saving, setSaving] = useState(false);
     const [courseId, setCourseId] = useState(initialData?._id || null);
+
+    // Mutations
+    const createMutation = useCreateCourse();
+    const updateMutation = useUpdateCourse();
+    const updateContentMutation = useUpdateCourseContent();
+    const publishMutation = usePublishCourse();
+
+    const isSaving = createMutation.isPending || updateMutation.isPending || updateContentMutation.isPending || publishMutation.isPending;
 
     const steps = [
         { id: 0, title: 'Basic Information', icon: Layers, component: BasicInformation },
@@ -26,9 +38,10 @@ export default function CreateCourseWizard({ initialData }) {
 
     const handleNext = async () => {
         // Auto-save before moving to next step
-        await handleSave(false);
+        const savedCourse = await handleSave(false);
 
-        if (currentStep < steps.length - 1) {
+        // Only proceed if save was successful
+        if (savedCourse && currentStep < steps.length - 1) {
             setCurrentStep(prev => prev + 1);
         }
     };
@@ -41,27 +54,24 @@ export default function CreateCourseWizard({ initialData }) {
 
     const handleSave = async (showNotification = true) => {
         try {
-            setSaving(true);
-
-            // Use centralized transform helper
             const courseData = toApiFormat();
-
-            let savedCourse;
+            let result;
 
             if (courseId) {
                 // Update existing course
-                const response = await coursesApi.updateCourse(courseId, courseData);
-                savedCourse = response.data;
+                result = await updateMutation.mutateAsync({ id: courseId, data: courseData });
             } else {
                 // Create new course
-                const response = await coursesApi.createCourse(courseData);
-                savedCourse = response.data;
-                setCourseId(savedCourse._id);
+                result = await createMutation.mutateAsync(courseData);
+                const newCourse = result.data;
+                setCourseId(newCourse._id);
             }
+
+            const savedCourse = result.data;
 
             // Save curriculum if exists
             if (course.content && course.content.length > 0 && savedCourse._id) {
-                await coursesApi.updateCourseContent(savedCourse._id, course.content);
+                await updateContentMutation.mutateAsync({ id: savedCourse._id, content: course.content });
             }
 
             if (showNotification) {
@@ -75,34 +85,24 @@ export default function CreateCourseWizard({ initialData }) {
 
             return savedCourse;
         } catch (error) {
-            console.error('Failed to save course:', error);
             alert('Failed to save course. Please try again.');
             return null;
-        } finally {
-            setSaving(false);
         }
     };
 
     const handlePublish = async () => {
+        // Save first
+        const savedCourse = await handleSave(false);
+        if (!savedCourse) return;
+
         try {
-            setSaving(true);
-
-            // Save first
-            const savedCourse = await handleSave(false);
-            if (!savedCourse) {
-                return;
-            }
-
             // Then publish
-            await coursesApi.publishCourse(savedCourse._id);
+            await publishMutation.mutateAsync(savedCourse._id);
 
             alert('Course published successfully!');
             router.push('/admin/courses');
         } catch (error) {
-            console.error('Failed to publish course:', error);
             alert('Failed to publish course. Please try again.');
-        } finally {
-            setSaving(false);
         }
     };
 
@@ -151,7 +151,7 @@ export default function CreateCourseWizard({ initialData }) {
                     onPrev={handlePrev}
                     onSave={() => handleSave(true)}
                     onPublish={handlePublish}
-                    saving={saving}
+                    saving={isSaving}
                     // Props for Curriculum Builder (will be ignored by others)
                     addNode={addNode}
                     updateNode={updateNode}

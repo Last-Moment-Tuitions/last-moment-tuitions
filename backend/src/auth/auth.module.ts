@@ -10,6 +10,6 @@ import { AuthGuard } from './guards/auth.guard';
     imports: [UsersModule, FirebaseModule],
     controllers: [AuthController],
     providers: [AuthService, AuthGuard],
-    exports: [AuthService, AuthGuard],
+    exports: [AuthService, AuthGuard, UsersModule],
 })
 export class AuthModule { }

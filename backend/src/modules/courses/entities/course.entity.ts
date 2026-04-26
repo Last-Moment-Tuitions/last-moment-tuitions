@@ -16,16 +16,16 @@ export class Course {
   category: string;
 
   @Prop({ default: null })
-  sub_category: string;
+  subCategory: string;
 
   @Prop({ default: '', trim: true })
   topic: string;
 
-  @Prop({ default: '', trim: true })
+  @Prop({ default: 'english', trim: true })
   language: string;
 
   @Prop({ default: '', trim: true })
-  subtitle_language: string;
+  subtitleLanguage: string;
 
   @Prop({ type: String, enum: ['beginner', 'intermediate', 'advanced'], default: 'beginner' })
   level: string;
@@ -44,10 +44,10 @@ export class Course {
   descriptions: string;
 
   @Prop({ type: [String], default: [] })
-  what_to_learn: string[];
+  whatToLearn: string[];
 
   @Prop({ type: [String], default: [] })
-  target_audience: string[];
+  targetAudience: string[];
 
   @Prop({ type: [String], default: [] })
   requirements: string[];
@@ -57,13 +57,13 @@ export class Course {
 
   // PUBLISH COURSE (Step 4)
   @Prop({ type: String, default: '' })
-  welcome_message: string;
+  welcomeMessage: string;
 
   @Prop({ type: String, default: '' })
-  congratulations_message: string;
+  congratulationsMessage: string;
 
   @Prop([{ type: MongooseSchema.Types.ObjectId, ref: 'User' }])
-  instructor_ids: MongooseSchema.Types.ObjectId[];
+  instructorIds: MongooseSchema.Types.ObjectId[];
 
   // INSTRUCTOR INFO (denormalized for display)
   @Prop({ type: MongooseSchema.Types.Mixed, default: null })
@@ -76,13 +76,13 @@ export class Course {
 
   // PRICING & PUBLISHING
   @Prop({ required: true, type: MongooseSchema.Types.ObjectId, ref: 'User' })
-  created_by: MongooseSchema.Types.ObjectId;
+  createdBy: MongooseSchema.Types.ObjectId;
 
   @Prop({ default: 0 })
   price: number; // in paisa
 
   @Prop({ default: 0 })
-  original_price: number; // in paisa
+  originalPrice: number; // in paisa
 
   @Prop({ default: 'INR' })
   currency: string;
@@ -91,32 +91,34 @@ export class Course {
   status: string;
 
   @Prop({ default: null })
-  published_at: Date;
+  publishedAt: Date;
 
   @Prop({ default: null })
-  last_updated: string; // e.g., "11/2024"
+  lastUpdated: string; // e.g., "11/2024"
 
   // METRICS (auto-managed)
   @Prop({ default: 0 })
-  enrollment_count: number;
+  enrollmentCount: number;
 
   @Prop({ default: 0, min: 0, max: 5 })
-  average_rating: number;
+  averageRating: number;
 
   @Prop({ default: 0 })
-  rating_count: number;
+  ratingCount: number;
 
   @Prop({ default: 0 })
-  review_count: number;
+  reviewCount: number;
 
   @Prop({ default: 0 })
-  view_count: number;
+  viewCount: number;
 }
 
 export const CourseSchema = SchemaFactory.createForClass(Course);
 
 // Indexes
-CourseSchema.index({ title: 'text', descriptions: 'text' });
+CourseSchema.index({ title: 'text', descriptions: 'text' }, { language_override: 'none' });
 CourseSchema.index({ category: 1, status: 1 });
-CourseSchema.index({ created_by: 1, status: 1 });
-CourseSchema.index({ status: 1, published_at: -1 });
+CourseSchema.index({ createdBy: 1, status: 1 });
+CourseSchema.index({ status: 1, publishedAt: -1 });
+CourseSchema.index({ updatedAt: -1 });
+CourseSchema.index({ level: 1 });

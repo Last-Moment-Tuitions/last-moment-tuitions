@@ -6,37 +6,37 @@ export type EnrollmentDocument = HydratedDocument<Enrollment>;
 @Schema({ timestamps: true })
 export class Enrollment {
   @Prop({ required: true, type: MongooseSchema.Types.ObjectId, ref: 'Course' })
-  course_id: MongooseSchema.Types.ObjectId;
+  courseId: MongooseSchema.Types.ObjectId;
 
   @Prop({ required: true, type: MongooseSchema.Types.ObjectId, ref: 'User' })
-  user_id: MongooseSchema.Types.ObjectId;
+  userId: MongooseSchema.Types.ObjectId;
 
   @Prop({ default: () => new Date() })
-  enrolled_at: Date;
+  enrolledAt: Date;
 
   @Prop({ default: null })
-  expires_at: Date;
+  expiresAt: Date;
 
   // Progress tracking
   @Prop({
     type: {
-      completed_nodes: [String],
-      current_node: String,
-      percentage_complete: Number,
-      last_accessed_at: Date,
+      completedNodes: [String],
+      currentNode: String,
+      percentageComplete: Number,
+      lastAccessedAt: Date,
     },
     default: {
-      completed_nodes: [],
-      current_node: null,
-      percentage_complete: 0,
-      last_accessed_at: null,
+      completedNodes: [],
+      currentNode: null,
+      percentageComplete: 0,
+      lastAccessedAt: null,
     },
   })
   progress: {
-    completed_nodes: string[];
-    current_node: string;
-    percentage_complete: number;
-    last_accessed_at: Date;
+    completedNodes: string[];
+    currentNode: string;
+    percentageComplete: number;
+    lastAccessedAt: Date;
   };
 
   // Reviews
@@ -47,17 +47,17 @@ export class Enrollment {
   review: string;
 
   @Prop({ default: null })
-  reviewed_at: Date;
+  reviewedAt: Date;
 
   // Certification
   @Prop({ default: false })
-  certificate_issued: boolean;
+  certificateIssued: boolean;
 
   @Prop({ default: null })
-  certificate_issued_at: Date;
+  certificateIssuedAt: Date;
 
   @Prop({ default: '' })
-  certificate_url: string;
+  certificateUrl: string;
 
   @Prop({ type: String, enum: ['active', 'completed', 'expired'], default: 'active' })
   status: string;
@@ -66,5 +66,7 @@ export class Enrollment {
 export const EnrollmentSchema = SchemaFactory.createForClass(Enrollment);
 
 // Indexes
-EnrollmentSchema.index({ course_id: 1, user_id: 1 }, { unique: true });
-EnrollmentSchema.index({ user_id: 1, status: 1 });
+EnrollmentSchema.index({ courseId: 1, userId: 1 }, { unique: true });
+EnrollmentSchema.index({ userId: 1, status: 1 });
+EnrollmentSchema.index({ enrolledAt: -1 });
+EnrollmentSchema.index({ status: 1 });

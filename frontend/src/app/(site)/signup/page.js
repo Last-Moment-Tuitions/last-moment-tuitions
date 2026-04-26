@@ -5,7 +5,7 @@ import { Mail, Lock, User, Phone, Eye, EyeOff } from 'lucide-react';
 import { Button, Input, Label, GoogleButton } from '@/components/ui';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import API_BASE_URL from '@/lib/config';
+import { authService } from '@/services/authService';
 import { auth, googleProvider } from '@/lib/firebase';
 import { signInWithPopup } from 'firebase/auth';
 import { useToast } from '@/context/ToastContext';
@@ -87,20 +87,7 @@ export default function SignUpPage() {
             }
 
             // Send to backend to create session
-            const res = await fetch(`${API_BASE_URL}/auth/google`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ token }),
-            });
-
-            if (!res.ok) {
-                const errorData = await res.json();
-                throw new Error(errorData.message || 'Backend verification failed');
-            }
-
-            const data = await res.json();
+            const data = await authService.loginGoogle(token);
             const { accessToken, expiresIn, user } = data.details || {};
 
             if (!accessToken || !user) {
@@ -112,7 +99,6 @@ export default function SignUpPage() {
             login(user);
             router.push('/');
         } catch (error) {
-            console.error('Google Sign Up Error:', error);
             toast.error('Failed to authenticate with Google');
         }
     };
@@ -125,33 +111,23 @@ export default function SignUpPage() {
             return;
         }
 
-        setLoading(true);
         try {
-            const res = await fetch(`${API_BASE_URL}/auth/signup`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    firstName: formData.firstName,
-                    lastName: formData.lastName,
-                    email: formData.email,
-                    phone: formData.phone,
-                    password: formData.password,
-                    confirmPassword: formData.confirmPassword
-                }),
+            await authService.signup({
+                firstName: formData.firstName,
+                lastName: formData.lastName,
+                email: formData.email,
+                phone: formData.phone,
+                password: formData.password,
+                confirmPassword: formData.confirmPassword
             });
 
-            if (res.ok) {
-                toast.success('Account created successfully! Redirecting to sign in...');
-                setTimeout(() => {
-                    router.push('/signin');
-                }, 2000);
-            } else {
-                const errorData = await res.json();
-                toast.error(errorData.message || 'Signup failed');
-            }
+            toast.success('Account created successfully! Redirecting to sign in...');
+            setTimeout(() => {
+                router.push('/signin');
+            }, 2000);
         } catch (error) {
             console.error('Signup error:', error);
-            toast.error('Connection error. Please try again.');
+            toast.error(error.response?.data?.message || error.message || 'Signup failed');
         } finally {
             setLoading(false);
         }

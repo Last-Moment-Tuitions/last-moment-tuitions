@@ -24,6 +24,12 @@ export class Page {
   @Prop({ type: String, enum: ['page', 'template'], default: 'page' })
   type: string;
 
+  @Prop({ type: String, default: '' })
+  category: string;
+
+  @Prop({ type: MongooseSchema.Types.Mixed, default: {} })
+  defaultProps: Record<string, any>;
+
   @Prop({ type: [MongooseSchema.Types.Mixed], default: [] })
   gjsComponents: any[];
 
@@ -54,3 +60,9 @@ export class Page {
 }
 
 export const PageSchema = SchemaFactory.createForClass(Page);
+
+// Indexes for performance
+PageSchema.index({ type: 1, status: 1 });
+PageSchema.index({ folder: 1, type: 1 });
+PageSchema.index({ category: 1 });
+PageSchema.index({ updatedAt: -1 });

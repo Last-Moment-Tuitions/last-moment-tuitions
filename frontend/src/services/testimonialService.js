@@ -49,7 +49,6 @@ export const testimonialService = {
             });
             return Array.isArray(response.data) ? response.data : [];
         } catch (error) {
-            console.error("Critical Fetch Error:", error);
             throw error;
         }
     },

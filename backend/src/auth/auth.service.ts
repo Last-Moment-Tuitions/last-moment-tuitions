@@ -6,6 +6,7 @@ import { EmailService } from '../email/email.service';
 import { SignupDto } from './dto/signup.dto';
 import { LoginDto } from './dto/login.dto';
 import { GoogleLoginDto } from './dto/google-login.dto';
+import { UserDocument } from '../users/schemas/user.schema';
 import * as argon2 from 'argon2';
 import Redis from 'ioredis';
 import { v4 as uuidv4 } from 'uuid';
@@ -108,32 +109,24 @@ export class AuthService {
     }
 
     // --- Strict Consistency Check ---
-    // Mirrors Mongo activeSessions against Redis. If Mongo has it but Redis doesn't -> REJECT.
-    private async checkSessionConsistency(user: any) {
+    // Mirrors Mongo activeSessions against Redis. If Mongo has it but Redis doesn't -> EXPIRED/RESTART.
+    private async checkSessionConsistency(user: UserDocument) {
         if (!user.activeSessions || user.activeSessions.length === 0) return;
 
-        let dirty = false;
-        let expiredFound = false;
-        const validSessions = [];
-
+        // Batch all EXISTS checks in a single pipeline round-trip
+        const pipeline = this.redis.pipeline();
         for (const sessionId of user.activeSessions) {
-            const exists = await this.redis.exists(`session:${sessionId}`);
-            if (!exists) {
-                dirty = true;
-                expiredFound = true;
-                // Session in Mongo but missing in Redis -> EXPIRED/RESTART
-            } else {
-                validSessions.push(sessionId);
-            }
+            pipeline.exists(`session:${sessionId}`);
         }
+        const results = await pipeline.exec();
 
-        if (dirty) {
+        const validSessions = user.activeSessions.filter(
+            (_: string, index: number) => results[index]?.[1] === 1,
+        );
+
+        if (validSessions.length !== user.activeSessions.length) {
             user.activeSessions = validSessions;
-            await user.save(); // Clean up Mongo
-
-            if (expiredFound) {
-                throw new UnauthorizedException('Session expired. Please log in again.');
-            }
+            await user.save();
         }
     }
 
@@ -171,7 +164,7 @@ export class AuthService {
     }
 
     // --- Session Management (Hybrid & Strict) ---
-    private async createSession(user: any, provider: string, ip: string, userAgent: string) {
+    private async createSession(user: UserDocument, provider: string, ip: string, userAgent: string) {
         const userId = user._id.toString();
         const userSessionsKey = `user:sessions:${userId}`;
         const MAX_SESSIONS = 3;
@@ -180,40 +173,42 @@ export class AuthService {
         // Generate Device Hash (SHA256 of UserAgent + IP)
         const deviceHash = createHash('sha256').update(`${userAgent}${ip}`).digest('hex');
 
-        // 1. REUSE: Check for existing valid session
-        // We can check the Redis list. The most recent is at the right (rpush).
+        // 1. REUSE: Fetch all session IDs then batch-fetch their data in one pipeline
         const currentSessionIds = await this.redis.lrange(userSessionsKey, 0, -1);
 
-        // Iterate reversed to find most recent valid
-        for (let i = currentSessionIds.length - 1; i >= 0; i--) {
-            const sid = currentSessionIds[i];
-            const exists = await this.redis.exists(`session:${sid}`);
-            if (exists) {
-                // Reuse this session ONLY if deviceHash matches
-                const sessionData = await this.redis.hgetall(`session:${sid}`);
-                if (sessionData.deviceHash === deviceHash) {
-                    console.log(`[DEBUG] Reusing session (${sid}) for device (${deviceHash})`);
-                    // Return only essential user data
+        if (currentSessionIds.length > 0) {
+            // Batch: fetch all session hashes in one round-trip (most-recent first)
+            const fetchPipeline = this.redis.pipeline();
+            for (let i = currentSessionIds.length - 1; i >= 0; i--) {
+                fetchPipeline.hgetall(`session:${currentSessionIds[i]}`);
+            }
+            const fetchResults = await fetchPipeline.exec();
+
+            for (let i = 0; i < fetchResults.length; i++) {
+                const sessionData = fetchResults[i]?.[1] as Record<string, string> | null;
+                // A null/empty result means the key expired in Redis
+                if (sessionData && sessionData.userId && sessionData.deviceHash === deviceHash) {
+                    const sid = currentSessionIds[currentSessionIds.length - 1 - i];
                     const userObj = user.toObject ? user.toObject() : user;
                     return {
                         accessToken: sid,
-                        expiresIn: SESSION_TTL, // This is static, ideally we'd get TTL from Redis
+                        expiresIn: SESSION_TTL,
                         user: {
                             roles: userObj.roles,
                             firstName: userObj.firstName,
                             lastName: userObj.lastName,
-                            email: userObj.email
-                        }
+                            email: userObj.email,
+                        },
                     };
                 }
             }
         }
 
-        // 2. CREATE NEW (No valid session found)
+        // 2. CREATE NEW (No valid session found for this device)
         const sessionId = uuidv4();
         const sessionKey = `session:${sessionId}`;
 
-        // 3. FIFO Logic (Redis)
+        // 3. FIFO Logic (Redis) — evict oldest if at capacity
         const sessionCount = await this.redis.llen(userSessionsKey);
         if (sessionCount >= MAX_SESSIONS) {
             const oldestSessionId = await this.redis.lpop(userSessionsKey);
@@ -222,35 +217,31 @@ export class AuthService {
             }
         }
 
-        // 4. Create new session in Redis
+        // 4. Create new session in Redis (single pipeline)
         const sessionData = {
             userId,
-            issuedAt: Date.now(),
+            issuedAt: Date.now().toString(),
             authProvider: provider,
-            lastActiveAt: Date.now(),
-            deviceHash, // Store device hash
+            lastActiveAt: Date.now().toString(),
+            deviceHash,
         };
 
-        const pipeline = this.redis.pipeline();
-        pipeline.rpush(userSessionsKey, sessionId);
-        pipeline.hmset(sessionKey, sessionData);
-        pipeline.expire(sessionKey, SESSION_TTL);
-        const results = await pipeline.exec();
-
-        console.log(`[DEBUG] Session Created: Key=${sessionKey}, User=${userId}`);
+        const writePipeline = this.redis.pipeline();
+        writePipeline.rpush(userSessionsKey, sessionId);
+        writePipeline.hmset(sessionKey, sessionData);
+        writePipeline.expire(sessionKey, SESSION_TTL);
+        await writePipeline.exec();
 
         // 5. Update MongoDB (Mirror)
         if (!user.activeSessions) user.activeSessions = [];
         user.activeSessions.push(sessionId);
-        // Enforce Max 3 in Mongo too (should match Redis, but for safety)
+        // Enforce max sessions in Mongo too (safety net mirroring Redis FIFO)
         if (user.activeSessions.length > MAX_SESSIONS) {
-            user.activeSessions.shift(); // Remove oldest
+            user.activeSessions.shift();
         }
         await user.save();
 
-        // Return only essential user data
         const userObj = user.toObject ? user.toObject() : user;
-
         return {
             accessToken: sessionId,
             expiresIn: SESSION_TTL,
@@ -258,8 +249,8 @@ export class AuthService {
                 roles: userObj.roles,
                 firstName: userObj.firstName,
                 lastName: userObj.lastName,
-                email: userObj.email
-            }
+                email: userObj.email,
+            },
         };
     }
 
@@ -288,7 +279,6 @@ export class AuthService {
 
         // Send OTP via email
         await this.emailService.sendOtpEmail(email, otp);
-        console.log(`[DEBUG] OTP sent to ${email}: ${otp}`);
 
         return { message: 'OTP sent successfully to your email. Valid for 60 seconds.' };
     }
@@ -341,6 +331,20 @@ export class AuthService {
         const user = await this.usersService.findByEmail(email);
         if (!user) {
             throw new BadRequestException('User not found');
+        }
+
+        // 1. Strong Password Validation (Regex)
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*])(?=.{8,})/;
+        if (!passwordRegex.test(newPassword)) {
+            throw new BadRequestException('Password must be 8+ characters with uppercase, lowercase, number, and special character (!@#$%^&*)');
+        }
+
+        // 2. Check if same as previous password
+        if (user.passwordHash) {
+            const isSameAsOld = await argon2.verify(user.passwordHash, newPassword);
+            if (isSameAsOld) {
+                throw new BadRequestException('New password cannot be the same as your old password');
+            }
         }
 
         const hashedPassword = await argon2.hash(newPassword);

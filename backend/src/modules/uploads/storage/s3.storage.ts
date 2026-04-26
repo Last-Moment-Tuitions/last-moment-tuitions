@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { S3Client, PutObjectCommand, DeleteObjectCommand, ListObjectsV2Command } from '@aws-sdk/client-s3';
+import { ConfigService } from '@nestjs/config';
+import { S3Client, PutObjectCommand, DeleteObjectCommand, ListObjectsV2Command, GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { v4 as uuidv4 } from 'uuid';
 import * as path from 'path';
@@ -12,15 +13,15 @@ export class S3StorageProvider implements StorageProvider {
     private readonly region: string;
     private readonly logger = new Logger(S3StorageProvider.name);
 
-    constructor() {
-        this.region = process.env.AWS_REGION || 'ap-south-1';
-        this.bucket = process.env.AWS_S3_BUCKET || '';
+    constructor(private readonly configService: ConfigService) {
+        this.region = this.configService.get<string>('AWS_REGION', 'ap-south-1');
+        this.bucket = this.configService.get<string>('AWS_S3_BUCKET', '');
 
         this.s3Client = new S3Client({
             region: this.region,
             credentials: {
-                accessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
-                secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || '',
+                accessKeyId: this.configService.get<string>('AWS_ACCESS_KEY_ID', ''),
+                secretAccessKey: this.configService.get<string>('AWS_SECRET_ACCESS_KEY', ''),
             },
         });
     }
@@ -28,7 +29,7 @@ export class S3StorageProvider implements StorageProvider {
     async getPresignedUrl(
         folder: string,
         filename: string,
-        contentType: string
+        contentType: string,
     ): Promise<{ uploadUrl: string; key: string; publicUrl: string }> {
         if (!process.env.AWS_S3_BUCKET || !process.env.AWS_ACCESS_KEY_ID) {
             throw new Error('AWS credentials (AWS_S3_BUCKET or AWS_ACCESS_KEY_ID) are missing from backend environment variables. Please configure S3 in your .env file.');
@@ -48,7 +49,6 @@ export class S3StorageProvider implements StorageProvider {
             // URL expires in 15 minutes
             const uploadUrl = await getSignedUrl(this.s3Client, command, { expiresIn: 900 });
             const publicUrl = `https://${this.bucket}.s3.${this.region}.amazonaws.com/${key}`;
-
             return { uploadUrl, key, publicUrl };
         } catch (error: any) {
             this.logger.error(`Failed to generate presigned URL: ${error.message}`);
@@ -56,9 +56,33 @@ export class S3StorageProvider implements StorageProvider {
         }
     }
 
+    async getBuffer(key: string): Promise<Buffer> {
+        const command = new GetObjectCommand({
+            Bucket: this.bucket,
+            Key: key,
+        });
+
+        try {
+            const response = await this.s3Client.send(command);
+            if (!response.Body) {
+                throw new Error('No body in response');
+            }
+            const stream = response.Body as unknown as NodeJS.ReadableStream;
+            return new Promise((resolve, reject) => {
+                const chunks: Buffer[] = [];
+                stream.on('data', (chunk) => chunks.push(Buffer.from(chunk)));
+                stream.on('error', (err) => reject(err));
+                stream.on('end', () => resolve(Buffer.concat(chunks)));
+            });
+        } catch (error: any) {
+            this.logger.error(`Failed to download buffer from S3: ${error.message}`);
+            throw error;
+        }
+    }
+
     async upload(
-        file: Express.Multer.File,
-        folder: string,
+        _file: Express.Multer.File,
+        _folder: string,
     ): Promise<{ url: string; key: string }> {
         throw new Error('Direct upload via backend is disabled. Use getPresignedUrl instead.');
     }

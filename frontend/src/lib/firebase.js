@@ -12,12 +12,6 @@ const firebaseConfig = {
     measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
-console.log('[Firebase] Config loaded:', {
-    apiKey: firebaseConfig.apiKey ? '✅ set' : '❌ MISSING',
-    authDomain: firebaseConfig.authDomain || '❌ MISSING',
-    projectId: firebaseConfig.projectId || '❌ MISSING',
-    appId: firebaseConfig.appId ? '✅ set' : '❌ MISSING',
-});
 
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const auth = getAuth(app);

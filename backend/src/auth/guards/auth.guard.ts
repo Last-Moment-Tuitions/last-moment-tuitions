@@ -1,4 +1,4 @@
-import { Injectable, CanActivate, ExecutionContext, UnauthorizedException, ForbiddenException } from '@nestjs/common';
+import { Injectable, CanActivate, ExecutionContext, UnauthorizedException } from '@nestjs/common';
 import { AuthService } from '../auth.service';
 import { UsersService } from '../../users/users.service';
 
@@ -27,15 +27,6 @@ export class AuthGuard implements CanActivate {
         if (!user) {
             throw new UnauthorizedException('User not found');
         }
-        
-        if (request.url.includes('/admin')) {
-            console.log(`[AuthGuard] Checking Admin Access: URL=${request.url}, Roles=${user.roles}`);
-            if (!user.roles || !user.roles.includes('admin')) {
-                console.warn(`[AuthGuard] Access Denied for ${user.email} to ${request.url}`);
-                throw new ForbiddenException('Admin access required');
-            }
-        }
-
 
         // Attach user/session to request
         request['user'] = {

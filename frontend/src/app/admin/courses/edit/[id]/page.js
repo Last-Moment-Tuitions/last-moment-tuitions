@@ -1,42 +1,23 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useParams } from 'next/navigation';
 import CourseBuilder from '@/features/admin/courses/components/CourseBuilder/CourseBuilder';
-import { coursesApi } from '@/services/courses.api';
+import { useCourseWithContent } from '@/hooks/api/useCourses';
 import { fromApiFormat } from '@/features/admin/courses/hooks/useCourseForm';
 
 export default function EditCoursePage() {
     const params = useParams();
     const { id } = params;
-    const [courseData, setCourseData] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
 
-    useEffect(() => {
-        if (!id) return;
+    const { data: response, isLoading: loading, error } = useCourseWithContent(id);
 
-        const fetchCourse = async () => {
-            try {
-                setLoading(true);
-                setError(null);
-                const response = await coursesApi.getCourseWithContent(id);
-                const course = response?.data || response;
-
-                // Transform backend snake_case to frontend camelCase
-                const transformedData = fromApiFormat(course);
-
-                setCourseData(transformedData);
-            } catch (err) {
-                console.error('Failed to fetch course:', err);
-                setError(err.message || 'Failed to load course');
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchCourse();
-    }, [id]);
+    // Transform backend snake_case to frontend camelCase (memoized)
+    const courseData = React.useMemo(() => {
+        const course = response?.data || response;
+        if (!course) return null;
+        return fromApiFormat(course);
+    }, [response]);
 
     if (loading) {
         return (

@@ -10,7 +10,8 @@ import {
     MessageCircle, Settings, LogOut, GraduationCap,
     CircleUser,
     Star,
-    Loader2
+    Loader2,
+    BookOpen, FileText, LayoutTemplate, Menu
 } from 'lucide-react';
 
 export default function AdminLayout({ children }) {
@@ -35,12 +36,12 @@ export default function AdminLayout({ children }) {
     const navItems = [
         { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
         { name: 'Create New Course', href: '/admin/courses/create', icon: PlusCircle },
-        { name: 'My Courses', href: '/admin/courses', icon: Layers },
-        { name: 'Pages', href: '/admin/pages', icon: Layers },
-        { name: 'Templates', href: '/admin/templates', icon: Layers },
-        { name: 'Menus', href: '/admin/menus', icon: Layers },
-        { name: 'Earning', href: '/admin/earnings', icon: CreditCard },
-        { name: 'Message', href: '/admin/messages', icon: MessageCircle, badge: 2 },
+        { name: 'My Courses', href: '/admin/courses', icon: BookOpen },
+        { name: 'Pages', href: '/admin/pages', icon: FileText },
+        { name: 'Templates', href: '/admin/templates', icon: LayoutTemplate },
+        { name: 'Menus', href: '/admin/menus', icon: Menu },
+        // { name: 'Earning', href: '/admin/earnings', icon: CreditCard },
+        // { name: 'Message', href: '/admin/messages', icon: MessageCircle, badge: 2 },
         { name: 'Testimonials', href: '/admin/testimonials', icon: Star },
         { name: 'Settings', href: '/admin/settings', icon: Settings },
     ];
@@ -51,18 +52,29 @@ export default function AdminLayout({ children }) {
         </div>;
     }
 
+    // Editor has its own full-screen layout, skip the admin shell
+    if (pathname.startsWith('/admin/editor')) {
+        return children;
+    }
+
     return (
         <div className="flex min-h-screen bg-[#F5F7FA] font-sans text-gray-900">
             {/* Sidebar - Figma Width 280px */}
             <aside className="w-[280px] bg-[#1D2026] text-white flex flex-col shrink-0 transition-all duration-300 fixed h-full z-30">
                 {/* Logo Area */}
                 <div className="h-[70px] flex items-center px-6 border-b border-[#363B47]">
-                    <div className="flex items-center gap-2">
-                        <div className="p-1.5 bg-primary-600 rounded">
-                            <GraduationCap className="w-6 h-6 text-white" />
+                    <Link href="/" className="flex items-center gap-3 group">
+                        <div className="w-8 h-8 rounded-full overflow-hidden border border-[#363B47] shadow-sm group-hover:border-primary-500/50 transition-all duration-300 shrink-0 bg-white">
+                            <img
+                                src="https://play-lh.googleusercontent.com/APeEZa4FLR80Q2huR4dQmpElLaBz_jw7kkkpFF38Kjm6Y_ehZjg3XIqH_8Vvo0WZBg"
+                                alt="Last Moment Tuitions Logo"
+                                className="w-full h-full object-cover group-hover:scale-110 transition-transform"
+                            />
                         </div>
-                        <span className="text-xl font-semibold tracking-tight">LMT Admin</span>
-                    </div>
+                        <span className="text-[17px] font-extrabold text-white tracking-tight truncate">
+                            Last Moment Tuitions
+                        </span>
+                    </Link>
                 </div>
 
                 {/* Navigation */}
@@ -125,38 +137,24 @@ export default function AdminLayout({ children }) {
                 {/* Top Header with User Info and Logout */}
                 <header className="h-[70px] bg-white border-b border-gray-200 flex items-center justify-end px-8 sticky top-0 z-20 shadow-sm">
                     <div className="flex items-center gap-4">
-                        {/* User Info */}
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center">
-                                <CircleUser className="w-6 h-6 text-primary-600" />
-                            </div>
-                            <div className="text-sm">
-                                <p className="font-semibold text-gray-900">
-                                    {user?.name || user?.email?.split('@')[0] || 'Admin'}
-                                </p>
-                                <p className="text-xs text-gray-500">Administrator</p>
-                            </div>
-                        </div>
-
-                        {/* Logout Button */}
+                        <span className="text-sm font-semibold text-gray-700">
+                            Hello, {user?.firstName || 'Admin'}
+                        </span>
                         <button
                             onClick={async () => {
                                 setLoggingOut(true);
                                 await logout(() => toast.success('Logged out successfully'));
                             }}
                             disabled={loggingOut}
-                            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors border border-gray-200 hover:border-red-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="rounded-full px-5 py-2 text-sm font-bold shadow-sm whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed border border-primary-500 text-primary-600 bg-transparent hover:bg-primary-50 hover:text-primary-700 transition-colors"
                         >
                             {loggingOut ? (
                                 <>
-                                    <Loader2 className="w-4 h-4 animate-spin" />
-                                    <span>Logging out...</span>
+                                    <Loader2 className="w-4 h-4 animate-spin inline mr-2" />
+                                    Logging out...
                                 </>
                             ) : (
-                                <>
-                                    <LogOut className="w-4 h-4" />
-                                    <span>Logout</span>
-                                </>
+                                'Logout'
                             )}
                         </button>
                     </div>

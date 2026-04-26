@@ -1,7 +1,14 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { adminService } from '@/services/adminService';
+import { useEffect, useState, useMemo } from 'react';
+import { 
+    useInfinitePages,
+    useFolders, 
+    useCreateFolder, 
+    useDeleteFolder, 
+    useDeletePage, 
+    useUpdatePage 
+} from '@/hooks/api/useAdmin';
 import { useToast } from '@/context/ToastContext';
 import Link from 'next/link';
 import { Button } from '@/components/ui';
@@ -9,90 +16,56 @@ import { Plus, Edit, Trash, ExternalLink, Search, Check, Folder, ChevronRight, H
 
 export default function ContentManager({ view = 'page' }) {
     const { toast } = useToast();
+
+    // Sections are stored as type:template in MongoDB but displayed separately in the UI
+    const apiType = view === 'section' ? 'template' : view;
+    // Human-readable labels
+    const viewLabel = view === 'section' ? 'Section' : view === 'template' ? 'Template' : 'Page';
+    const viewLabelPlural = viewLabel + 's';
+
     // Navigation State
     const [currentFolder, setCurrentFolder] = useState(null); // null = root
     const [breadcrumbs, setBreadcrumbs] = useState([{ id: null, name: 'Home' }]);
 
-    // Data State
-    const [folders, setFolders] = useState([]);
-    const [pages, setPages] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [creatingFolder, setCreatingFolder] = useState(false);
-    const [deletingId, setDeletingId] = useState(null);
-    const [togglingId, setTogglingId] = useState(null);
+    // Filter/UI State
     const [search, setSearch] = useState('');
     const [copiedId, setCopiedId] = useState(null);
+    const [isCreateFolderOpen, setIsCreateFolderOpen] = useState(false);
+    const [newFolderName, setNewFolderName] = useState('');
 
-    // Initial Load & Folder Change
-    useEffect(() => {
-        fetchContent();
-    }, [currentFolder, view]);
+    // TanStack Query
+    const folderParams = { parent: currentFolder || 'null', type: view };
+    const pageParams = { folder: currentFolder || 'null', type: view, status: 'all' };
 
-    const fetchContent = async () => {
-        setLoading(true);
-        try {
-            // Fetch Folders (only for current parent)
-            const parentParam = currentFolder ? currentFolder : 'null';
-            // Note: Update backend to handle 'null' string if sending as query param, 
-            // or better, handle undefined/null in service. 
-            // Existing code sent 'null' string to express? 
-            // In NestJS controller I implemented standard finding. 
-            // Let's pass params cleanly. 
+    const { data: foldersRaw, isLoading: foldersLoading } = useFolders(folderParams);
+    
+    // Use Infinite Query for pages
+    const { 
+        data: pagesInfiniteData, 
+        isLoading: pagesLoading,
+        fetchNextPage,
+        hasNextPage,
+        isFetchingNextPage
+    } = useInfinitePages(pageParams, 20);
 
-            // Backend expectation: 
-            // If I look at my PagesService: async findAll(filter: any = {})
-            // It passes the query directly to mongoose find.
-            // So if I pass { folder: 'null' } it will look for folder: 'null' string.
-            // But ObjectId is needed.
+    const folders = useMemo(() => foldersRaw?.details || foldersRaw || [], [foldersRaw]);
+    
+    // Flatten the infinite pages data
+    const pages = useMemo(() => {
+        return pagesInfiniteData?.pages.flatMap(page => page.data || page) || [];
+    }, [pagesInfiniteData]);
 
-            // The previous code sent `?parent=null`. 
-            // I should check how I implemented the backend Service/Controller.
-            // PagesController: findAll(@Query() query) -> pagesService.findAll(query)
-            // PagesService: find(filter)
+    const loading = foldersLoading || pagesLoading;
 
-            // If query is { folder: 'null' }, mongoose might error on casting to ObjectId if 'null' string is passed
-            // OR if I used `type: Types.ObjectId` and default null, searching for { folder: null } (literal null) is correct.
-            // Searching for { folder: 'null' } (string) is wrong.
+    // Mutations
+    const createFolderMutation = useCreateFolder();
+    const deleteFolderMutation = useDeleteFolder();
+    const deletePageMutation = useDeletePage();
+    const updatePageMutation = useUpdatePage();
 
-            // In express, query params are strings. 
+    const [deletingId, setDeletingId] = useState(null);
+    const [togglingId, setTogglingId] = useState(null);
 
-            // I'll stick to reproducing what the frontend WAS sending for now, 
-            // but I might need to fix the backend to handle 'null' string vs null value
-            // if the previous backend handled it manually.
-
-            const folderParams = { parent: currentFolder, type: view };
-            const pageParams = { folder: currentFolder, type: view };
-
-            // However, ContentManager passes 'null' string explicitly if currentFolder is null.
-            // "const parentParam = currentFolder ? currentFolder : 'null';"
-
-            // I will update this to pass null or undefined if currentFolder is null, 
-            // letting the service/axios handle it (usually axios drops undefined params).
-            // But wait, if I want root folders (parent: null), I need to query for parent: null.
-            // Mongoose find({ parent: null }) works. 
-            // But over HTTP, query param ?parent=null is a string "null" or literal null depending on parser.
-            // NestJS/Express usually sees it as string "null" unless transformed.
-
-            // For now, I will trust the previous frontend logic assumption, 
-            // but use the service.
-
-            const folders = await adminService.getFolders({ parent: parentParam, type: view });
-            const pages = await adminService.getPages({ folder: parentParam, type: view, status: 'all' });
-
-            // Robustly handle both { data: [...] } and [...] response formats
-            const foldersData = folders?.details || folders;
-            const pagesData = pages?.data || pages;
-
-            setFolders(Array.isArray(foldersData) ? foldersData : []);
-            setPages(Array.isArray(pagesData) ? pagesData : []);
-
-        } catch (error) {
-            console.error('Failed to fetch content', error);
-            toast.error(error.message || 'Failed to fetch content');
-        } finally {
-            setLoading(false);
-        }
-    };
 
     // --- Navigation Actions ---
     const enterFolder = (folder) => {
@@ -107,9 +80,8 @@ export default function ContentManager({ view = 'page' }) {
         setBreadcrumbs(newBreadcrumbs);
     };
 
-    // --- Modal State ---
-    const [isCreateFolderOpen, setIsCreateFolderOpen] = useState(false);
-    const [newFolderName, setNewFolderName] = useState('');
+    // --- Modal Logic ---
+    // (State moved to Filter/UI State section)
 
     // --- CRUD Actions ---
     const handleCreateFolderClick = () => {
@@ -121,19 +93,15 @@ export default function ContentManager({ view = 'page' }) {
         e.preventDefault();
         if (!newFolderName.trim()) return;
 
-        setCreatingFolder(true);
         try {
-            await adminService.createFolder({
+            await createFolderMutation.mutateAsync({
                 name: newFolderName,
                 parent: currentFolder,
                 type: view
             });
-            fetchContent();
             setIsCreateFolderOpen(false);
         } catch (error) {
             toast.error(error.message || 'Failed to create folder');
-        } finally {
-            setCreatingFolder(false);
         }
     };
 
@@ -143,8 +111,7 @@ export default function ContentManager({ view = 'page' }) {
 
         setDeletingId(id);
         try {
-            await adminService.deleteFolder(id);
-            fetchContent();
+            await deleteFolderMutation.mutateAsync(id);
         } catch (error) {
             toast.error(error.message || 'Failed to delete folder');
         } finally {
@@ -158,8 +125,7 @@ export default function ContentManager({ view = 'page' }) {
 
         setDeletingId(id);
         try {
-            await adminService.deletePage(id);
-            fetchContent();
+            await deletePageMutation.mutateAsync(id);
         } catch (error) {
             toast.error(error.message || 'Failed to delete page');
         } finally {
@@ -172,12 +138,8 @@ export default function ContentManager({ view = 'page' }) {
         setTogglingId(page._id);
         try {
             const newStatus = page.status === 'published' ? 'draft' : 'published';
-            await adminService.updatePage(page._id, { status: newStatus });
-
-            // Optimistic update
-            setPages(pages.map(p => p._id === page._id ? { ...p, status: newStatus } : p));
+            await updatePageMutation.mutateAsync({ id: page._id, data: { status: newStatus } });
         } catch (error) {
-            console.error('Failed to update status', error);
             toast.error(error.message || 'Failed to update status');
         } finally {
             setTogglingId(null);
@@ -189,6 +151,25 @@ export default function ContentManager({ view = 'page' }) {
         setCopiedId(id);
         setTimeout(() => setCopiedId(null), 2000);
     };
+
+    // --- Infinite Scroll Logic ---
+    useEffect(() => {
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
+                    fetchNextPage();
+                }
+            },
+            { threshold: 0.5 }
+        );
+
+        const sentinel = document.getElementById('infinite-scroll-sentinel');
+        if (sentinel) observer.observe(sentinel);
+
+        return () => {
+            if (sentinel) observer.unobserve(sentinel);
+        };
+    }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
     // --- Filter Logic ---
     // Search creates a "Flat View" of the current folder's content (client-side only for now)
@@ -227,15 +208,19 @@ export default function ContentManager({ view = 'page' }) {
             <div className="flex flex-col gap-4 border-b border-gray-100 pb-6">
                 <div className="flex md:items-center justify-between gap-4">
                     <div>
-                        <h1 className="text-xl font-semibold text-gray-900 tracking-tight capitalize">{view}s Manager</h1>
+                        <h1 className="text-xl font-semibold text-gray-900 tracking-tight capitalize">{viewLabelPlural} Manager</h1>
+                        {view === 'section' && (
+                            <p className="text-sm text-gray-500 mt-0.5">Reusable sections available in the page editor block panel</p>
+                        )}
                     </div>
                     <div className="flex gap-2">
                         <Button onClick={handleCreateFolderClick} variant="outline" className="h-9 gap-2 text-gray-700 border-gray-200">
                             <FolderPlus className="w-4 h-4" /> New Folder
                         </Button>
-                        <Link href={`/admin/pages/create?type=${view}&folder=${currentFolder || ''}`}>
+                        {/* Sections route to create page with type=template so they're stored correctly */}
+                        <Link href={`/admin/pages/create?type=${apiType}&folder=${currentFolder || ''}`}>
                             <Button className="bg-gray-900 hover:bg-black text-white px-4 py-2 h-9 text-sm font-medium shadow-sm gap-2">
-                                <Plus className="w-4 h-4" /> New {view === 'template' ? 'Template' : 'Page'}
+                                <Plus className="w-4 h-4" /> New {viewLabel}
                             </Button>
                         </Link>
                     </div>
@@ -260,7 +245,7 @@ export default function ContentManager({ view = 'page' }) {
             {/* Controls */}
             <div className="flex justify-between items-center">
                 <div className="text-sm text-gray-500">
-                    {folders.length} Folders, {pages.length} Pages
+                    {folders.length} Folders, {pages.length} {viewLabelPlural}
                 </div>
                 <div className="relative w-full md:w-64">
                     <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
@@ -329,7 +314,7 @@ export default function ContentManager({ view = 'page' }) {
                                     item.status === 'published' ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />
                                 )}
                             </button>
-                            <Link href={`/editor/${item._id}`}>
+                            <Link href={`/admin/editor/${item._id}`}>
                                 <button className="p-1.5 bg-white/90 backdrop-blur text-gray-600 hover:text-blue-600 rounded-md shadow-sm border border-gray-100">
                                     <Edit className="w-3.5 h-3.5" />
                                 </button>
@@ -361,10 +346,10 @@ export default function ContentManager({ view = 'page' }) {
                                     {item.title}
                                 </h3>
                                 <p className="text-xs text-gray-400 font-mono truncate">
-                                    {view === 'template' ? item._id : `/${item.slug}`}
-                                    {view === 'template' && (
+                                    {view === 'page' ? `/${item.slug}` : item.category ? `category: ${item.category}` : item._id}
+                                    {(view === 'template' || view === 'section') && (
                                         <button onClick={() => copyToClipboard(item._id)} className="ml-2 hover:text-black inline-flex align-middle">
-                                            {copiedId === item._id ? <Check className="w-3 h-3 text-green-500" /> : <span className="text-[10px] uppercase border px-1 rounded">Copy</span>}
+                                            {copiedId === item._id ? <Check className="w-3 h-3 text-green-500" /> : <span className="text-[10px] uppercase border px-1 rounded">Copy ID</span>}
                                         </button>
                                     )}
                                 </p>
@@ -380,9 +365,21 @@ export default function ContentManager({ view = 'page' }) {
                                     {item.viewCount || 0} views
                                 </span>
                             )}
+                            {view === 'section' && item.category && (
+                                <span className="flex items-center gap-1 text-orange-500 font-medium">
+                                    <span className="uppercase tracking-wide text-[10px]">{item.category}</span>
+                                </span>
+                            )}
                         </div>
                     </div>
                 ))}
+
+                {/* Infinite Scroll Sentinel */}
+                {pages.length > 0 && (
+                    <div id="infinite-scroll-sentinel" className="col-span-full h-10 flex items-center justify-center">
+                        {isFetchingNextPage && <Loader2 className="w-6 h-6 animate-spin text-primary-600" />}
+                    </div>
+                )}
 
                 {/* Empty State */}
                 {filteredFolders.length === 0 && filteredPages.length === 0 && (
@@ -390,12 +387,17 @@ export default function ContentManager({ view = 'page' }) {
                         <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mb-4">
                             <Folder className="w-8 h-8 text-gray-300" />
                         </div>
-                        <h3 className="text-lg font-medium text-gray-900">This folder is empty</h3>
+                        <h3 className="text-lg font-medium text-gray-900">No {viewLabelPlural.toLowerCase()} yet</h3>
                         <p className="text-gray-500 mt-1 max-w-sm mx-auto">
-                            Get started by creating a new folder or adding a page here.
+                            {view === 'section'
+                                ? 'Create reusable sections that appear as blocks in the page editor.'
+                                : 'Get started by creating a new folder or adding a page here.'}
                         </p>
                         <div className="mt-6 flex justify-center gap-3">
                             <Button onClick={handleCreateFolderClick} variant="outline">Create Folder</Button>
+                            <Link href={`/admin/pages/create?type=${apiType}&folder=${currentFolder || ''}`}>
+                                <Button className="bg-gray-900 text-white">New {viewLabel}</Button>
+                            </Link>
                         </div>
                     </div>
                 )}
@@ -427,10 +429,10 @@ export default function ContentManager({ view = 'page' }) {
                                     </button>
                                     <button
                                         type="submit"
-                                        disabled={!newFolderName.trim() || creatingFolder}
+                                        disabled={!newFolderName.trim() || createFolderMutation.isPending}
                                         className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
-                                        {creatingFolder ? 'Creating...' : 'Create Folder'}
+                                        {createFolderMutation.isPending ? 'Creating...' : 'Create Folder'}
                                     </button>
                                 </div>
                             </form>

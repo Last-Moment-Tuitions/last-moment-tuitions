@@ -1,14 +1,24 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { UploadsController } from './uploads.controller';
 import { UserUploadsController } from './user-uploads.controller';
 import { UploadsService } from './uploads.service';
+import { S3StorageProvider } from './storage/s3.storage';
 import { AuthModule } from '../../auth/auth.module';
 import { UsersModule } from '../../users/users.module';
+import { STORAGE_PROVIDER } from './constants';
 
 @Module({
-    imports: [AuthModule, UsersModule],
-    controllers: [UploadsController, UserUploadsController],
-    providers: [UploadsService],
+    imports: [ConfigModule, AuthModule, UsersModule],
+    controllers: [UploadsController],
+    providers: [
+        {
+            provide: STORAGE_PROVIDER,
+            useClass: S3StorageProvider,
+        },
+        UploadsService,
+    ],
     exports: [UploadsService],
 })
 export class UploadsModule { }
+

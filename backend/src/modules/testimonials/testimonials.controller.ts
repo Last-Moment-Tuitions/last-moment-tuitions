@@ -22,6 +22,11 @@ export class TestimonialsController {
         return this.testimonialsService.findAll(target_page);
     }
 
+    @Get(':id')
+    async findOne(@Param('id') id: string) {
+        return this.testimonialsService.findOne(id);
+    }
+
     @UseGuards(AuthGuard)
     @Post()
     async create(@Body() data: CreateTestimonialDto) {
