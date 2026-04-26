@@ -1,7 +1,6 @@
 @import "tailwindcss";
 
 @theme {
-  /* Primary Colors - Dark Sea Tones Blue */
   --color-primary-50: #e8f0f9;
   --color-primary-100: #d1e1f3;
   --color-primary-200: #a3c3e7;
@@ -14,7 +13,6 @@
   --color-primary-900: #041230;
   --color-primary-950: #020b20;
 
-  /* Accent Colors - Teal/Cyan */
   --color-accent-50: #e6f7fb;
   --color-accent-100: #cceff7;
   --color-accent-200: #99dfef;
