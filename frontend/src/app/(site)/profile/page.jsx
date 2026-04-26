@@ -3,7 +3,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Upload, Eye, EyeOff, ArrowRight, Loader2, PlayCircle, MonitorPlay, Trophy, Users, ArrowLeft, ShoppingBag, Clock, CheckCircle2, XCircle, ChevronRight, FileText, Mail, Instagram, Linkedin, X } from 'lucide-react';
+import Link from 'next/link';
+import { Upload, Eye, EyeOff, ArrowRight, Loader2, PlayCircle, MonitorPlay, Trophy, Users, ArrowLeft, ShoppingBag, Clock, CheckCircle2, XCircle, ChevronRight, FileText, Mail, Instagram, Linkedin, X, BookOpen } from 'lucide-react';
 import { Button, Input, Label } from '@/components/ui';
 import API_BASE_URL from '@/lib/config';
 
@@ -465,10 +466,10 @@ export default function ProfilePage() {
                                     {myCourses.slice(0, 4).map((course) => (
                                         <div key={course._id} className="border border-gray-200 rounded-sm overflow-hidden flex flex-col relative bg-white pb-[2px] transition-all hover:shadow-md">
                                             <div className="h-40 w-full relative">
-                                                <img 
-                                                    src={course.thumbnail || "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=500&q=80"} 
-                                                    alt={course.title} 
-                                                    className="w-full h-full object-cover" 
+                                                <img
+                                                    src={course.thumbnail || "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=500&q=80"}
+                                                    alt={course.title}
+                                                    className="w-full h-full object-cover"
                                                 />
                                             </div>
                                             <div className="p-4 flex-1 flex flex-col justify-between">
