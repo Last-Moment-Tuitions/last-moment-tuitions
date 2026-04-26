@@ -46,7 +46,7 @@ export default function Error404Page() {
                     {/* Buttons btn */}
                     <Link
                         href="/"
-                        className="flex flex-row justify-center items-center px-6 gap-3 w-[140px] h-12 bg-[#FF6636] hover:bg-[#E05D31] transition-colors duration-200 no-underline rounded-sm"
+                        className="flex flex-row justify-center items-center px-6 gap-3 w-[140px] h-12 bg-[#06477e] hover:bg-[#E05D31] transition-colors duration-200 no-underline rounded-sm"
                     >
                         <span className="font-semibold text-base leading-none tracking-[-0.01em] text-white text-center whitespace-nowrap">
                             Go Back

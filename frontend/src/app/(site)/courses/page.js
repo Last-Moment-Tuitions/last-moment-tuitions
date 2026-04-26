@@ -358,30 +358,20 @@ export default function CoursesPage() {
                             )}
                         </div>
 
-                        {/* Pagination (Mock) */}
-                        <div className="mt-12 flex justify-center gap-2">
-                            <Button variant="outline" size="sm" className="w-10 h-10 p-0 rounded-full" disabled>
-                                &lt;
-                            </Button>
-                            <Button variant="primary" size="sm" className="w-10 h-10 p-0 rounded-full">
-                                1
-                            </Button>
-                            <Button variant="ghost" size="sm" className="w-10 h-10 p-0 rounded-full">
-                                2
-                            </Button>
-                            <Button variant="ghost" size="sm" className="w-10 h-10 p-0 rounded-full">
-                                3
-                            </Button>
-                            <Button variant="ghost" size="sm" className="w-10 h-10 p-0 rounded-full">
-                                ...
-                            </Button>
-                            <Button variant="ghost" size="sm" className="w-10 h-10 p-0 rounded-full">
-                                8
-                            </Button>
-                            <Button variant="outline" size="sm" className="w-10 h-10 p-0 rounded-full">
-                                &gt;
-                            </Button>
-                        </div>
+                        {/* Pagination - Only show if more than one page exists */}
+                        {filteredCourses.length > 12 && (
+                            <div className="mt-12 flex justify-center gap-2">
+                                <Button variant="outline" size="sm" className="w-10 h-10 p-0 rounded-full" disabled>
+                                    &lt;
+                                </Button>
+                                <Button variant="primary" size="sm" className="w-10 h-10 p-0 rounded-full">
+                                    1
+                                </Button>
+                                <Button variant="outline" size="sm" className="w-10 h-10 p-0 rounded-full" disabled>
+                                    &gt;
+                                </Button>
+                            </div>
+                        )}
                     </main>
 
                 </div>

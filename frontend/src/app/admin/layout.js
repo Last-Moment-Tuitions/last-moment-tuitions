@@ -64,11 +64,17 @@ export default function AdminLayout({ children }) {
                 {/* Logo Area */}
                 <div className="h-[70px] flex items-center px-6 border-b border-[#363B47]">
                     <Link href="/" className="flex items-center gap-3 group">
-                        <div className="w-8 h-8 rounded-full overflow-hidden border border-[#363B47] shadow-sm group-hover:border-primary-500/50 transition-all duration-300 shrink-0 bg-white">
+                        <div className="w-9 h-9 bg-white rounded-full border border-[#363B47] shadow-sm group-hover:border-primary-500/50 transition-all duration-300 shrink-0 overflow-hidden relative">
                             <img
                                 src="https://play-lh.googleusercontent.com/APeEZa4FLR80Q2huR4dQmpElLaBz_jw7kkkpFF38Kjm6Y_ehZjg3XIqH_8Vvo0WZBg"
                                 alt="Last Moment Tuitions Logo"
-                                className="w-full h-full object-cover group-hover:scale-110 transition-transform"
+                                className="absolute w-[155%] h-[155%] max-w-none"
+                                style={{ 
+                                    left: "50%", 
+                                    top: "50%", 
+                                    transform: "translate(-50%, -46%)",
+                                    objectFit: "cover"
+                                }}
                             />
                         </div>
                         <span className="text-[17px] font-extrabold text-white tracking-tight truncate">
@@ -107,29 +113,7 @@ export default function AdminLayout({ children }) {
                     })}
                 </nav>
 
-                {/* Sign Out (Fixed at bottom like Figma) */}
-                <div className="p-6 border-t border-[#363B47]">
-                    <button
-                        onClick={async () => {
-                            setLoggingOut(true);
-                            await logout(() => toast.success('Logged out successfully'));
-                        }}
-                        disabled={loggingOut}
-                        className="flex items-center gap-3 w-full text-[#8C94A3] hover:text-white transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        {loggingOut ? (
-                            <>
-                                <Loader2 className="w-5 h-5 animate-spin" />
-                                Logging out...
-                            </>
-                        ) : (
-                            <>
-                                <LogOut className="w-5 h-5" />
-                                Sign Out
-                            </>
-                        )}
-                    </button>
-                </div>
+
             </aside>
 
             {/* Main Content Wrapper - Offset for fixed sidebar */}

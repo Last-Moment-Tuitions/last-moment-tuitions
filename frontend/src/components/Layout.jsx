@@ -29,11 +29,17 @@ export function Header() {
                 <div className="flex items-center gap-4 xl:gap-8">
                     {/* Logo & Branding */}
                     <Link href="/" className="flex-shrink-0 flex items-center gap-3 group">
-                        <div className="w-10 h-10 rounded-full overflow-hidden border border-gray-100 shadow-sm group-hover:shadow-md transition-all">
+                        <div className="w-11 h-11 bg-white rounded-full border-[1.5px] border-black shadow-sm shrink-0 overflow-hidden relative">
                             <img
                                 src="https://play-lh.googleusercontent.com/APeEZa4FLR80Q2huR4dQmpElLaBz_jw7kkkpFF38Kjm6Y_ehZjg3XIqH_8Vvo0WZBg"
                                 alt="Last Moment Tuitions Logo"
-                                className="w-full h-full object-cover"
+                                className="absolute w-[155%] h-[155%] max-w-none"
+                                style={{ 
+                                    left: "50%", 
+                                    top: "50%", 
+                                    transform: "translate(-50%, -46%)",
+                                    objectFit: "cover"
+                                }}
                             />
                         </div>
                         <h1 className="text-xl md:text-2xl font-extrabold text-gray-900 tracking-tight whitespace-nowrap">
@@ -277,11 +283,17 @@ export function Footer() {
                     {/* Brand & Socials */}
                     <div className="lg:col-span-4 space-y-8">
                         <Link href="/" className="flex items-center gap-3 group">
-                            <div className="w-12 h-12 rounded-xl overflow-hidden border border-gray-800 shadow-xl group-hover:border-primary-500/50 transition-all duration-300">
+                            <div className="w-12 h-12 bg-white rounded-full border-[1.5px] border-gray-900 shadow-xl shrink-0 overflow-hidden relative group">
                                 <img
                                     src="https://play-lh.googleusercontent.com/APeEZa4FLR80Q2huR4dQmpElLaBz_jw7kkkpFF38Kjm6Y_ehZjg3XIqH_8Vvo0WZBg"
                                     alt="Last Moment Tuitions Logo"
-                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                                    className="absolute w-[155%] h-[155%] max-w-none transition-transform duration-300 group-hover:scale-[1.65]"
+                                    style={{ 
+                                        left: "50%", 
+                                        top: "50%", 
+                                        transform: "translate(-50%, -46%)",
+                                        objectFit: "cover"
+                                    }}
                                 />
                             </div>
                             <span className="text-xl font-extrabold text-white tracking-tight">
